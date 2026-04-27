@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useGameStore, SWORD_DEFS } from './store';
 import { WEAPONS, WeaponId } from './controls';
 import { NPC_DATA } from './npcData';
@@ -307,6 +307,30 @@ function ItemFanfare() {
   );
 }
 
+// ── Auto-Save Toast ───────────────────────────────────────────────
+function SaveToast() {
+  const lastSaveTime = useGameStore(s => s.lastSaveTime);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (!lastSaveTime) return;
+    setVisible(true);
+    const t = setTimeout(() => setVisible(false), 2200);
+    return () => clearTimeout(t);
+  }, [lastSaveTime]);
+
+  if (!visible) return null;
+  return (
+    <div
+      className="fixed top-3 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/75 border border-amber-700/60 rounded-full px-3 py-1 text-xs text-amber-300 font-mono backdrop-blur-sm"
+      style={{ zIndex: 8500, animation: 'fadeInOut 2.2s ease-in-out forwards' }}
+    >
+      <span>💾</span>
+      <span>Auto-saved</span>
+    </div>
+  );
+}
+
 // ── Main HUD ──────────────────────────────────────────────────────
 export function HUD() {
   const {
@@ -323,6 +347,9 @@ export function HUD() {
 
   return (
     <div className="absolute inset-0 pointer-events-none p-2 flex flex-col justify-between select-none">
+
+      {/* Save Toast */}
+      <SaveToast />
 
       {/* Item Fanfare */}
       <ItemFanfare />

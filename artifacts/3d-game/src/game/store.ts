@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import * as THREE from 'three';
 import { WeaponId, WEAPONS } from './controls';
 import { NPC_DATA } from './npcData';
+import { saveGame, loadGame, deleteSave, getAreaSpawn, SaveData } from './saveManager';
 
 export type GameState = 'title' | 'playing' | 'gameover' | 'victory';
 export type AreaId = 'field' | 'forest' | 'desert' | 'boss';
@@ -127,6 +128,11 @@ interface GameStore {
   useFountain: () => void;
   setArmorLevel: (level: 0 | 1 | 2) => void;
   resetGame: () => void;
+  lastSaveTime: number;
+  triggerSave: () => void;
+  performSave: () => void;
+  loadFromSave: () => boolean;
+  deleteSaveData: () => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -165,6 +171,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   showShop: false,
   nearShop: false,
   nearFountain: false,
+  lastSaveTime: 0,
 
   setGameState: (state) => set({ gameState: state }),
   addRupees: (amount) => set((s) => ({ rupees: s.rupees + amount })),
@@ -389,5 +396,82 @@ export const useGameStore = create<GameStore>((set, get) => ({
     showShop: false,
     nearShop: false,
     nearFountain: false,
+    lastSaveTime: 0,
   }),
+
+  triggerSave: () => set({ lastSaveTime: Date.now() }),
+
+  performSave: () => {
+    const s = get();
+    if (s.gameState !== 'playing') return;
+    const data: SaveData = {
+      version: 1,
+      timestamp: Date.now(),
+      hearts: s.hearts,
+      maxHearts: s.maxHearts,
+      rupees: s.rupees,
+      arrows: s.arrows,
+      bombs: s.bombs,
+      shurikens: s.shurikens,
+      activeSword: s.activeSword,
+      unlockedSwords: s.unlockedSwords,
+      selectedWeapon: s.selectedWeapon,
+      currentArea: s.currentArea,
+      chestsOpened: s.chestsOpened,
+      shardsCollected: s.shardsCollected,
+      heartPiecesCollected: s.heartPiecesCollected,
+      armorLevel: s.armorLevel,
+      bossHP: s.bossHP,
+      bossDefeated: s.bossDefeated,
+      talkedToNPCs: s.talkedToNPCs,
+    };
+    saveGame(data);
+    set({ lastSaveTime: Date.now() });
+  },
+
+  loadFromSave: () => {
+    const data = loadGame();
+    if (!data) return false;
+    const area = (data.currentArea ?? 'field') as AreaId;
+    const spawnPos = getAreaSpawn(area);
+    set({
+      gameState: 'playing',
+      hearts: data.hearts ?? 3,
+      maxHearts: data.maxHearts ?? 3,
+      rupees: data.rupees ?? 0,
+      arrows: data.arrows ?? 10,
+      bombs: data.bombs ?? 5,
+      shurikens: data.shurikens ?? 15,
+      activeSword: (data.activeSword ?? 'crystal') as SwordId,
+      unlockedSwords: (data.unlockedSwords ?? ['crystal']) as SwordId[],
+      selectedWeapon: (data.selectedWeapon ?? 'sword') as WeaponId,
+      currentArea: area,
+      chestsOpened: data.chestsOpened ?? [],
+      shardsCollected: data.shardsCollected ?? 0,
+      heartPiecesCollected: data.heartPiecesCollected ?? [],
+      armorLevel: (data.armorLevel ?? 0) as 0 | 1 | 2,
+      bossHP: data.bossHP ?? 20,
+      bossDefeated: data.bossDefeated ?? false,
+      talkedToNPCs: data.talkedToNPCs ?? [],
+      playerPosition: spawnPos.clone(),
+      playerDirection: new THREE.Vector3(0, 0, -1),
+      swordActive: false,
+      spinActive: false,
+      isBlocking: false,
+      pendingTransition: { area, spawnPos },
+      pendingWeaponFire: null,
+      nearChest: false,
+      nearNPC: null,
+      activeDialogue: null,
+      itemFanfare: null,
+      showShop: false,
+      nearShop: false,
+      nearFountain: false,
+      bossMaxHP: 20,
+      lastSaveTime: 0,
+    });
+    return true;
+  },
+
+  deleteSaveData: () => { deleteSave(); },
 }));

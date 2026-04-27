@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useGameStore } from './store';
 import { Button } from '@/components/ui/button';
+import { getSaveMeta, formatSaveTime, AREA_DISPLAY, deleteSave } from './saveManager';
 
 const STORY = {
   title: "Adelynn's Adventure Quest",
@@ -13,19 +14,43 @@ const STORY = {
   ],
 };
 
+const ARMOR_LABELS = ['No Armor', 'Blue Tunic', 'Red Tunic'];
+
 // ── Title Screen ─────────────────────────────────────────────────
 export function TitleScreen() {
-  const setGameState = useGameStore(state => state.setGameState);
+  const setGameState  = useGameStore(state => state.setGameState);
+  const resetGame     = useGameStore(state => state.resetGame);
+  const loadFromSave  = useGameStore(state => state.loadFromSave);
+  const deleteSaveData = useGameStore(state => state.deleteSaveData);
+  const [saveMeta, setSaveMeta] = useState(getSaveMeta());
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const startGame = () => setGameState('playing');
+  const startNewGame = () => resetGame();
+
+  const continueGame = () => {
+    loadFromSave();
+  };
+
+  const handleDeleteSave = () => {
+    if (confirmDelete) {
+      deleteSaveData();
+      setSaveMeta(null);
+      setConfirmDelete(false);
+    } else {
+      setConfirmDelete(true);
+    }
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') startGame();
+      if (e.key === 'Enter' || e.key === ' ') {
+        if (saveMeta) continueGame(); else startNewGame();
+      }
+      if (e.key === 'Escape') setConfirmDelete(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [saveMeta]);
 
   return (
     <div
@@ -40,7 +65,7 @@ export function TitleScreen() {
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: 'linear-gradient(to bottom, rgba(8,4,24,0.55) 0%, rgba(8,4,24,0.75) 60%, rgba(8,4,24,0.92) 100%)' }} />
 
-      {/* Content — centred, compact */}
+      {/* Content */}
       <div className="relative z-10 flex flex-col items-center gap-3 px-4 w-full max-w-lg">
 
         {/* Title */}
@@ -52,12 +77,12 @@ export function TitleScreen() {
           {STORY.subtitle}
         </h2>
 
-        {/* Lore — single paragraph, compact */}
+        {/* Lore */}
         <p className="text-amber-100/80 text-sm text-center leading-relaxed bg-black/40 rounded-xl px-5 py-3 border border-amber-900/40">
           {STORY.lore}
         </p>
 
-        {/* Shards — inline row */}
+        {/* Shards row */}
         <div className="flex gap-3">
           {STORY.shards.map(s => (
             <div key={s.area} className="flex flex-col items-center gap-0.5 bg-black/40 rounded-lg px-3 py-2 border border-purple-900/40">
@@ -68,17 +93,62 @@ export function TitleScreen() {
           ))}
         </div>
 
-        {/* CTA button */}
+        {/* Save slot — shown if save exists */}
+        {saveMeta && (
+          <div className="w-full bg-black/50 border border-amber-700/60 rounded-xl px-4 py-3">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-amber-400 text-sm">💾</span>
+              <span className="text-amber-300 font-bold text-sm">Saved Game</span>
+              <span className="text-amber-700 text-xs ml-auto">{formatSaveTime(saveMeta.timestamp)}</span>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-gray-300 mb-2">
+              <span>📍 {AREA_DISPLAY[saveMeta.area] ?? saveMeta.area}</span>
+              <span>💎 {saveMeta.shards}/3 shards</span>
+              <span>❤️ {saveMeta.hearts}/{saveMeta.maxHearts}</span>
+              {saveMeta.armorLevel > 0 && <span>🛡️ {ARMOR_LABELS[saveMeta.armorLevel]}</span>}
+              {saveMeta.swordsUnlocked > 1 && <span>⚔️ {saveMeta.swordsUnlocked} swords</span>}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                className="flex-1 bg-amber-600 hover:bg-amber-500 text-amber-100 font-serif border border-amber-400 cursor-pointer text-sm"
+                onClick={continueGame}
+              >
+                ▶ Continue Quest
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className={`text-xs border cursor-pointer transition-colors
+                  ${confirmDelete
+                    ? 'border-red-500 bg-red-900/60 text-red-200 hover:bg-red-800'
+                    : 'border-gray-600 text-gray-400 hover:border-red-600 hover:text-red-400'}`}
+                onClick={handleDeleteSave}
+                title="Delete save data"
+              >
+                {confirmDelete ? '⚠ Confirm Delete' : '🗑'}
+              </Button>
+            </div>
+            {confirmDelete && (
+              <p className="text-red-400 text-xs text-center mt-1">All progress will be lost! Click again to confirm.</p>
+            )}
+          </div>
+        )}
+
+        {/* New game button */}
         <Button
-          size="lg"
-          className="text-lg px-10 py-5 bg-amber-700 hover:bg-amber-600 text-amber-100 font-serif tracking-wider border border-amber-500 cursor-pointer"
-          onClick={startGame}
+          size={saveMeta ? 'sm' : 'lg'}
+          className={`${saveMeta
+            ? 'text-sm px-6 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-600 text-gray-300'
+            : 'text-lg px-10 py-5 bg-amber-700 hover:bg-amber-600 text-amber-100 border border-amber-500'
+          } font-serif tracking-wider cursor-pointer`}
+          onClick={startNewGame}
         >
-          ▶ Begin the Quest
+          {saveMeta ? '+ New Game' : '▶ Begin the Quest'}
         </Button>
 
         <p className="text-xs text-gray-500 font-mono">
-          WASD move · Space attack · Q/Shift cycle weapon · E interact · Enter/Space to start
+          WASD move · Space attack · Q/Shift cycle weapon · E interact · {saveMeta ? 'Enter to continue' : 'Enter/Space to start'}
         </p>
       </div>
     </div>
@@ -87,8 +157,10 @@ export function TitleScreen() {
 
 // ── Game Over Screen ─────────────────────────────────────────────
 export function GameOverScreen() {
-  const resetGame   = useGameStore(state => state.resetGame);
-  const shardsCount = useGameStore(state => state.shardsCollected);
+  const resetGame    = useGameStore(state => state.resetGame);
+  const loadFromSave = useGameStore(state => state.loadFromSave);
+  const shardsCount  = useGameStore(state => state.shardsCollected);
+  const [saveMeta]   = useState(getSaveMeta());
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') resetGame(); };
@@ -122,22 +194,41 @@ export function GameOverScreen() {
         </div>
       )}
 
-      <Button
-        size="lg"
-        className="text-lg px-8 py-4 bg-red-900 hover:bg-red-800 text-red-100 font-serif border border-red-700 cursor-pointer"
-        onClick={() => resetGame()}
-      >
-        ↩ Rise Again
-      </Button>
-      <p className="mt-3 text-xs text-gray-600 font-mono">Press Enter to retry</p>
+      <div className="flex flex-col gap-2 items-center">
+        {/* Load save button — shown if a save exists */}
+        {saveMeta && (
+          <Button
+            size="lg"
+            className="text-base px-8 py-3 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif border border-amber-600 cursor-pointer"
+            onClick={() => loadFromSave()}
+          >
+            💾 Load Saved Game — {AREA_DISPLAY[saveMeta.area] ?? saveMeta.area}
+          </Button>
+        )}
+        <Button
+          size="lg"
+          className="text-lg px-8 py-4 bg-red-900 hover:bg-red-800 text-red-100 font-serif border border-red-700 cursor-pointer"
+          onClick={() => resetGame()}
+        >
+          ↩ Rise Again (New Game)
+        </Button>
+      </div>
+
+      <p className="mt-3 text-xs text-gray-600 font-mono">Press Enter to retry from scratch</p>
     </div>
   );
 }
 
 // ── Victory Screen ───────────────────────────────────────────────
 export function VictoryScreen() {
-  const resetGame = useGameStore(state => state.resetGame);
-  const rupees    = useGameStore(state => state.rupees);
+  const resetGame  = useGameStore(state => state.resetGame);
+  const rupees     = useGameStore(state => state.rupees);
+  const deleteSaveData = useGameStore(state => state.deleteSaveData);
+
+  useEffect(() => {
+    // Clear save on true victory
+    deleteSaveData();
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') resetGame(); };

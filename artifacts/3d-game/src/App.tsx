@@ -12,6 +12,7 @@ import { Pickups } from './game/Pickups';
 import { Weapons } from './game/Weapons';
 import { AudioSystem, MuteButton } from './game/AudioSystem';
 import { ShopUI } from './game/Shop';
+import { SaveSystem } from './game/SaveSystem';
 
 function GameScene() {
   const currentArea  = useGameStore(s => s.currentArea);
@@ -42,6 +43,7 @@ export default function App() {
       </KeyboardControls>
 
       <AudioSystem />
+      <SaveSystem />
       <MuteButton />
       <HUD />
       <ShopUI />
