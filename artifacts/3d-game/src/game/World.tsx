@@ -103,6 +103,82 @@ function Portal({ def, portalTime }: { def: PortalDef; portalTime: number }) {
   );
 }
 
+// ─── Crystal shard chest ─────────────────────────────────────────
+const SHARD_COLORS: Record<string, string> = {
+  field:  '#ffe060',  // Shard of Dawn
+  forest: '#9966ff',  // Shard of Dusk
+  desert: '#ff6030',  // Shard of Ember
+};
+
+function TreasureChest({ pos, area }: { pos: [number, number, number]; area: string }) {
+  const chestsOpened = useGameStore(s => s.chestsOpened);
+  const opened = chestsOpened.includes(area);
+  const color  = SHARD_COLORS[area] ?? '#ffd060';
+
+  return (
+    <group position={pos}>
+      {/* ── Box body ── */}
+      <mesh castShadow>
+        <boxGeometry args={[1.6, 0.95, 1.05]} />
+        <meshStandardMaterial color="#6b4020" roughness={0.82} />
+      </mesh>
+      {/* Iron band left */}
+      <mesh castShadow position={[-0.56, 0.28, 0]}>
+        <boxGeometry args={[0.07, 0.95, 1.07]} />
+        <meshStandardMaterial color="#404040" metalness={0.6} roughness={0.5} />
+      </mesh>
+      {/* Iron band right */}
+      <mesh castShadow position={[0.56, 0.28, 0]}>
+        <boxGeometry args={[0.07, 0.95, 1.07]} />
+        <meshStandardMaterial color="#404040" metalness={0.6} roughness={0.5} />
+      </mesh>
+
+      {/* ── Lid — rotated open when opened ── */}
+      <group position={[0, 0.55, -0.5]} rotation={[opened ? -Math.PI * 0.72 : 0, 0, 0]}>
+        <mesh castShadow position={[0, 0.09, 0.55]}>
+          <boxGeometry args={[1.72, 0.2, 1.1]} />
+          <meshStandardMaterial color="#8b5030" roughness={0.75} />
+        </mesh>
+        {/* Lid front iron strip */}
+        <mesh position={[0, 0.06, 1.06]}>
+          <boxGeometry args={[1.62, 0.16, 0.06]} />
+          <meshStandardMaterial color="#404040" metalness={0.6} roughness={0.5} />
+        </mesh>
+      </group>
+
+      {/* ── Front lock plate ── */}
+      {!opened && (
+        <mesh position={[0, 0.48, 0.54]}>
+          <boxGeometry args={[0.28, 0.28, 0.06]} />
+          <meshStandardMaterial color={color} metalness={0.7} roughness={0.2}
+            emissive={color} emissiveIntensity={0.7} />
+        </mesh>
+      )}
+
+      {/* ── Crystal shard floating inside when opened ── */}
+      {opened && (
+        <mesh position={[0, 0.9, 0]} rotation={[0.4, Math.PI / 4, 0]}>
+          <octahedronGeometry args={[0.26, 0]} />
+          <meshStandardMaterial color={color} transparent opacity={0.75}
+            emissive={color} emissiveIntensity={2} metalness={0.3} />
+        </mesh>
+      )}
+
+      {/* ── Floating glow orb above closed chest ── */}
+      {!opened && (
+        <mesh position={[0, 2.5, 0]}>
+          <sphereGeometry args={[0.09, 9, 7]} />
+          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={4} />
+        </mesh>
+      )}
+
+      {/* Point light */}
+      <pointLight position={[0, opened ? 1.2 : 2, 0]} color={color}
+        intensity={opened ? 0.6 : 3.5} distance={opened ? 5 : 10} decay={2} />
+    </group>
+  );
+}
+
 // ─── Field area ───────────────────────────────────────────────────
 function FieldArea() {
   const trees = useMemo(() => seededItems(22, -50, 50, 1), []);
@@ -161,22 +237,8 @@ function FieldArea() {
         </mesh>
       ))}
 
-      {/* Chest (placeholder — moved to desert in full game) */}
-      <group position={chestPos}>
-        <mesh castShadow>
-          <boxGeometry args={[1.5, 1, 1]} />
-          <meshStandardMaterial color="#8b5a2b" />
-        </mesh>
-        <mesh position={[0, 0.57, 0]} castShadow>
-          <boxGeometry args={[1.62, 0.22, 1.1]} />
-          <meshStandardMaterial color="#a0622d" />
-        </mesh>
-        <mesh position={[0, 0.5, 0.52]}>
-          <boxGeometry args={[0.3, 0.3, 0.06]} />
-          <meshStandardMaterial color="#d4a840" metalness={0.6} roughness={0.4} />
-        </mesh>
-        <pointLight position={[0, 1.5, 0]} color="#ffd060" intensity={2} distance={5} decay={2} />
-      </group>
+      {/* Shard of Dawn chest */}
+      <TreasureChest pos={chestPos} area="field" />
 
       {/* World boundary walls (invisible) */}
       <Boundary />
@@ -249,6 +311,9 @@ function ForestArea() {
           </mesh>
         </group>
       ))}
+
+      {/* Shard of Dusk chest — centre of the woods */}
+      <TreasureChest pos={[0, 0.5, 0]} area="forest" />
 
       <Boundary />
     </>
@@ -327,26 +392,8 @@ function DesertArea() {
         </group>
       ))}
 
-      {/* Victory Chest */}
-      <group position={chestPos}>
-        <mesh castShadow>
-          <boxGeometry args={[1.8, 1.1, 1.2]} />
-          <meshStandardMaterial color="#8b5a2b" />
-        </mesh>
-        <mesh position={[0, 0.62, 0]} castShadow>
-          <boxGeometry args={[1.9, 0.24, 1.3]} />
-          <meshStandardMaterial color="#a0622d" />
-        </mesh>
-        <mesh position={[0, 0.55, 0.62]}>
-          <boxGeometry args={[0.34, 0.34, 0.07]} />
-          <meshStandardMaterial color="#d4a840" metalness={0.7} roughness={0.3} />
-        </mesh>
-        <pointLight position={[0, 2, 0]} color="#ffcc44" intensity={4} distance={8} decay={2} />
-        <mesh position={[0, 3, 0]}>
-          <sphereGeometry args={[0.12, 8, 8]} />
-          <meshStandardMaterial color="#ffe080" emissive="#ffe080" emissiveIntensity={3} />
-        </mesh>
-      </group>
+      {/* Shard of Ember chest */}
+      <TreasureChest pos={chestPos} area="desert" />
 
       <Boundary />
     </>
@@ -392,22 +439,7 @@ export function World() {
       }
     }
 
-    // Chest interaction (field or desert)
-    const chestZ = -22;
-    const chestX = 0;
-    const checkChest = (area: string) =>
-      area === currentArea &&
-      Math.abs(playerPosition.x - chestX) < 2 &&
-      Math.abs(playerPosition.z - chestZ) < 2;
-
-    if (
-      (currentArea === 'field' && checkChest('field')) ||
-      (currentArea === 'desert' &&
-        Math.abs(playerPosition.x) < 2 &&
-        Math.abs(playerPosition.z - (-24)) < 2)
-    ) {
-      // Proximity hint is handled in HUD. Actual trigger is from Player E key.
-    }
+    // (Chest proximity + interaction handled in Player.tsx)
   });
 
   return (

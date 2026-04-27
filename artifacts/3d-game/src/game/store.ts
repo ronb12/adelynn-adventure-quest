@@ -26,11 +26,13 @@ interface GameStore {
   pendingTransition: AreaTransition | null;
   pendingWeaponFire: WeaponId | null;
   nearChest: boolean;
+  shardsCollected: number;
+  chestsOpened: string[];
 
   setGameState: (state: GameState) => void;
   addRupees: (amount: number) => void;
   addArrows: (amount: number) => void;
-  addBombs: (amount: number) => void;
+  addBombs:  (amount: number) => void;
   useArrow: () => boolean;
   useBomb: () => boolean;
   damagePlayer: (amount: number) => void;
@@ -44,6 +46,7 @@ interface GameStore {
   clearPendingWeaponFire: () => void;
   triggerAreaTransition: (t: AreaTransition) => void;
   setNearChest: (v: boolean) => void;
+  openChest: (area: string) => void;
   resetGame: () => void;
 }
 
@@ -63,6 +66,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   pendingTransition: null,
   pendingWeaponFire: null,
   nearChest: false,
+  shardsCollected: 0,
+  chestsOpened: [],
 
   setGameState: (state) => set({ gameState: state }),
   addRupees: (amount) => set((s) => ({ rupees: s.rupees + amount })),
@@ -99,6 +104,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
   clearPendingWeaponFire: () => set({ pendingWeaponFire: null }),
   triggerAreaTransition: (t) => set({ currentArea: t.area, pendingTransition: t }),
   setNearChest: (v) => set({ nearChest: v }),
+
+  openChest: (area) => set((s) => {
+    if (s.chestsOpened.includes(area)) return {};          // already opened
+    const newShards = s.shardsCollected + 1;
+    const newOpened = [...s.chestsOpened, area];
+    const rupeesGain = 25 + Math.floor(Math.random() * 20); // 25–44 rupees per shard
+    const newRupees  = s.rupees + rupeesGain;
+    if (newShards >= 3) {
+      return { chestsOpened: newOpened, shardsCollected: newShards, rupees: newRupees, gameState: 'victory' };
+    }
+    return { chestsOpened: newOpened, shardsCollected: newShards, rupees: newRupees };
+  }),
+
   resetGame: () => set({
     gameState: 'playing',
     hearts: 3,
@@ -113,5 +131,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     pendingTransition: null,
     pendingWeaponFire: null,
     nearChest: false,
+    shardsCollected: 0,
+    chestsOpened: [],
   }),
 }));

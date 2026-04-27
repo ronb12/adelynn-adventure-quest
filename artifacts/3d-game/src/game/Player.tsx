@@ -10,6 +10,7 @@ const SPEED = 5;
 
 const CHEST_POSITIONS: Record<string, THREE.Vector3> = {
   field:  new THREE.Vector3(0, 0, -22),
+  forest: new THREE.Vector3(0, 0, 0),
   desert: new THREE.Vector3(0, 0, -24),
 };
 
@@ -439,9 +440,12 @@ export function Player() {
 
     // Chest check
     const chestPos = CHEST_POSITIONS[store.currentArea];
-    const nearChest = chestPos ? pos.current.distanceTo(chestPos) < 2.5 : false;
+    const alreadyOpened = store.chestsOpened.includes(store.currentArea);
+    const nearChest = chestPos && !alreadyOpened
+      ? pos.current.distanceTo(chestPos) < 2.5
+      : false;
     store.setNearChest(nearChest);
-    if (interact && nearChest) store.setGameState('victory');
+    if (interact && nearChest) store.openChest(store.currentArea);
 
     // Walk animation
     walkTime.current += delta * (moving ? 10 : 3);

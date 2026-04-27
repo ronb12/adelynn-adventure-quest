@@ -39,9 +39,10 @@ export function AudioSystem() {
   useEffect(() => {
     return useGameStore.subscribe((state, prev) => {
       if (state.hearts < prev.hearts && state.hearts > 0) sfxPlayerHurt();
-      if (state.rupees > prev.rupees) sfxPickup();
+      if (state.rupees > prev.rupees && state.chestsOpened.length === prev.chestsOpened.length) sfxPickup();
       if (state.currentArea !== prev.currentArea) sfxPortal();
-      if (state.nearChest && !prev.nearChest) sfxChestOpen();
+      // Play fanfare when a chest is actually opened (not just approached)
+      if (state.chestsOpened.length > prev.chestsOpened.length) sfxChestOpen();
     });
   }, []);
 
