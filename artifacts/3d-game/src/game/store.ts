@@ -60,6 +60,17 @@ interface GameStore {
   arrows: number;
   bombs: number;
   shurikens: number;
+  // New weapon ammo
+  frostCharges: number;
+  flareCharges: number;
+  veilCrystals: number;
+  quakeRunes: number;
+  moonbowAmmo: number;
+  // Cooldown-based weapon timers (ms timestamps — 0 = ready)
+  auraEndTime: number;
+  shadowEndTime: number;
+  chainCooldownEnd: number;
+
   playerPosition: THREE.Vector3;
   playerDirection: THREE.Vector3;
   swordActive: boolean;
@@ -94,9 +105,22 @@ interface GameStore {
   addArrows: (amount: number) => void;
   addBombs:  (amount: number) => void;
   addShurikens: (amount: number) => void;
+  addFrostCharges: (n: number) => void;
+  addFlareCharges: (n: number) => void;
+  addVeilCrystals: (n: number) => void;
+  addQuakeRunes: (n: number) => void;
+  addMoonbowAmmo: (n: number) => void;
   useArrow: () => boolean;
   useBomb: () => boolean;
   useShuriken: () => boolean;
+  useFrostCharge: () => boolean;
+  useFlareCharge: () => boolean;
+  useVeilCrystal: () => boolean;
+  useQuakeRune: () => boolean;
+  useMoonbowAmmo: () => boolean;
+  activateAura: () => void;
+  activateShadow: () => void;
+  activateChain: () => void;
   damagePlayer: (amount: number) => void;
   healPlayer: (amount: number) => void;
   fullHeal: () => void;
@@ -123,7 +147,7 @@ interface GameStore {
   setNearShop: (v: boolean) => void;
   openShop: () => void;
   closeShop: () => void;
-  buyItem: (item: 'arrows' | 'bombs' | 'heart' | 'shurikens', cost: number) => boolean;
+  buyItem: (item: 'arrows' | 'bombs' | 'heart' | 'shurikens' | 'frost' | 'flare' | 'veil' | 'quake' | 'moonbow', cost: number) => boolean;
   setNearFountain: (v: boolean) => void;
   useFountain: () => void;
   setArmorLevel: (level: 0 | 1 | 2) => void;
@@ -143,6 +167,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   arrows: 10,
   bombs: 5,
   shurikens: 15,
+  frostCharges: 8,
+  flareCharges: 3,
+  veilCrystals: 3,
+  quakeRunes: 2,
+  moonbowAmmo: 10,
+  auraEndTime: 0,
+  shadowEndTime: 0,
+  chainCooldownEnd: 0,
   playerPosition: new THREE.Vector3(0, 0, 0),
   playerDirection: new THREE.Vector3(0, 0, -1),
   swordActive: false,
@@ -178,6 +210,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   addArrows: (amount) => set((s) => ({ arrows: Math.min(s.arrows + amount, 99) })),
   addBombs:  (amount) => set((s) => ({ bombs:  Math.min(s.bombs  + amount, 20) })),
   addShurikens: (amount) => set((s) => ({ shurikens: Math.min(s.shurikens + amount, 60) })),
+  addFrostCharges: (n) => set((s) => ({ frostCharges: Math.min(s.frostCharges + n, 20) })),
+  addFlareCharges: (n) => set((s) => ({ flareCharges: Math.min(s.flareCharges + n, 10) })),
+  addVeilCrystals: (n) => set((s) => ({ veilCrystals: Math.min(s.veilCrystals + n, 10) })),
+  addQuakeRunes: (n) => set((s) => ({ quakeRunes: Math.min(s.quakeRunes + n, 8) })),
+  addMoonbowAmmo: (n) => set((s) => ({ moonbowAmmo: Math.min(s.moonbowAmmo + n, 60) })),
 
   useArrow: () => {
     const arrows = get().arrows;
@@ -197,8 +234,43 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ shurikens: shurikens - 1 });
     return true;
   },
+  useFrostCharge: () => {
+    const n = get().frostCharges;
+    if (n <= 0) return false;
+    set({ frostCharges: n - 1 });
+    return true;
+  },
+  useFlareCharge: () => {
+    const n = get().flareCharges;
+    if (n <= 0) return false;
+    set({ flareCharges: n - 1 });
+    return true;
+  },
+  useVeilCrystal: () => {
+    const n = get().veilCrystals;
+    if (n <= 0) return false;
+    set({ veilCrystals: n - 1 });
+    return true;
+  },
+  useQuakeRune: () => {
+    const n = get().quakeRunes;
+    if (n <= 0) return false;
+    set({ quakeRunes: n - 1 });
+    return true;
+  },
+  useMoonbowAmmo: () => {
+    const n = get().moonbowAmmo;
+    if (n <= 0) return false;
+    set({ moonbowAmmo: n - 1 });
+    return true;
+  },
+  activateAura: () => set({ auraEndTime: Date.now() + 4000 }),
+  activateShadow: () => set({ shadowEndTime: Date.now() + 2500 }),
+  activateChain: () => set({ chainCooldownEnd: Date.now() + 4000 }),
 
   damagePlayer: (amount) => set((s) => {
+    // Shadow Veil makes player immune
+    if (s.shadowEndTime > Date.now()) return {};
     const reduction = s.armorLevel === 2 ? 0.5 : s.armorLevel === 1 ? 0.75 : 1.0;
     const blockReduction = s.isBlocking ? 0.25 : 1.0;
     const finalAmount = amount * reduction * blockReduction;
@@ -351,10 +423,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
   buyItem: (item, cost) => {
     const s = get();
     if (s.rupees < cost) return false;
-    if (item === 'arrows')    set({ rupees: s.rupees - cost, arrows: Math.min(s.arrows + 10, 99) });
-    else if (item === 'bombs') set({ rupees: s.rupees - cost, bombs: Math.min(s.bombs + 5, 20) });
-    else if (item === 'shurikens') set({ rupees: s.rupees - cost, shurikens: Math.min(s.shurikens + 15, 60) });
+    const spend = { rupees: s.rupees - cost };
+    if (item === 'arrows')    set({ ...spend, arrows: Math.min(s.arrows + 10, 99) });
+    else if (item === 'bombs') set({ ...spend, bombs: Math.min(s.bombs + 5, 20) });
+    else if (item === 'shurikens') set({ ...spend, shurikens: Math.min(s.shurikens + 15, 60) });
     else if (item === 'heart') set((st) => ({ rupees: st.rupees - cost, hearts: Math.min(st.hearts + 1, st.maxHearts) }));
+    else if (item === 'frost') set({ ...spend, frostCharges: Math.min(s.frostCharges + 5, 20) });
+    else if (item === 'flare') set({ ...spend, flareCharges: Math.min(s.flareCharges + 3, 10) });
+    else if (item === 'veil')  set({ ...spend, veilCrystals: Math.min(s.veilCrystals + 3, 10) });
+    else if (item === 'quake') set({ ...spend, quakeRunes: Math.min(s.quakeRunes + 2, 8) });
+    else if (item === 'moonbow') set({ ...spend, moonbowAmmo: Math.min(s.moonbowAmmo + 10, 60) });
     return true;
   },
 
@@ -370,6 +448,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     arrows: 10,
     bombs: 5,
     shurikens: 15,
+    frostCharges: 8,
+    flareCharges: 3,
+    veilCrystals: 3,
+    quakeRunes: 2,
+    moonbowAmmo: 10,
+    auraEndTime: 0,
+    shadowEndTime: 0,
+    chainCooldownEnd: 0,
     playerPosition: new THREE.Vector3(0, 0, 0),
     playerDirection: new THREE.Vector3(0, 0, -1),
     swordActive: false,
@@ -413,6 +499,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       arrows: s.arrows,
       bombs: s.bombs,
       shurikens: s.shurikens,
+      frostCharges: s.frostCharges,
+      flareCharges: s.flareCharges,
+      veilCrystals: s.veilCrystals,
+      quakeRunes: s.quakeRunes,
+      moonbowAmmo: s.moonbowAmmo,
       activeSword: s.activeSword,
       unlockedSwords: s.unlockedSwords,
       selectedWeapon: s.selectedWeapon,
@@ -442,6 +533,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
       arrows: data.arrows ?? 10,
       bombs: data.bombs ?? 5,
       shurikens: data.shurikens ?? 15,
+      frostCharges: data.frostCharges ?? 8,
+      flareCharges: data.flareCharges ?? 3,
+      veilCrystals: data.veilCrystals ?? 3,
+      quakeRunes: data.quakeRunes ?? 2,
+      moonbowAmmo: data.moonbowAmmo ?? 10,
+      auraEndTime: 0,
+      shadowEndTime: 0,
+      chainCooldownEnd: 0,
       activeSword: (data.activeSword ?? 'crystal') as SwordId,
       unlockedSwords: (data.unlockedSwords ?? ['crystal']) as SwordId[],
       selectedWeapon: (data.selectedWeapon ?? 'sword') as WeaponId,

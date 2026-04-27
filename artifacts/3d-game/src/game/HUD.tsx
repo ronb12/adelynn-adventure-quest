@@ -4,10 +4,36 @@ import { WEAPONS, WeaponId } from './controls';
 import { NPC_DATA } from './npcData';
 
 const WEAPON_ICONS: Record<WeaponId, string> = {
-  sword: '⚔', bow: '🏹', bomb: '💣', boomerang: '🪃', wand: '🪄', shuriken: '⭐',
+  sword:    '⚔',
+  bow:      '🏹',
+  moonbow:  '🌙',
+  bomb:     '🧪',
+  boomerang:'🌑',
+  wand:     '🪄',
+  frost:    '❄️',
+  shuriken: '⭐',
+  flare:    '☀️',
+  veil:     '💠',
+  quake:    '🪨',
+  aura:     '💫',
+  shadow:   '🌑',
+  chain:    '⛓️',
 };
 const WEAPON_LABELS: Record<WeaponId, string> = {
-  sword: 'Sword', bow: 'Bow', bomb: 'Bomb', boomerang: 'Rang', wand: 'Wand', shuriken: 'Stars',
+  sword:    'Sword',
+  bow:      'Bow',
+  moonbow:  'Moonbow',
+  bomb:     'Vial',
+  boomerang:'Rang',
+  wand:     'Wand',
+  frost:    'Frost',
+  shuriken: 'Stars',
+  flare:    'Flare',
+  veil:     'Veil',
+  quake:    'Quake',
+  aura:     'Aura',
+  shadow:   'Shadow',
+  chain:    'Chain',
 };
 const AREA_NAMES: Record<string, string> = {
   field: 'Sunfield Plains', forest: 'Whisper Woods', desert: 'Ashrock Summit', boss: "Malgrath's Lair",
@@ -82,15 +108,47 @@ function ShardTracker() {
   );
 }
 
+// Cooldown bar helper
+function CooldownPip({ endTime, duration, color }: { endTime: number; duration: number; color: string }) {
+  const [pct, setPct] = useState(0);
+  useEffect(() => {
+    const iv = setInterval(() => {
+      const rem = Math.max(0, endTime - Date.now());
+      setPct(rem / duration);
+    }, 80);
+    return () => clearInterval(iv);
+  }, [endTime, duration]);
+  if (pct <= 0) return <span className="text-xs font-bold" style={{ color }}>RDY</span>;
+  return (
+    <div className="w-full h-1 bg-gray-700 rounded-full overflow-hidden mt-0.5">
+      <div className="h-full rounded-full transition-all" style={{ width: `${(1-pct)*100}%`, background: color }} />
+    </div>
+  );
+}
+
 // ── Weapon Bar ────────────────────────────────────────────────────
 function WeaponBar() {
-  const selected      = useGameStore(s => s.selectedWeapon);
-  const arrows        = useGameStore(s => s.arrows);
-  const bombs         = useGameStore(s => s.bombs);
-  const shurikens     = useGameStore(s => s.shurikens);
-  const activeSword   = useGameStore(s => s.activeSword);
+  const selected       = useGameStore(s => s.selectedWeapon);
+  const arrows         = useGameStore(s => s.arrows);
+  const bombs          = useGameStore(s => s.bombs);
+  const shurikens      = useGameStore(s => s.shurikens);
+  const frostCharges   = useGameStore(s => s.frostCharges);
+  const flareCharges   = useGameStore(s => s.flareCharges);
+  const veilCrystals   = useGameStore(s => s.veilCrystals);
+  const quakeRunes     = useGameStore(s => s.quakeRunes);
+  const moonbowAmmo    = useGameStore(s => s.moonbowAmmo);
+  const auraEndTime    = useGameStore(s => s.auraEndTime);
+  const shadowEndTime  = useGameStore(s => s.shadowEndTime);
+  const chainEnd       = useGameStore(s => s.chainCooldownEnd);
+  const activeSword    = useGameStore(s => s.activeSword);
   const unlockedSwords = useGameStore(s => s.unlockedSwords);
-  const ammo: Partial<Record<WeaponId, number>> = { bow: arrows, bomb: bombs, shuriken: shurikens };
+
+  const ammo: Partial<Record<WeaponId, number>> = {
+    bow: arrows, moonbow: moonbowAmmo,
+    bomb: bombs, shuriken: shurikens,
+    frost: frostCharges, flare: flareCharges,
+    veil: veilCrystals, quake: quakeRunes,
+  };
   return (
     <div className="flex flex-col gap-1">
       {/* Active sword info (Z to cycle) */}
@@ -104,28 +162,47 @@ function WeaponBar() {
           <span className="text-purple-400 text-xs ml-auto">{unlockedSwords.indexOf(activeSword)+1}/{unlockedSwords.length}</span>
         </div>
       )}
+      {/* Sliding window: show 7 weapons centered on selected */}
       <div className="flex gap-1 items-end">
-        {WEAPONS.map(w => {
-          const active = w === selected;
-          return (
-            <div key={w}
-              className={`flex flex-col items-center px-1.5 py-0.5 rounded-lg border-2 transition-all
-                ${active ? 'bg-amber-400/90 border-amber-600 scale-110 shadow-lg' : 'bg-black/50 border-gray-600 opacity-70'}`}>
-              <span className="text-base leading-none">{WEAPON_ICONS[w]}</span>
-              <span className={`text-xs font-bold ${active ? 'text-amber-900' : 'text-gray-300'}`}>
-                {WEAPON_LABELS[w]}
-              </span>
-              {ammo[w] !== undefined && (
-                <span className={`text-xs font-mono ${active ? 'text-amber-800' : 'text-gray-400'}`}>
-                  ×{ammo[w]}
+        {(() => {
+          const selIdx = WEAPONS.indexOf(selected);
+          const half = 3;
+          const shown: typeof WEAPONS[number][] = [];
+          for (let i = selIdx - half; i <= selIdx + half; i++) {
+            const wi = ((i % WEAPONS.length) + WEAPONS.length) % WEAPONS.length;
+            shown.push(WEAPONS[wi]);
+          }
+          return shown.map(w => {
+            const active = w === selected;
+            const isCooldown = w === 'aura' || w === 'shadow' || w === 'chain';
+            const cooldownEnd = w === 'aura' ? auraEndTime : w === 'shadow' ? shadowEndTime : chainEnd;
+            const cdDuration = w === 'aura' ? 4000 : w === 'shadow' ? 2500 : 4000;
+            return (
+              <div key={w}
+                className={`flex flex-col items-center px-1.5 py-0.5 rounded-lg border-2 transition-all min-w-[36px]
+                  ${active ? 'bg-amber-400/90 border-amber-600 scale-110 shadow-lg' : 'bg-black/50 border-gray-600 opacity-70'}`}>
+                <span className="text-sm leading-none">{WEAPON_ICONS[w]}</span>
+                <span className={`text-xs font-bold leading-tight ${active ? 'text-amber-900' : 'text-gray-300'}`}>
+                  {WEAPON_LABELS[w]}
                 </span>
-              )}
-              {w === 'wand' && active && (
-                <span className="text-xs text-amber-800">∞</span>
-              )}
-            </div>
-          );
-        })}
+                {ammo[w] !== undefined && (
+                  <span className={`text-xs font-mono leading-tight ${active ? 'text-amber-800' : 'text-gray-400'}`}>
+                    ×{ammo[w]}
+                  </span>
+                )}
+                {(w === 'wand' || w === 'boomerang') && (
+                  <span className={`text-xs leading-tight ${active ? 'text-amber-800' : 'text-gray-500'}`}>∞</span>
+                )}
+                {isCooldown && active && (
+                  <CooldownPip endTime={cooldownEnd} duration={cdDuration} color="#cc44ff" />
+                )}
+              </div>
+            );
+          });
+        })()}
+      </div>
+      <div className="text-center text-gray-600 text-xs mt-0.5">
+        [{WEAPONS.indexOf(selected)+1}/{WEAPONS.length}] Q/Shift to cycle
       </div>
     </div>
   );

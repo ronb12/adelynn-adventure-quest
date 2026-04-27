@@ -663,6 +663,7 @@ interface EnemyData {
   hitTimer: number;
   invulnTimer: number;
   stunTimer: number;
+  slowTimer: number;
   wobble: number;
   chaseRange: number;
   baseColor: THREE.Color;
@@ -705,7 +706,7 @@ export function Enemies() {
           hp: cfg.maxHp, maxHp: cfg.maxHp,
           speed: cfg.speed[0] + seeded(n,5)*(cfg.speed[1]-cfg.speed[0]),
           changeDirTimer: seeded(n,6)*2,
-          isHit: false, hitTimer: 0, invulnTimer: 0, stunTimer: 0,
+          isHit: false, hitTimer: 0, invulnTimer: 0, stunTimer: 0, slowTimer: 0,
           wobble: seeded(n,7)*Math.PI*2,
           chaseRange: cfg.chaseRange,
           baseColor: new THREE.Color(cfg.body),
@@ -747,18 +748,21 @@ export function Enemies() {
         return;
       }
 
+      const playerInvisible = Date.now() < store.shadowEndTime;
       enemy.changeDirTimer -= delta;
       if (enemy.changeDirTimer <= 0) {
         enemy.changeDirTimer = 1.2 + Math.random() * 2;
         const dist = enemy.pos.distanceTo(playerPosition);
-        if (Math.random() > 0.38 && dist < enemy.chaseRange) {
+        if (!playerInvisible && Math.random() > 0.38 && dist < enemy.chaseRange) {
           enemy.dir.copy(playerPosition).sub(enemy.pos).setY(0).normalize();
         } else {
           enemy.dir.set(Math.random()-0.5, 0, Math.random()-0.5).normalize();
         }
       }
 
-      enemy.pos.addScaledVector(enemy.dir, enemy.speed * delta);
+      if (enemy.slowTimer > 0) { enemy.slowTimer -= delta; }
+      const moveSpeed = enemy.slowTimer > 0 ? enemy.speed * 0.28 : enemy.speed;
+      enemy.pos.addScaledVector(enemy.dir, moveSpeed * delta);
       enemy.pos.x = THREE.MathUtils.clamp(enemy.pos.x, -27, 27);
       enemy.pos.z = THREE.MathUtils.clamp(enemy.pos.z, -27, 27);
       if (enemy.hitTimer > 0) { enemy.hitTimer -= delta; if (enemy.hitTimer <= 0) enemy.isHit = false; }
@@ -823,14 +827,51 @@ export function Enemies() {
           break;
         }
       }
-      // Boomerang stun
+      // Boomerang stun (Shadowrang)
       if (hitZones.boomerang && enemy.invulnTimer <= 0) {
         if (enemy.pos.clone().setY(0).distanceTo(hitZones.boomerang.pos.clone().setY(0)) < hitZones.boomerang.radius+0.2) {
           enemy.stunTimer = 2.2;
           enemy.invulnTimer = 0.4;
         }
       }
-      // Bomb explosion
+      // Moonbow crescent arrows
+      for (const zone of hitZones.moonbow) {
+        if (enemy.invulnTimer <= 0 &&
+            enemy.pos.clone().setY(0).distanceTo(zone.pos.clone().setY(0)) < zone.radius + 0.25) {
+          applyHit(enemy, zone.damage ?? 1.2, zone.pos);
+          if (enemy.dead) child.visible = false;
+          break;
+        }
+      }
+      // Frost Scepter — slows enemy
+      for (const zone of hitZones.frost) {
+        if (enemy.invulnTimer <= 0 &&
+            enemy.pos.distanceTo(zone.pos) < zone.radius + 0.2) {
+          applyHit(enemy, zone.damage ?? 1.0, zone.pos);
+          enemy.slowTimer = Math.max(enemy.slowTimer, 2.5);
+          if (enemy.dead) child.visible = false;
+          break;
+        }
+      }
+      // Chain Anchor — stuns on hit
+      if (hitZones.chain && enemy.invulnTimer <= 0) {
+        if (enemy.pos.clone().setY(0).distanceTo(hitZones.chain.pos.clone().setY(0)) < hitZones.chain.radius + 0.2) {
+          applyHit(enemy, hitZones.chain.damage ?? 0.5, hitZones.chain.pos);
+          enemy.stunTimer = Math.max(enemy.stunTimer, 2.0);
+          enemy.invulnTimer = 0.5;
+          if (enemy.dead) child.visible = false;
+        }
+      }
+      // Aura Ring orbiting crystals
+      for (const zone of hitZones.aura) {
+        if (enemy.invulnTimer <= 0 &&
+            enemy.pos.clone().setY(0).distanceTo(zone.pos.clone().setY(0)) < zone.radius + 0.15) {
+          applyHit(enemy, zone.damage ?? 0.25, zone.pos);
+          if (enemy.dead) child.visible = false;
+          break;
+        }
+      }
+      // Bomb explosion / Solara's Flare / Cragus Strike (all use explosions channel)
       for (const zone of hitZones.explosions) {
         if (enemy.pos.distanceTo(zone.pos) < zone.radius) {
           enemy.hp = 0; enemy.dead = true; child.visible = false; break;
@@ -1002,6 +1043,39 @@ export function BossEnemy() {
           bossPos.current.clone().setY(0).distanceTo(zone.pos.clone().setY(0)) < zone.radius+0.4) {
         store.damageBoss(zone.damage ?? 0.6);
         bossInvuln.current = 0.3;
+        sfxHit();
+        break;
+      }
+    }
+    for (const zone of hitZones.moonbow) {
+      if (bossInvuln.current <= 0 &&
+          bossPos.current.clone().setY(0).distanceTo(zone.pos.clone().setY(0)) < zone.radius+0.5) {
+        store.damageBoss(zone.damage ?? 1.2);
+        bossInvuln.current = 0.35;
+        sfxHit();
+        break;
+      }
+    }
+    for (const zone of hitZones.frost) {
+      if (bossInvuln.current <= 0 &&
+          bossPos.current.distanceTo(zone.pos) < zone.radius+0.5) {
+        store.damageBoss(zone.damage ?? 1.0);
+        bossInvuln.current = 0.4;
+        sfxHit();
+        break;
+      }
+    }
+    if (hitZones.chain && bossInvuln.current <= 0 &&
+        bossPos.current.clone().setY(0).distanceTo(hitZones.chain.pos.clone().setY(0)) < hitZones.chain.radius+0.5) {
+      store.damageBoss(hitZones.chain.damage ?? 0.5);
+      bossInvuln.current = 0.4;
+      sfxHit();
+    }
+    for (const zone of hitZones.aura) {
+      if (bossInvuln.current <= 0 &&
+          bossPos.current.clone().setY(0).distanceTo(zone.pos.clone().setY(0)) < zone.radius+0.5) {
+        store.damageBoss(zone.damage ?? 0.25);
+        bossInvuln.current = 0.15;
         sfxHit();
         break;
       }

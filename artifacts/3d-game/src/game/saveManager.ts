@@ -13,6 +13,11 @@ export interface SaveData {
   arrows: number;
   bombs: number;
   shurikens: number;
+  frostCharges?: number;
+  flareCharges?: number;
+  veilCrystals?: number;
+  quakeRunes?: number;
+  moonbowAmmo?: number;
   // Swords
   activeSword: string;
   unlockedSwords: string[];

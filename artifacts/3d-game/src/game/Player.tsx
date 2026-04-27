@@ -517,12 +517,12 @@ export function Player() {
     if (swordCycle && !prevSwordCycle.current) store.cycleSword(1);
     prevSwordCycle.current = swordCycle;
 
-    // Wand cooldown tick
+    // Weapon cooldown ticks
     if (wandCooldown.current > 0) wandCooldown.current -= delta;
 
     const sel = store.selectedWeapon;
 
-    // Sub-weapon dedicated keys
+    // Sub-weapon dedicated keys (legacy bindings still work on current selection)
     if (bow  && !prevBow.current  && sel === 'bow')            { store.fireWeapon('bow');       sfxArrow();     }
     if (bomb && !prevBomb.current && sel === 'bomb')           { store.fireWeapon('bomb');      sfxBomb();      }
     if (boomerang && !prevBoom.current && sel === 'boomerang') { store.fireWeapon('boomerang'); sfxBoomerang(); }
@@ -554,9 +554,10 @@ export function Player() {
       if (!attack) chargeTime.current = 0;
     } else {
       if (attack && !wasHeld) {
-        if (sel === 'bow')        { store.fireWeapon('bow');       sfxArrow();     }
-        else if (sel === 'bomb')  { store.fireWeapon('bomb');      sfxBomb();      }
-        else if (sel === 'boomerang') { store.fireWeapon('boomerang'); sfxBoomerang(); }
+        if      (sel === 'bow')            { store.fireWeapon('bow');        sfxArrow();     }
+        else if (sel === 'moonbow')        { store.fireWeapon('moonbow');    sfxArrow();     }
+        else if (sel === 'bomb')           { store.fireWeapon('bomb');       sfxBomb();      }
+        else if (sel === 'boomerang')      { store.fireWeapon('boomerang');  sfxBoomerang(); }
         else if (sel === 'wand') {
           if (wandCooldown.current <= 0) {
             store.fireWeapon('wand');
@@ -564,7 +565,14 @@ export function Player() {
             sfxArrow();
           }
         }
-        else if (sel === 'shuriken') { store.fireWeapon('shuriken'); sfxArrow(); }
+        else if (sel === 'frost')          { store.fireWeapon('frost');      sfxArrow();     }
+        else if (sel === 'shuriken')       { store.fireWeapon('shuriken');   sfxArrow();     }
+        else if (sel === 'flare')          { store.fireWeapon('flare');      sfxBomb();      }
+        else if (sel === 'veil')           { store.fireWeapon('veil');       sfxArrow();     }
+        else if (sel === 'quake')          { store.fireWeapon('quake');      sfxBomb();      }
+        else if (sel === 'aura')           { store.fireWeapon('aura');       sfxArrow();     }
+        else if (sel === 'shadow')         { store.fireWeapon('shadow');     sfxArrow();     }
+        else if (sel === 'chain')          { store.fireWeapon('chain');      sfxBoomerang(); }
       }
     }
 
