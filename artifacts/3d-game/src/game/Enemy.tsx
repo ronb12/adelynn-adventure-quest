@@ -114,36 +114,248 @@ function BatEnemy({ palette }: { palette: { body: string; accent: string } }) {
 }
 
 function KnightEnemy({ palette }: { palette: { body: string; accent: string } }) {
+  // Cloth colour — warm off-white wrappings
+  const cloth   = '#d4b896';
+  const dark    = '#2a1a0a';
+  const bronze  = palette.accent;
+  const armor   = palette.body;
+  const eyes    = '#ff6600';
+
   return (
     <group>
-      <mesh castShadow position={[-0.18, 0.22, 0]}>
-        <cylinderGeometry args={[0.12, 0.14, 0.48, 10]} />
-        <meshStandardMaterial color={palette.body} metalness={0.5} roughness={0.45} />
+      {/* ── FEET / SANDALS ── */}
+      <mesh castShadow position={[-0.17, 0.07, 0.04]} rotation={[0.15, 0, 0]}>
+        <boxGeometry args={[0.18, 0.1, 0.34]} />
+        <meshStandardMaterial color={dark} roughness={0.85} />
       </mesh>
-      <mesh castShadow position={[0.18, 0.22, 0]}>
-        <cylinderGeometry args={[0.12, 0.14, 0.48, 10]} />
-        <meshStandardMaterial color={palette.body} metalness={0.5} roughness={0.45} />
+      <mesh castShadow position={[0.17, 0.07, 0.04]} rotation={[0.15, 0, 0]}>
+        <boxGeometry args={[0.18, 0.1, 0.34]} />
+        <meshStandardMaterial color={dark} roughness={0.85} />
       </mesh>
-      <mesh castShadow position={[0, 0.72, 0]}>
-        <cylinderGeometry args={[0.36, 0.32, 0.72, 14]} />
-        <meshStandardMaterial color={palette.body} metalness={0.55} roughness={0.42} />
+
+      {/* ── LOWER LEGS (cloth-wrapped greaves) ── */}
+      <mesh castShadow position={[-0.17, 0.34, 0]}>
+        <cylinderGeometry args={[0.1, 0.11, 0.42, 10]} />
+        <meshStandardMaterial color={cloth} roughness={0.92} />
       </mesh>
-      <mesh castShadow position={[-0.5, 0.95, 0]}>
-        <sphereGeometry args={[0.2, 12, 10]} />
-        <meshStandardMaterial color={palette.accent} metalness={0.6} roughness={0.38} />
+      <mesh castShadow position={[0.17, 0.34, 0]}>
+        <cylinderGeometry args={[0.1, 0.11, 0.42, 10]} />
+        <meshStandardMaterial color={cloth} roughness={0.92} />
       </mesh>
-      <mesh castShadow position={[0.5, 0.95, 0]}>
-        <sphereGeometry args={[0.2, 12, 10]} />
-        <meshStandardMaterial color={palette.accent} metalness={0.6} roughness={0.38} />
+      {/* Knee guards (metal discs) */}
+      <mesh castShadow position={[-0.17, 0.55, 0.09]}>
+        <cylinderGeometry args={[0.115, 0.115, 0.07, 12]} rotation={[Math.PI / 2, 0, 0]} />
+        <meshStandardMaterial color={bronze} metalness={0.72} roughness={0.28} />
       </mesh>
-      <mesh castShadow position={[0, 1.37, 0]}>
-        <sphereGeometry args={[0.36, 16, 13]} />
-        <meshStandardMaterial color={palette.body} metalness={0.55} roughness={0.4} />
+      <mesh castShadow position={[0.17, 0.55, 0.09]}>
+        <cylinderGeometry args={[0.115, 0.115, 0.07, 12]} />
+        <meshStandardMaterial color={bronze} metalness={0.72} roughness={0.28} />
       </mesh>
-      <mesh position={[0, 1.32, 0.38]}>
-        <boxGeometry args={[0.32, 0.07, 0.02]} />
-        <meshStandardMaterial color="#111100" />
+
+      {/* ── UPPER LEGS ── */}
+      <mesh castShadow position={[-0.17, 0.75, 0]}>
+        <cylinderGeometry args={[0.13, 0.11, 0.38, 10]} />
+        <meshStandardMaterial color={armor} metalness={0.55} roughness={0.42} />
       </mesh>
+      <mesh castShadow position={[0.17, 0.75, 0]}>
+        <cylinderGeometry args={[0.13, 0.11, 0.38, 10]} />
+        <meshStandardMaterial color={armor} metalness={0.55} roughness={0.42} />
+      </mesh>
+
+      {/* ── HIP / BELT (layered cloth tabard) ── */}
+      <mesh castShadow position={[0, 0.96, 0]}>
+        <cylinderGeometry args={[0.31, 0.26, 0.18, 12]} />
+        <meshStandardMaterial color={cloth} roughness={0.88} />
+      </mesh>
+      {/* Belt plate */}
+      <mesh castShadow position={[0, 0.97, 0.3]}>
+        <boxGeometry args={[0.44, 0.12, 0.04]} />
+        <meshStandardMaterial color={bronze} metalness={0.7} roughness={0.3} />
+      </mesh>
+      {/* Side tabard strips */}
+      {[-0.22, 0, 0.22].map((x, i) => (
+        <mesh key={i} castShadow position={[x, 0.81, 0.08]}>
+          <boxGeometry args={[0.1, 0.22, 0.06]} />
+          <meshStandardMaterial color={i % 2 === 0 ? armor : cloth} roughness={0.85} />
+        </mesh>
+      ))}
+
+      {/* ── TORSO (layered chest) ── */}
+      <mesh castShadow position={[0, 1.22, 0]}>
+        <cylinderGeometry args={[0.3, 0.29, 0.5, 14]} />
+        <meshStandardMaterial color={armor} metalness={0.58} roughness={0.38} />
+      </mesh>
+      {/* Chest plate on front */}
+      <mesh castShadow position={[0, 1.26, 0.28]}>
+        <boxGeometry args={[0.42, 0.38, 0.07]} />
+        <meshStandardMaterial color={bronze} metalness={0.75} roughness={0.25} />
+      </mesh>
+      {/* Chest ridge line */}
+      <mesh castShadow position={[0, 1.26, 0.33]}>
+        <boxGeometry args={[0.05, 0.32, 0.03]} />
+        <meshStandardMaterial color={dark} roughness={0.6} />
+      </mesh>
+      {/* Back plate */}
+      <mesh castShadow position={[0, 1.22, -0.28]}>
+        <boxGeometry args={[0.44, 0.44, 0.06]} />
+        <meshStandardMaterial color={armor} metalness={0.55} roughness={0.42} />
+      </mesh>
+
+      {/* ── SHOULDERS (rounded pauldrons) ── */}
+      <mesh castShadow position={[-0.47, 1.42, 0]} rotation={[0, 0, 0.4]}>
+        <sphereGeometry args={[0.22, 12, 10]} />
+        <meshStandardMaterial color={bronze} metalness={0.72} roughness={0.28} />
+      </mesh>
+      <mesh castShadow position={[0.47, 1.42, 0]} rotation={[0, 0, -0.4]}>
+        <sphereGeometry args={[0.22, 12, 10]} />
+        <meshStandardMaterial color={bronze} metalness={0.72} roughness={0.28} />
+      </mesh>
+      {/* Pauldron ridges */}
+      <mesh castShadow position={[-0.5, 1.52, 0]} rotation={[0, 0, 0.4]}>
+        <cylinderGeometry args={[0.05, 0.04, 0.3, 8]} />
+        <meshStandardMaterial color={armor} metalness={0.65} roughness={0.35} />
+      </mesh>
+      <mesh castShadow position={[0.5, 1.52, 0]} rotation={[0, 0, -0.4]}>
+        <cylinderGeometry args={[0.05, 0.04, 0.3, 8]} />
+        <meshStandardMaterial color={armor} metalness={0.65} roughness={0.35} />
+      </mesh>
+
+      {/* ── UPPER ARMS ── */}
+      <mesh castShadow position={[-0.58, 1.18, 0]}>
+        <cylinderGeometry args={[0.1, 0.1, 0.34, 10]} />
+        <meshStandardMaterial color={cloth} roughness={0.92} />
+      </mesh>
+      <mesh castShadow position={[0.58, 1.18, 0]}>
+        <cylinderGeometry args={[0.1, 0.1, 0.34, 10]} />
+        <meshStandardMaterial color={cloth} roughness={0.92} />
+      </mesh>
+
+      {/* ── FOREARMS / GAUNTLETS ── */}
+      <mesh castShadow position={[-0.6, 0.9, 0]}>
+        <cylinderGeometry args={[0.09, 0.1, 0.32, 10]} />
+        <meshStandardMaterial color={armor} metalness={0.62} roughness={0.35} />
+      </mesh>
+      <mesh castShadow position={[0.6, 0.9, 0]}>
+        <cylinderGeometry args={[0.09, 0.1, 0.32, 10]} />
+        <meshStandardMaterial color={armor} metalness={0.62} roughness={0.35} />
+      </mesh>
+      {/* Wrist cuffs */}
+      <mesh castShadow position={[-0.6, 0.76, 0]}>
+        <cylinderGeometry args={[0.11, 0.1, 0.07, 10]} />
+        <meshStandardMaterial color={bronze} metalness={0.78} roughness={0.22} />
+      </mesh>
+      <mesh castShadow position={[0.6, 0.76, 0]}>
+        <cylinderGeometry args={[0.11, 0.1, 0.07, 10]} />
+        <meshStandardMaterial color={bronze} metalness={0.78} roughness={0.22} />
+      </mesh>
+
+      {/* ── SHIELD (left arm, round buckler) ── */}
+      <mesh castShadow position={[-0.62, 0.88, 0.22]} rotation={[0, -0.4, 0]}>
+        <cylinderGeometry args={[0.28, 0.28, 0.05, 16]} rotation={[Math.PI / 2, 0, 0]} />
+        <meshStandardMaterial color={armor} metalness={0.65} roughness={0.32} />
+      </mesh>
+      {/* Shield boss (centre stud) */}
+      <mesh castShadow position={[-0.76, 0.88, 0.38]} rotation={[0, -0.4, 0]}>
+        <sphereGeometry args={[0.09, 10, 8]} />
+        <meshStandardMaterial color={bronze} metalness={0.82} roughness={0.18} />
+      </mesh>
+      {/* Shield rim */}
+      <mesh position={[-0.62, 0.88, 0.22]} rotation={[0, -0.4, 0]}>
+        <torusGeometry args={[0.28, 0.03, 8, 18]} />
+        <meshStandardMaterial color={bronze} metalness={0.8} roughness={0.2} />
+      </mesh>
+
+      {/* ── SCIMITAR (right arm) ── */}
+      {/* Handle */}
+      <mesh castShadow position={[0.62, 0.66, 0.14]} rotation={[0.5, 0, 0.15]}>
+        <cylinderGeometry args={[0.045, 0.04, 0.38, 8]} />
+        <meshStandardMaterial color={dark} roughness={0.8} />
+      </mesh>
+      {/* Guard */}
+      <mesh castShadow position={[0.62, 0.82, 0.04]} rotation={[Math.PI / 2, 0, 0.15]}>
+        <cylinderGeometry args={[0.035, 0.035, 0.38, 8]} />
+        <meshStandardMaterial color={bronze} metalness={0.82} roughness={0.18} />
+      </mesh>
+      {/* Blade (wide curved shape — two boxes at an angle) */}
+      <mesh castShadow position={[0.64, 1.0, 0.0]} rotation={[0.3, 0, -0.18]}>
+        <boxGeometry args={[0.07, 0.62, 0.018]} />
+        <meshStandardMaterial color="#c8c0a0" metalness={0.88} roughness={0.12} />
+      </mesh>
+      <mesh castShadow position={[0.54, 1.3, 0.0]} rotation={[0.65, 0, -0.45]}>
+        <boxGeometry args={[0.06, 0.42, 0.016]} />
+        <meshStandardMaterial color="#c8c0a0" metalness={0.88} roughness={0.12} />
+      </mesh>
+      {/* Blade shine edge */}
+      <mesh position={[0.66, 1.0, 0.01]} rotation={[0.3, 0, -0.18]}>
+        <boxGeometry args={[0.015, 0.6, 0.005]} />
+        <meshStandardMaterial color="#ffffff" metalness={1} roughness={0} />
+      </mesh>
+
+      {/* ── NECK ── */}
+      <mesh castShadow position={[0, 1.54, 0]}>
+        <cylinderGeometry args={[0.13, 0.14, 0.18, 10]} />
+        <meshStandardMaterial color={cloth} roughness={0.9} />
+      </mesh>
+
+      {/* ── HEAD ── */}
+      <mesh castShadow position={[0, 1.76, 0]}>
+        <sphereGeometry args={[0.33, 16, 14]} />
+        <meshStandardMaterial color={cloth} roughness={0.88} />
+      </mesh>
+
+      {/* ── HELMET (metal cap) ── */}
+      <mesh castShadow position={[0, 1.97, 0]}>
+        <sphereGeometry args={[0.34, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.56]} />
+        <meshStandardMaterial color={armor} metalness={0.68} roughness={0.3} />
+      </mesh>
+      {/* Helmet rim band */}
+      <mesh castShadow position={[0, 1.87, 0]}>
+        <torusGeometry args={[0.33, 0.035, 8, 20]} />
+        <meshStandardMaterial color={bronze} metalness={0.8} roughness={0.2} />
+      </mesh>
+      {/* Nose guard */}
+      <mesh castShadow position={[0, 1.8, 0.3]} rotation={[0.15, 0, 0]}>
+        <boxGeometry args={[0.06, 0.24, 0.05]} />
+        <meshStandardMaterial color={armor} metalness={0.68} roughness={0.3} />
+      </mesh>
+      {/* Cheek guards */}
+      <mesh castShadow position={[-0.22, 1.74, 0.22]} rotation={[0, 0.35, 0]}>
+        <boxGeometry args={[0.06, 0.22, 0.1]} />
+        <meshStandardMaterial color={armor} metalness={0.65} roughness={0.32} />
+      </mesh>
+      <mesh castShadow position={[0.22, 1.74, 0.22]} rotation={[0, -0.35, 0]}>
+        <boxGeometry args={[0.06, 0.22, 0.1]} />
+        <meshStandardMaterial color={armor} metalness={0.65} roughness={0.32} />
+      </mesh>
+
+      {/* ── KEFFIYEH TAIL (cloth hanging at back) ── */}
+      <mesh castShadow position={[0, 1.66, -0.26]} rotation={[-0.25, 0, 0]}>
+        <boxGeometry args={[0.42, 0.44, 0.06]} />
+        <meshStandardMaterial color={cloth} roughness={0.92} />
+      </mesh>
+      {/* Keffiyeh side drape left */}
+      <mesh castShadow position={[-0.28, 1.55, -0.1]} rotation={[-0.1, 0.3, 0.12]}>
+        <boxGeometry args={[0.12, 0.38, 0.05]} />
+        <meshStandardMaterial color={cloth} roughness={0.92} />
+      </mesh>
+      {/* Keffiyeh side drape right */}
+      <mesh castShadow position={[0.28, 1.55, -0.1]} rotation={[-0.1, -0.3, -0.12]}>
+        <boxGeometry args={[0.12, 0.38, 0.05]} />
+        <meshStandardMaterial color={cloth} roughness={0.92} />
+      </mesh>
+
+      {/* ── EYES (glowing slits) ── */}
+      <mesh position={[-0.13, 1.8, 0.3]}>
+        <boxGeometry args={[0.12, 0.04, 0.02]} />
+        <meshStandardMaterial color={eyes} emissive={eyes} emissiveIntensity={3.5} />
+      </mesh>
+      <mesh position={[0.13, 1.8, 0.3]}>
+        <boxGeometry args={[0.12, 0.04, 0.02]} />
+        <meshStandardMaterial color={eyes} emissive={eyes} emissiveIntensity={3.5} />
+      </mesh>
+
+      {/* Subtle warm point light */}
+      <pointLight color="#ff8833" intensity={0.6} distance={5} decay={2} position={[0, 1.4, 0]} />
     </group>
   );
 }
