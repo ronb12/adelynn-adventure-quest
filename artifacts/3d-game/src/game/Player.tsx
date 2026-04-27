@@ -218,38 +218,113 @@ function HeroLeg({ side, legRef }: LegProps) {
   );
 }
 
+// Colours matching A Link to the Past sword design
+const SW = {
+  blade:    '#a8c8e8',   // light blue-silver blade
+  bladeHi:  '#d8eeff',   // bright edge highlight
+  fuller:   '#cce4f8',   // central ridge line
+  guard:    '#e8c020',   // golden crossguard
+  guardHi:  '#f8e060',   // guard highlight face
+  grip:     '#1e3a8a',   // deep blue handle
+  gripWrap: '#c8a818',   // gold wrap rings
+  pommel:   '#d4a800',   // gold pommel
+  pommelHi: '#f0c830',   // pommel top sheen
+};
+
 function SwordMesh() {
   return (
-    <group position={[0.04, -0.85, 0]}>
-      {/* Grip */}
-      <mesh castShadow>
-        <cylinderGeometry args={[0.04, 0.04, 0.24, 7]} />
-        <meshStandardMaterial color={C.belt} roughness={0.9} />
+    <group position={[0.04, -0.88, 0]}>
+      {/* ── Pommel (gold sphere) ── */}
+      <mesh castShadow position={[0, -0.18, 0]}>
+        <sphereGeometry args={[0.09, 12, 9]} />
+        <meshStandardMaterial color={SW.pommel} metalness={0.65} roughness={0.2} />
       </mesh>
-      {/* Guard */}
-      <mesh position={[0, 0.15, 0]} castShadow>
-        <boxGeometry args={[0.36, 0.07, 0.09]} />
-        <meshStandardMaterial color={C.gold} metalness={0.5} roughness={0.3} />
+      {/* Pommel top sheen cap */}
+      <mesh position={[0, -0.12, 0]}>
+        <sphereGeometry args={[0.055, 9, 7]} />
+        <meshStandardMaterial color={SW.pommelHi} metalness={0.8} roughness={0.1} />
       </mesh>
-      {/* Pommel */}
-      <mesh position={[0, -0.14, 0]} castShadow>
-        <sphereGeometry args={[0.07, 8, 6]} />
-        <meshStandardMaterial color={C.gold} metalness={0.5} roughness={0.3} />
+
+      {/* ── Grip (deep blue cylinder) ── */}
+      <mesh castShadow position={[0, 0.04, 0]}>
+        <cylinderGeometry args={[0.048, 0.056, 0.42, 9]} />
+        <meshStandardMaterial color={SW.grip} roughness={0.72} />
       </mesh>
-      {/* Blade */}
-      <mesh position={[0, 0.72, 0]} castShadow>
-        <cylinderGeometry args={[0.038, 0.055, 1.0, 5]} />
-        <meshStandardMaterial color={C.steel} metalness={0.7} roughness={0.2} />
+      {/* Grip wrap rings */}
+      {[-0.08, 0.04, 0.16].map((y, i) => (
+        <mesh key={i} position={[0, y, 0]}>
+          <torusGeometry args={[0.056, 0.011, 6, 14]} />
+          <meshStandardMaterial color={SW.gripWrap} metalness={0.55} roughness={0.28} />
+        </mesh>
+      ))}
+
+      {/* ── Crossguard (gold bar + round end caps) ── */}
+      {/* Main bar */}
+      <mesh castShadow position={[0, 0.27, 0]}>
+        <boxGeometry args={[0.64, 0.078, 0.096]} />
+        <meshStandardMaterial color={SW.guard} metalness={0.58} roughness={0.22} />
       </mesh>
-      {/* Blade edge glint */}
-      <mesh position={[0.02, 0.72, 0]}>
-        <cylinderGeometry args={[0.01, 0.014, 0.98, 4]} />
-        <meshStandardMaterial color="#ffffff" metalness={1} roughness={0.0} />
+      {/* Top face sheen */}
+      <mesh position={[0, 0.31, 0]}>
+        <boxGeometry args={[0.62, 0.012, 0.08]} />
+        <meshStandardMaterial color={SW.guardHi} metalness={0.7} roughness={0.12} />
       </mesh>
-      {/* Tip */}
-      <mesh position={[0, 1.24, 0]} castShadow>
-        <coneGeometry args={[0.038, 0.18, 5]} />
-        <meshStandardMaterial color={C.steel} metalness={0.7} roughness={0.2} />
+      {/* Left end sphere */}
+      <mesh castShadow position={[-0.33, 0.27, 0]}>
+        <sphereGeometry args={[0.082, 11, 9]} />
+        <meshStandardMaterial color={SW.guard} metalness={0.58} roughness={0.22} />
+      </mesh>
+      {/* Right end sphere */}
+      <mesh castShadow position={[0.33, 0.27, 0]}>
+        <sphereGeometry args={[0.082, 11, 9]} />
+        <meshStandardMaterial color={SW.guard} metalness={0.58} roughness={0.22} />
+      </mesh>
+      {/* Guard inner notch where blade starts */}
+      <mesh position={[0, 0.33, 0]}>
+        <boxGeometry args={[0.14, 0.06, 0.068]} />
+        <meshStandardMaterial color={SW.guardHi} metalness={0.7} roughness={0.12} />
+      </mesh>
+
+      {/* ── Blade (flat, wide, light blue) ── */}
+      {/* Base / ricasso */}
+      <mesh castShadow position={[0, 0.41, 0]}>
+        <boxGeometry args={[0.13, 0.12, 0.038]} />
+        <meshStandardMaterial color={SW.blade} metalness={0.82} roughness={0.1} />
+      </mesh>
+      {/* Main blade body — tapered via scale */}
+      <mesh castShadow position={[0, 0.98, 0]} scale={[1, 1, 1]}>
+        <boxGeometry args={[0.118, 1.08, 0.034]} />
+        <meshStandardMaterial color={SW.blade} metalness={0.82} roughness={0.1} />
+      </mesh>
+      {/* Left edge highlight */}
+      <mesh position={[-0.057, 0.98, 0]}>
+        <boxGeometry args={[0.009, 1.08, 0.038]} />
+        <meshStandardMaterial color={SW.bladeHi} metalness={1.0} roughness={0.0} />
+      </mesh>
+      {/* Right edge highlight */}
+      <mesh position={[0.057, 0.98, 0]}>
+        <boxGeometry args={[0.009, 1.08, 0.038]} />
+        <meshStandardMaterial color={SW.bladeHi} metalness={1.0} roughness={0.0} />
+      </mesh>
+      {/* Central fuller ridge (front) */}
+      <mesh position={[0, 0.98, 0.018]}>
+        <boxGeometry args={[0.026, 1.0, 0.006]} />
+        <meshStandardMaterial color={SW.fuller} metalness={0.9} roughness={0.05} />
+      </mesh>
+      {/* Central fuller ridge (back) */}
+      <mesh position={[0, 0.98, -0.018]}>
+        <boxGeometry args={[0.026, 1.0, 0.006]} />
+        <meshStandardMaterial color={SW.fuller} metalness={0.9} roughness={0.05} />
+      </mesh>
+      {/* Blade tip — triangular cone */}
+      <mesh castShadow position={[0, 1.565, 0]}>
+        <coneGeometry args={[0.059, 0.22, 4]} />
+        <meshStandardMaterial color={SW.blade} metalness={0.82} roughness={0.1} />
+      </mesh>
+      {/* Tip edge glint */}
+      <mesh position={[0, 1.57, 0.012]}>
+        <coneGeometry args={[0.014, 0.2, 4]} />
+        <meshStandardMaterial color={SW.bladeHi} metalness={1.0} roughness={0.0} />
       </mesh>
     </group>
   );
