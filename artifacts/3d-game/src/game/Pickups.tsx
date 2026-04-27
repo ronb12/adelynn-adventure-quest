@@ -1,106 +1,190 @@
-import { useRef, useMemo } from 'react';
+import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { useGameStore } from './store';
+import { useGameStore, AreaId } from './store';
 
-const RUPEE_COUNT = 10;
-const HEART_COUNT = 3;
-const WORLD_SIZE = 50;
+// Fixed heart piece positions per area (placed interestingly around the map)
+const HEART_PIECE_POSITIONS: Record<AreaId, { id: string; pos: [number, number, number] }[]> = {
+  field: [
+    { id: 'hp-field-1', pos: [ 18,  0.6,  15] },
+    { id: 'hp-field-2', pos: [-20,  0.6, -18] },
+    { id: 'hp-field-3', pos: [ 24,  0.6, -10] },
+  ],
+  forest: [
+    { id: 'hp-forest-1', pos: [ 20,  0.6,  20] },
+    { id: 'hp-forest-2', pos: [-18,  0.6, -15] },
+    { id: 'hp-forest-3', pos: [  8,  0.6, -22] },
+  ],
+  desert: [
+    { id: 'hp-desert-1', pos: [ 22,  0.6,  18] },
+    { id: 'hp-desert-2', pos: [-16,  0.6, -20] },
+    { id: 'hp-desert-3', pos: [  5,  0.6,  22] },
+  ],
+  boss: [
+    { id: 'hp-boss-1', pos: [14, 0.6, -12] },
+  ],
+};
+
+const RUPEE_POSITIONS: { pos: [number, number, number] }[] = [
+  { pos: [  5, 0.5,  8] }, { pos: [-10, 0.5, 12] }, { pos: [ 15, 0.5, -5] },
+  { pos: [ -8, 0.5, -14] }, { pos: [ 20, 0.5,  3] }, { pos: [-18, 0.5,  7] },
+  { pos: [  2, 0.5, -20] }, { pos: [ 12, 0.5, 18] }, { pos: [-22, 0.5, -8] },
+  { pos: [  6, 0.5, 24] },
+];
+
+const HEART_POSITIONS: { pos: [number, number, number] }[] = [
+  { pos: [-5, 0.5, 10] }, { pos: [16, 0.5, -16] }, { pos: [-14, 0.5, 5] },
+];
 
 interface PickupData {
-  id: number;
+  id: string;
   type: 'rupee' | 'heart';
   pos: THREE.Vector3;
   active: boolean;
-  baseY: number;
+}
+
+interface HeartPieceData {
+  id: string;
+  pos: THREE.Vector3;
+  active: boolean;
 }
 
 export function Pickups() {
-  const pickupsRef = useRef<PickupData[]>([]);
-  const groupRef = useRef<THREE.Group>(null);
-  
-  const addRupees = useGameStore(state => state.addRupees);
-  const healPlayer = useGameStore(state => state.healPlayer);
+  const currentArea = useGameStore(s => s.currentArea);
+  const pickupsRef    = useRef<PickupData[]>([]);
+  const heartPiecesRef = useRef<HeartPieceData[]>([]);
+  const pickupGroupRef = useRef<THREE.Group>(null);
+  const hpGroupRef     = useRef<THREE.Group>(null);
+  const initializedArea = useRef<AreaId | null>(null);
 
-  // Initialize
-  if (pickupsRef.current.length === 0) {
-    let idCounter = 0;
-    for (let i = 0; i < RUPEE_COUNT; i++) {
-      pickupsRef.current.push({
-        id: idCounter++,
-        type: 'rupee',
-        pos: new THREE.Vector3(
-          (Math.random() - 0.5) * WORLD_SIZE,
-          0.5,
-          (Math.random() - 0.5) * WORLD_SIZE
-        ),
+  // Re-initialize on area change
+  if (initializedArea.current !== currentArea) {
+    initializedArea.current = currentArea;
+    const store = useGameStore.getState();
+
+    // Rupees & hearts (fresh each area)
+    pickupsRef.current = [
+      ...RUPEE_POSITIONS.map((r, i) => ({
+        id: `rupee-${i}`,
+        type: 'rupee' as const,
+        pos: new THREE.Vector3(...r.pos),
         active: true,
-        baseY: 0.5
-      });
-    }
-    for (let i = 0; i < HEART_COUNT; i++) {
-      pickupsRef.current.push({
-        id: idCounter++,
-        type: 'heart',
-        pos: new THREE.Vector3(
-          (Math.random() - 0.5) * WORLD_SIZE,
-          0.5,
-          (Math.random() - 0.5) * WORLD_SIZE
-        ),
+      })),
+      ...HEART_POSITIONS.map((h, i) => ({
+        id: `heart-${i}`,
+        type: 'heart' as const,
+        pos: new THREE.Vector3(...h.pos),
         active: true,
-        baseY: 0.5
-      });
-    }
+      })),
+    ];
+
+    // Heart pieces (persistent — hide already collected)
+    const pieces = HEART_PIECE_POSITIONS[currentArea] ?? [];
+    heartPiecesRef.current = pieces.map(p => ({
+      id: p.id,
+      pos: new THREE.Vector3(...p.pos),
+      active: !store.heartPiecesCollected.includes(p.id),
+    }));
   }
 
   useFrame((state) => {
-    const playerPos = useGameStore.getState().playerPosition;
-    const gameState = useGameStore.getState().gameState;
-    
-    if (gameState !== 'playing' || !groupRef.current) return;
+    const { playerPosition, gameState, addRupees, healPlayer, collectHeartPiece } =
+      useGameStore.getState();
+    if (gameState !== 'playing') return;
 
-    pickupsRef.current.forEach((pickup, index) => {
-      if (!pickup.active) return;
+    const t = state.clock.elapsedTime;
 
-      const child = groupRef.current!.children[index];
-      if (child) {
-        // Bob and spin
-        child.position.y = pickup.baseY + Math.sin(state.clock.elapsedTime * 3 + pickup.id) * 0.2;
-        child.rotation.y += 0.05;
+    // ── Regular pickups ──
+    if (pickupGroupRef.current) {
+      pickupsRef.current.forEach((pickup, i) => {
+        const child = pickupGroupRef.current!.children[i];
+        if (!child) return;
+        if (!pickup.active) { child.visible = false; return; }
         child.visible = true;
-      }
+        child.position.y = pickup.pos.y + Math.sin(t * 3 + i) * 0.15;
+        child.rotation.y += 0.04;
 
-      // Collect
-      if (pickup.pos.distanceTo(playerPos) < 1.5) {
-        pickup.active = false;
-        if (child) child.visible = false;
-
-        if (pickup.type === 'rupee') {
-          addRupees(1);
-        } else if (pickup.type === 'heart') {
-          healPlayer(1);
+        if (pickup.pos.distanceTo(playerPosition) < 1.4) {
+          pickup.active = false;
+          child.visible = false;
+          if (pickup.type === 'rupee') addRupees(1);
+          else healPlayer(1);
         }
-      }
-    });
+      });
+    }
+
+    // ── Heart pieces ──
+    if (hpGroupRef.current) {
+      heartPiecesRef.current.forEach((hp, i) => {
+        const child = hpGroupRef.current!.children[i];
+        if (!child) return;
+        if (!hp.active) { child.visible = false; return; }
+        child.visible = true;
+        child.position.y = hp.pos.y + Math.sin(t * 2 + i * 1.3) * 0.12;
+        child.rotation.y += 0.03;
+
+        if (hp.pos.distanceTo(playerPosition) < 1.5) {
+          hp.active = false;
+          child.visible = false;
+          collectHeartPiece(hp.id);
+        }
+      });
+    }
   });
 
   return (
-    <group ref={groupRef}>
-      {pickupsRef.current.map(p => (
-        <group key={p.id} position={p.pos}>
-          {p.type === 'rupee' ? (
-            <mesh castShadow>
-              <octahedronGeometry args={[0.3]} />
-              <meshStandardMaterial color="#22cc55" roughness={0.2} metalness={0.8} />
+    <>
+      {/* Rupees & hearts */}
+      <group ref={pickupGroupRef}>
+        {pickupsRef.current.map(p => (
+          <group key={p.id} position={p.pos}>
+            {p.type === 'rupee' ? (
+              <mesh castShadow>
+                <octahedronGeometry args={[0.3]} />
+                <meshStandardMaterial color="#22cc55" roughness={0.2} metalness={0.8}
+                  emissive="#22cc55" emissiveIntensity={0.3} />
+              </mesh>
+            ) : (
+              <group>
+                {/* Heart shape using two spheres */}
+                <mesh castShadow position={[-0.12, 0.1, 0]} scale={[0.28, 0.25, 0.2]}>
+                  <sphereGeometry args={[1, 12, 10]} />
+                  <meshStandardMaterial color="#ff2244" emissive="#ff2244" emissiveIntensity={0.5} />
+                </mesh>
+                <mesh castShadow position={[0.12, 0.1, 0]} scale={[0.28, 0.25, 0.2]}>
+                  <sphereGeometry args={[1, 12, 10]} />
+                  <meshStandardMaterial color="#ff2244" emissive="#ff2244" emissiveIntensity={0.5} />
+                </mesh>
+                <mesh castShadow position={[0, -0.06, 0]} scale={[0.34, 0.28, 0.2]} rotation={[0,0,Math.PI/4]}>
+                  <boxGeometry args={[1, 1, 1]} />
+                  <meshStandardMaterial color="#ff2244" emissive="#ff2244" emissiveIntensity={0.5} />
+                </mesh>
+                <pointLight color="#ff2244" intensity={0.8} distance={3} decay={2} />
+              </group>
+            )}
+          </group>
+        ))}
+      </group>
+
+      {/* Heart pieces — glowing purple */}
+      <group ref={hpGroupRef}>
+        {heartPiecesRef.current.map(hp => (
+          <group key={hp.id} position={hp.pos}>
+            {/* Quarter-heart piece shape */}
+            <mesh castShadow scale={[0.35, 0.32, 0.25]}>
+              <sphereGeometry args={[1, 14, 12]} />
+              <meshStandardMaterial color="#ff44cc" roughness={0.3} metalness={0.2}
+                emissive="#cc00ff" emissiveIntensity={0.8} />
             </mesh>
-          ) : (
-            <mesh castShadow scale={[0.3, 0.3, 0.3]}>
-              <boxGeometry args={[1, 1, 1]} />
-              <meshStandardMaterial color="#ff2222" />
+            {/* Star sparkle on top */}
+            <mesh position={[0, 0.5, 0]}>
+              <octahedronGeometry args={[0.12, 0]} />
+              <meshStandardMaterial color="#ffffff" emissive="#cc88ff" emissiveIntensity={2} />
             </mesh>
-          )}
-        </group>
-      ))}
-    </group>
+            <pointLight color="#cc00ff" intensity={1.5} distance={5} decay={2} />
+          </group>
+        ))}
+      </group>
+    </>
   );
 }

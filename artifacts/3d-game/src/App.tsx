@@ -7,21 +7,23 @@ import { World } from './game/World';
 import { CameraRig } from './game/CameraRig';
 import { HUD } from './game/HUD';
 import { TitleScreen, GameOverScreen, VictoryScreen } from './game/screens';
-import { Enemies } from './game/Enemy';
+import { Enemies, BossEnemy } from './game/Enemy';
 import { Pickups } from './game/Pickups';
 import { Weapons } from './game/Weapons';
 import { AudioSystem, MuteButton } from './game/AudioSystem';
+import { ShopUI } from './game/Shop';
 
 function GameScene() {
-  const currentArea = useGameStore(s => s.currentArea);
+  const currentArea  = useGameStore(s => s.currentArea);
+  const bossDefeated = useGameStore(s => s.bossDefeated);
+
   return (
     <>
-      {/* World renders its own sky/fog/lighting per area */}
       <World />
       <CameraRig />
-      {/* key resets state on area change */}
-      <Enemies key={`enemies-${currentArea}`} />
       <Player />
+      {currentArea !== 'boss' && <Enemies key={`enemies-${currentArea}`} />}
+      {currentArea === 'boss' && !bossDefeated && <BossEnemy />}
       <Pickups key={`pickups-${currentArea}`} />
       <Weapons />
     </>
@@ -42,6 +44,8 @@ export default function App() {
       <AudioSystem />
       <MuteButton />
       <HUD />
+      <ShopUI />
+
       {gameState === 'title'    && <div className="absolute inset-0" style={{ zIndex: 9999 }}><TitleScreen /></div>}
       {gameState === 'gameover' && <div className="absolute inset-0" style={{ zIndex: 9999 }}><GameOverScreen /></div>}
       {gameState === 'victory'  && <div className="absolute inset-0" style={{ zIndex: 9999 }}><VictoryScreen /></div>}

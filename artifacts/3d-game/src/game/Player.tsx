@@ -9,52 +9,48 @@ import { sfxSword, sfxArrow, sfxBomb, sfxBoomerang } from './AudioManager';
 const SPEED = 5;
 
 const CHEST_POSITIONS: Record<string, THREE.Vector3> = {
-  field:  new THREE.Vector3(0, 0, -22),
-  forest: new THREE.Vector3(0, 0, 0),
-  desert: new THREE.Vector3(0, 0, -24),
+  field:   new THREE.Vector3(0, 0, -22),
+  forest:  new THREE.Vector3(0, 0, 0),
+  desert:  new THREE.Vector3(0, 0, -24),
+  'boss-armor': new THREE.Vector3(-8, 0, 8),
 };
 
-// ── Colour palette — Adelynn (pink adventurer) ───────────────────
+// ── Colour palette — Adelynn ─────────────────────────────────────
 const C = {
-  tunic:    '#e91e8c',   // hot pink outfit
-  tunicDk:  '#880e4f',   // deep magenta accent
-  skin:     '#f5c9a0',
-  hair:     '#7b2d14',   // rich auburn
-  boot:     '#6a1040',   // dark magenta boots
-  belt:     '#fce4ec',   // light pink belt
-  gold:     '#fdd835',
-  steel:    '#eceff1',
-  steelDk:  '#90a4ae',
-  shPink:   '#f06292',   // pink shield
-  shGold:   '#f8bbd0',   // light rose shield boss
+  tunic:   '#e91e8c',
+  tunicDk: '#880e4f',
+  skin:    '#f5c9a0',
+  hair:    '#7b2d14',
+  boot:    '#6a1040',
+  belt:    '#fce4ec',
+  gold:    '#fdd835',
+  steel:   '#eceff1',
+  steelDk: '#90a4ae',
+  shPink:  '#f06292',
+  shGold:  '#f8bbd0',
 };
 
-// ── Sub-components (pure visuals) ───────────────────────────────
+// ─── Visual sub-components ───────────────────────────────────────
 
 function HeroHead() {
   return (
     <group position={[0, 1.55, 0]}>
-      {/* Neck */}
       <mesh position={[0, -0.22, 0]} castShadow>
         <cylinderGeometry args={[0.14, 0.14, 0.22, 10]} />
         <meshStandardMaterial color={C.skin} />
       </mesh>
-      {/* Head sphere */}
       <mesh castShadow>
         <sphereGeometry args={[0.33, 18, 14]} />
         <meshStandardMaterial color={C.skin} />
       </mesh>
-      {/* Ear left */}
       <mesh position={[-0.34, 0.04, 0]} castShadow>
         <sphereGeometry args={[0.08, 8, 6]} />
         <meshStandardMaterial color={C.skin} />
       </mesh>
-      {/* Ear right */}
       <mesh position={[0.34, 0.04, 0]} castShadow>
         <sphereGeometry args={[0.08, 8, 6]} />
         <meshStandardMaterial color={C.skin} />
       </mesh>
-      {/* Eyes */}
       <mesh position={[-0.13, 0.06, 0.3]}>
         <sphereGeometry args={[0.065, 10, 8]} />
         <meshStandardMaterial color="#1a1a2e" />
@@ -63,7 +59,6 @@ function HeroHead() {
         <sphereGeometry args={[0.065, 10, 8]} />
         <meshStandardMaterial color="#1a1a2e" />
       </mesh>
-      {/* Eye whites */}
       <mesh position={[-0.13, 0.07, 0.295]}>
         <sphereGeometry args={[0.04, 8, 6]} />
         <meshStandardMaterial color="#ffffff" />
@@ -72,22 +67,18 @@ function HeroHead() {
         <sphereGeometry args={[0.04, 8, 6]} />
         <meshStandardMaterial color="#ffffff" />
       </mesh>
-      {/* Nose */}
       <mesh position={[0, -0.03, 0.32]}>
         <sphereGeometry args={[0.05, 8, 6]} />
         <meshStandardMaterial color={C.skin} />
       </mesh>
-      {/* Lips — rosy pink */}
       <mesh position={[0, -0.12, 0.3]}>
         <boxGeometry args={[0.13, 0.045, 0.02]} />
         <meshStandardMaterial color="#e91e8c" roughness={0.5} />
       </mesh>
-      {/* Auburn hair — back mass */}
       <mesh position={[0, 0.06, -0.22]} castShadow>
         <sphereGeometry args={[0.3, 10, 8]} />
         <meshStandardMaterial color={C.hair} roughness={0.8} />
       </mesh>
-      {/* Hair side pieces */}
       <mesh position={[-0.27, -0.02, 0.15]} castShadow>
         <sphereGeometry args={[0.11, 8, 6]} />
         <meshStandardMaterial color={C.hair} roughness={0.8} />
@@ -96,37 +87,30 @@ function HeroHead() {
         <sphereGeometry args={[0.11, 8, 6]} />
         <meshStandardMaterial color={C.hair} roughness={0.8} />
       </mesh>
-      {/* Ponytail base */}
       <mesh position={[0, -0.02, -0.32]} castShadow>
         <sphereGeometry args={[0.13, 9, 7]} />
         <meshStandardMaterial color={C.hair} roughness={0.8} />
       </mesh>
-      {/* Ponytail shaft */}
       <mesh position={[0, -0.28, -0.34]} rotation={[0.3, 0, 0]} castShadow>
         <cylinderGeometry args={[0.07, 0.05, 0.38, 8]} />
         <meshStandardMaterial color={C.hair} roughness={0.8} />
       </mesh>
-      {/* Ponytail tip */}
       <mesh position={[0, -0.52, -0.28]} castShadow>
         <sphereGeometry args={[0.07, 8, 6]} />
         <meshStandardMaterial color={C.hair} roughness={0.8} />
       </mesh>
-      {/* Pink bow / ribbon */}
       <mesh position={[0.01, 0.02, -0.34]} rotation={[0, 0, Math.PI / 4]}>
         <boxGeometry args={[0.22, 0.08, 0.05]} />
         <meshStandardMaterial color="#ff4db8" roughness={0.4} />
       </mesh>
-      {/* Hat brim */}
       <mesh position={[0, 0.26, 0]} castShadow>
         <cylinderGeometry args={[0.42, 0.42, 0.08, 16]} />
         <meshStandardMaterial color={C.tunic} roughness={0.55} />
       </mesh>
-      {/* Hat cone */}
       <mesh position={[0, 0.76, -0.04]} rotation={[0.3, 0, 0]} castShadow>
         <coneGeometry args={[0.36, 1.0, 14]} />
         <meshStandardMaterial color={C.tunic} roughness={0.55} />
       </mesh>
-      {/* Hat star trim */}
       <mesh position={[0, 0.32, 0.38]}>
         <sphereGeometry args={[0.055, 7, 5]} />
         <meshStandardMaterial color="#ffd6ec" metalness={0.4} roughness={0.2} />
@@ -135,35 +119,32 @@ function HeroHead() {
   );
 }
 
-function HeroTorso() {
+function HeroTorso({ armorLevel }: { armorLevel: number }) {
+  const tunicColor = armorLevel >= 2 ? '#c41e1e' : armorLevel >= 1 ? '#1e50c4' : C.tunic;
+  const tunicDk    = armorLevel >= 2 ? '#8b0000' : armorLevel >= 1 ? '#0a2d8b' : C.tunicDk;
   return (
     <group position={[0, 0.72, 0]}>
-      {/* Main torso — tapered cylinder */}
       <mesh castShadow>
         <cylinderGeometry args={[0.3, 0.35, 0.72, 14]} />
-        <meshStandardMaterial color={C.tunic} roughness={0.7} />
+        <meshStandardMaterial color={tunicColor} roughness={0.7} />
       </mesh>
-      {/* Chest tunic accent stripe */}
       <mesh position={[0, 0.1, 0.28]}>
         <boxGeometry args={[0.38, 0.32, 0.04]} />
-        <meshStandardMaterial color={C.tunicDk} />
+        <meshStandardMaterial color={tunicDk} />
       </mesh>
-      {/* Belt */}
       <mesh position={[0, -0.3, 0]} castShadow>
         <cylinderGeometry args={[0.36, 0.38, 0.1, 14]} />
         <meshStandardMaterial color={C.belt} roughness={0.8} />
       </mesh>
-      {/* Belt buckle */}
       <mesh position={[0, -0.3, 0.39]}>
         <boxGeometry args={[0.14, 0.1, 0.04]} />
         <meshStandardMaterial color={C.gold} metalness={0.5} roughness={0.3} />
       </mesh>
-      {/* Skirt flare — wider at bottom */}
       <mesh position={[0, -0.52, 0]} castShadow>
         <cylinderGeometry args={[0.48, 0.55, 0.28, 14]} />
-        <meshStandardMaterial color={C.tunicDk} roughness={0.65} />
+        <meshStandardMaterial color={tunicDk} roughness={0.65} />
       </mesh>
-      {/* Pink shield on left hip */}
+      {/* Shield on left hip */}
       <group position={[-0.3, -0.12, -0.25]} rotation={[0, -0.4, 0]}>
         <mesh castShadow>
           <cylinderGeometry args={[0.3, 0.25, 0.08, 16]} />
@@ -173,7 +154,6 @@ function HeroTorso() {
           <cylinderGeometry args={[0.18, 0.15, 0.03, 10]} />
           <meshStandardMaterial color={C.shGold} metalness={0.4} roughness={0.4} />
         </mesh>
-        {/* Heart emblem on shield */}
         <mesh position={[0, 0.07, 0.16]}>
           <sphereGeometry args={[0.07, 8, 6]} />
           <meshStandardMaterial color="#ff4db8" emissive="#ff4db8" emissiveIntensity={0.3} />
@@ -192,27 +172,22 @@ function HeroArm({ side, armRef, children }: ArmProps) {
   const x = side * 0.44;
   return (
     <group ref={armRef} position={[x, 1.0, 0]}>
-      {/* Shoulder sphere */}
       <mesh castShadow>
         <sphereGeometry args={[0.15, 10, 8]} />
         <meshStandardMaterial color={C.tunic} roughness={0.7} />
       </mesh>
-      {/* Upper arm */}
       <mesh position={[0, -0.22, 0]} castShadow>
         <cylinderGeometry args={[0.11, 0.1, 0.32, 9]} />
         <meshStandardMaterial color={C.tunic} roughness={0.7} />
       </mesh>
-      {/* Elbow */}
       <mesh position={[0, -0.4, 0]} castShadow>
         <sphereGeometry args={[0.1, 9, 7]} />
         <meshStandardMaterial color={C.skin} />
       </mesh>
-      {/* Forearm */}
       <mesh position={[0, -0.55, 0]} castShadow>
         <cylinderGeometry args={[0.09, 0.09, 0.24, 9]} />
         <meshStandardMaterial color={C.skin} />
       </mesh>
-      {/* Hand */}
       <mesh position={[0, -0.72, 0]} castShadow>
         <sphereGeometry args={[0.1, 9, 7]} />
         <meshStandardMaterial color={C.skin} />
@@ -230,27 +205,22 @@ function HeroLeg({ side, legRef }: LegProps) {
   const x = side * 0.17;
   return (
     <group position={[x, 0.33, 0]}>
-      {/* Hip joint */}
       <mesh castShadow>
         <sphereGeometry args={[0.13, 9, 7]} />
         <meshStandardMaterial color={C.tunic} />
       </mesh>
-      {/* Thigh */}
       <mesh ref={legRef} position={[0, -0.22, 0]} castShadow>
         <cylinderGeometry args={[0.12, 0.11, 0.32, 9]} />
         <meshStandardMaterial color={C.tunic} roughness={0.7} />
       </mesh>
-      {/* Knee */}
       <mesh position={[0, -0.42, 0]} castShadow>
         <sphereGeometry args={[0.11, 9, 7]} />
         <meshStandardMaterial color={C.boot} />
       </mesh>
-      {/* Shin / boot */}
       <mesh position={[0, -0.58, 0]} castShadow>
         <cylinderGeometry args={[0.11, 0.13, 0.3, 9]} />
         <meshStandardMaterial color={C.boot} roughness={0.9} />
       </mesh>
-      {/* Foot */}
       <mesh position={[0, -0.77, 0.06]} castShadow>
         <sphereGeometry args={[0.13, 9, 6]} />
         <meshStandardMaterial color={C.boot} roughness={0.9} />
@@ -259,150 +229,104 @@ function HeroLeg({ side, legRef }: LegProps) {
   );
 }
 
-// Adelynn's sword — pink blade, chrome fittings
+// Shield raised visual (shown when blocking)
+function ShieldRaised() {
+  return (
+    <group position={[-0.55, 0.2, 0.4]} rotation={[0.1, 0.5, 0]}>
+      <mesh castShadow>
+        <cylinderGeometry args={[0.42, 0.36, 0.09, 18]} />
+        <meshStandardMaterial color="#f06292" roughness={0.4} metalness={0.3} />
+      </mesh>
+      <mesh position={[0, 0.06, 0]}>
+        <cylinderGeometry args={[0.24, 0.20, 0.04, 12]} />
+        <meshStandardMaterial color="#f8bbd0" metalness={0.5} roughness={0.3} />
+      </mesh>
+      <mesh position={[0, 0.08, 0.2]}>
+        <sphereGeometry args={[0.1, 8, 6]} />
+        <meshStandardMaterial color="#ff4db8" emissive="#ff4db8" emissiveIntensity={0.6} />
+      </mesh>
+    </group>
+  );
+}
+
+// Sword mesh
 const SW = {
-  blade:    '#f48fb1',   // medium pink blade
-  bladeHi:  '#fce4ec',   // bright pink-white edge
-  fuller:   '#e0e0e0',   // silver/chrome ridge
-  guard:    '#b0bec5',   // chrome crossguard
-  guardHi:  '#eceff1',   // bright chrome face
-  grip:     '#e91e8c',   // hot pink grip
-  gripWrap: '#cfd8dc',   // silver wrap rings
-  pommel:   '#b0bec5',   // chrome pommel
-  pommelHi: '#eceff1',   // bright chrome sheen
+  blade: '#f48fb1', bladeHi: '#fce4ec', fuller: '#e0e0e0',
+  guard: '#b0bec5', guardHi: '#eceff1', grip: '#e91e8c',
+  gripWrap: '#cfd8dc', pommel: '#b0bec5', pommelHi: '#eceff1',
 };
 
 function SwordMesh() {
   return (
     <group position={[0.04, -0.88, 0]}>
-      {/* ── Pommel (gold sphere) ── */}
       <mesh castShadow position={[0, -0.18, 0]}>
         <sphereGeometry args={[0.09, 12, 9]} />
         <meshStandardMaterial color={SW.pommel} metalness={0.65} roughness={0.2} />
       </mesh>
-      {/* Pommel top sheen cap */}
-      <mesh position={[0, -0.12, 0]}>
-        <sphereGeometry args={[0.055, 9, 7]} />
-        <meshStandardMaterial color={SW.pommelHi} metalness={0.8} roughness={0.1} />
-      </mesh>
-
-      {/* ── Grip (deep blue cylinder) ── */}
       <mesh castShadow position={[0, 0.04, 0]}>
         <cylinderGeometry args={[0.048, 0.056, 0.42, 9]} />
         <meshStandardMaterial color={SW.grip} roughness={0.72} />
       </mesh>
-      {/* Grip wrap rings */}
       {[-0.08, 0.04, 0.16].map((y, i) => (
         <mesh key={i} position={[0, y, 0]}>
           <torusGeometry args={[0.056, 0.011, 6, 14]} />
           <meshStandardMaterial color={SW.gripWrap} metalness={0.55} roughness={0.28} />
         </mesh>
       ))}
-
-      {/* ── Crossguard (gold bar + round end caps) ── */}
-      {/* Main bar */}
       <mesh castShadow position={[0, 0.27, 0]}>
         <boxGeometry args={[0.64, 0.078, 0.096]} />
         <meshStandardMaterial color={SW.guard} metalness={0.58} roughness={0.22} />
       </mesh>
-      {/* Top face sheen */}
-      <mesh position={[0, 0.31, 0]}>
-        <boxGeometry args={[0.62, 0.012, 0.08]} />
-        <meshStandardMaterial color={SW.guardHi} metalness={0.7} roughness={0.12} />
-      </mesh>
-      {/* Left end sphere */}
-      <mesh castShadow position={[-0.33, 0.27, 0]}>
-        <sphereGeometry args={[0.082, 11, 9]} />
-        <meshStandardMaterial color={SW.guard} metalness={0.58} roughness={0.22} />
-      </mesh>
-      {/* Right end sphere */}
-      <mesh castShadow position={[0.33, 0.27, 0]}>
-        <sphereGeometry args={[0.082, 11, 9]} />
-        <meshStandardMaterial color={SW.guard} metalness={0.58} roughness={0.22} />
-      </mesh>
-      {/* Guard inner notch where blade starts */}
-      <mesh position={[0, 0.33, 0]}>
-        <boxGeometry args={[0.14, 0.06, 0.068]} />
-        <meshStandardMaterial color={SW.guardHi} metalness={0.7} roughness={0.12} />
-      </mesh>
-
-      {/* ── Blade (chunky, always-visible, glowing blue) ── */}
-      {/* Ricasso / base block */}
-      <mesh castShadow position={[0, 0.42, 0]}>
-        <boxGeometry args={[0.15, 0.14, 0.13]} />
-        <meshStandardMaterial color={SW.blade} metalness={0.85} roughness={0.08}
-          emissive={SW.blade} emissiveIntensity={0.35} />
-      </mesh>
-      {/* Main blade body — thick so it reads from every angle */}
       <mesh castShadow position={[0, 1.0, 0]}>
         <boxGeometry args={[0.13, 1.1, 0.11]} />
         <meshStandardMaterial color={SW.blade} metalness={0.85} roughness={0.08}
           emissive={SW.blade} emissiveIntensity={0.4} />
       </mesh>
-      {/* Left edge highlight bevel */}
-      <mesh position={[-0.062, 1.0, 0]}>
-        <boxGeometry args={[0.012, 1.1, 0.115]} />
-        <meshStandardMaterial color={SW.bladeHi} metalness={1.0} roughness={0.0}
-          emissive={SW.bladeHi} emissiveIntensity={0.6} />
-      </mesh>
-      {/* Right edge highlight bevel */}
-      <mesh position={[0.062, 1.0, 0]}>
-        <boxGeometry args={[0.012, 1.1, 0.115]} />
-        <meshStandardMaterial color={SW.bladeHi} metalness={1.0} roughness={0.0}
-          emissive={SW.bladeHi} emissiveIntensity={0.6} />
-      </mesh>
-      {/* Central fuller ridge (front face) */}
-      <mesh position={[0, 1.0, 0.057]}>
-        <boxGeometry args={[0.03, 1.04, 0.012]} />
-        <meshStandardMaterial color={SW.fuller} metalness={0.9} roughness={0.04}
-          emissive={SW.fuller} emissiveIntensity={0.5} />
-      </mesh>
-      {/* Central fuller ridge (back face) */}
-      <mesh position={[0, 1.0, -0.057]}>
-        <boxGeometry args={[0.03, 1.04, 0.012]} />
-        <meshStandardMaterial color={SW.fuller} metalness={0.9} roughness={0.04}
-          emissive={SW.fuller} emissiveIntensity={0.5} />
-      </mesh>
-      {/* Blade tip */}
       <mesh castShadow position={[0, 1.6, 0]}>
         <coneGeometry args={[0.065, 0.24, 4]} />
         <meshStandardMaterial color={SW.blade} metalness={0.85} roughness={0.08}
           emissive={SW.blade} emissiveIntensity={0.4} />
       </mesh>
-      {/* Glow light from blade — pink shimmer */}
       <pointLight position={[0, 1.1, 0]} color="#ff80c0" intensity={1.2} distance={2.5} decay={2} />
     </group>
   );
 }
 
-// ── Main Player component ────────────────────────────────────────
+// ── Main Player component ─────────────────────────────────────────
 export function Player() {
-  const groupRef    = useRef<THREE.Group>(null!);
-  const bodyBobRef  = useRef<THREE.Group>(null!);
-  const leftLegRef  = useRef<THREE.Mesh>(null!);
-  const rightLegRef = useRef<THREE.Mesh>(null!);
-  const leftArmRef  = useRef<THREE.Group>(null!);
-  const rightArmRef = useRef<THREE.Group>(null!);
+  const groupRef      = useRef<THREE.Group>(null!);
+  const bodyBobRef    = useRef<THREE.Group>(null!);
+  const leftLegRef    = useRef<THREE.Mesh>(null!);
+  const rightLegRef   = useRef<THREE.Mesh>(null!);
+  const leftArmRef    = useRef<THREE.Group>(null!);
+  const rightArmRef   = useRef<THREE.Group>(null!);
   const swordGroupRef = useRef<THREE.Group>(null!);
 
   const [, getState] = useKeyboardControls<Controls>();
 
-  const isSwinging  = useRef(false);
-  const swingTime   = useRef(0);
-  const invulnTime  = useRef(0);
-  const walkTime    = useRef(0);
-  const targetYaw   = useRef(0);
-  const pos         = useRef(new THREE.Vector3());
-  const velocity    = useRef(new THREE.Vector3());
-  const facingDir   = useRef(new THREE.Vector3(0, 0, -1));
+  const isSwinging    = useRef(false);
+  const swingTime     = useRef(0);
+  const isSpinning    = useRef(false);
+  const spinTime      = useRef(0);
+  const chargeTime    = useRef(0);        // how long Space has been held
+  const attackHeld    = useRef(false);
+  const invulnTime    = useRef(0);
+  const walkTime      = useRef(0);
+  const targetYaw     = useRef(0);
+  const pos           = useRef(new THREE.Vector3());
+  const velocity      = useRef(new THREE.Vector3());
+  const facingDir     = useRef(new THREE.Vector3(0, 0, -1));
+  const armorLevel    = useRef(0);
 
   const prevNext     = useRef(false);
   const prevPrev     = useRef(false);
   const prevBow      = useRef(false);
   const prevBomb     = useRef(false);
   const prevBoom     = useRef(false);
-  const prevAtk      = useRef(false);
   const prevInteract = useRef(false);
+
+  // Track armor level without re-renders
+  useGameStore.subscribe((s) => { armorLevel.current = s.armorLevel; });
 
   useFrame((_, delta) => {
     const store = useGameStore.getState();
@@ -417,7 +341,10 @@ export function Player() {
     }
 
     const { forward, back, left, right, attack, interact,
-            nextWeapon, prevWeapon, bow, bomb, boomerang } = getState();
+            nextWeapon, prevWeapon, bow, bomb, boomerang, shield } = getState();
+
+    // Shield block
+    store.setBlocking(shield);
 
     // Weapon cycling
     if (nextWeapon && !prevNext.current) store.cycleWeapon(1);
@@ -425,8 +352,9 @@ export function Player() {
     prevNext.current = nextWeapon;
     prevPrev.current = prevWeapon;
 
-    // Fire sub-weapons on press (dedicated keys)
     const sel = store.selectedWeapon;
+
+    // Sub-weapon dedicated keys
     if (bow  && !prevBow.current  && sel === 'bow')            { store.fireWeapon('bow');       sfxArrow();     }
     if (bomb && !prevBomb.current && sel === 'bomb')           { store.fireWeapon('bomb');      sfxBomb();      }
     if (boomerang && !prevBoom.current && sel === 'boomerang') { store.fireWeapon('boomerang'); sfxBoomerang(); }
@@ -434,17 +362,35 @@ export function Player() {
     prevBomb.current = bomb;
     prevBoom.current = boomerang;
 
-    // Space: fire selected weapon
-    if (attack && !prevAtk.current) {
-      if (sel === 'sword' && !isSwinging.current) {
+    // ── Attack / charge spin ──────────────────────────────────────
+    const wasHeld = attackHeld.current;
+    attackHeld.current = attack;
+
+    if (sel === 'sword') {
+      if (attack && !isSpinning.current && !isSwinging.current) {
+        chargeTime.current += delta;
+      }
+      // Press: regular swing
+      if (!wasHeld && attack && !isSwinging.current && !isSpinning.current) {
         isSwinging.current = true;
         swingTime.current  = 0;
         sfxSword();
-      } else if (sel === 'bow')       { store.fireWeapon('bow');       sfxArrow();     }
-      else if (sel === 'bomb')        { store.fireWeapon('bomb');      sfxBomb();      }
-      else if (sel === 'boomerang')   { store.fireWeapon('boomerang'); sfxBoomerang(); }
+      }
+      // Release after charging ≥ 0.7s: spin attack
+      if (wasHeld && !attack && chargeTime.current >= 0.7 && !isSpinning.current) {
+        isSpinning.current = true;
+        spinTime.current   = 0;
+        isSwinging.current = false;
+        sfxSword();
+      }
+      if (!attack) chargeTime.current = 0;
+    } else {
+      if (attack && !wasHeld) {
+        if (sel === 'bow')       { store.fireWeapon('bow');       sfxArrow();     }
+        else if (sel === 'bomb') { store.fireWeapon('bomb');      sfxBomb();      }
+        else if (sel === 'boomerang') { store.fireWeapon('boomerang'); sfxBoomerang(); }
+      }
     }
-    prevAtk.current = attack;
 
     // Invulnerability flash
     if (invulnTime.current > 0) {
@@ -469,11 +415,13 @@ export function Player() {
       targetYaw.current = Math.atan2(facingDir.current.x, facingDir.current.z);
     }
 
-    // Smooth yaw
-    let diff = targetYaw.current - groupRef.current.rotation.y;
-    while (diff >  Math.PI) diff -= Math.PI * 2;
-    while (diff < -Math.PI) diff += Math.PI * 2;
-    groupRef.current.rotation.y += diff * Math.min(1, delta * 14);
+    // Smooth yaw (skip during spin)
+    if (!isSpinning.current) {
+      let diff = targetYaw.current - groupRef.current.rotation.y;
+      while (diff >  Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      groupRef.current.rotation.y += diff * Math.min(1, delta * 14);
+    }
 
     // World clamp
     pos.current.x = THREE.MathUtils.clamp(pos.current.x, -29, 29);
@@ -484,21 +432,29 @@ export function Player() {
     store.setPlayerDirection(facingDir.current.clone());
 
     // Chest check
-    const chestPos = CHEST_POSITIONS[store.currentArea];
-    const alreadyOpened = store.chestsOpened.includes(store.currentArea);
+    const chestArea = store.currentArea;
+    const chestKey  = chestArea === 'boss' ? 'boss-armor' : chestArea;
+    const chestPos  = CHEST_POSITIONS[chestKey];
+    const alreadyOpened = store.chestsOpened.includes(chestKey);
     const nearChest = chestPos && !alreadyOpened
       ? pos.current.distanceTo(chestPos) < 2.5
       : false;
     store.setNearChest(nearChest);
 
-    // E key rising-edge interaction (dialogue > chest > NPC)
+    // E key rising-edge interaction
     const interactJustPressed = interact && !prevInteract.current;
     prevInteract.current = interact;
     if (interactJustPressed) {
-      if (store.activeDialogue) {
+      if (store.showShop) {
+        store.closeShop();
+      } else if (store.activeDialogue) {
         store.advanceDialogue();
       } else if (nearChest) {
-        store.openChest(store.currentArea);
+        store.openChest(chestKey);
+      } else if (store.nearShop) {
+        store.openShop();
+      } else if (store.nearFountain) {
+        store.useFountain();
       } else if (store.nearNPC) {
         store.startDialogue(store.nearNPC);
       }
@@ -510,12 +466,8 @@ export function Player() {
     bodyBobRef.current.position.y = moving ? 0.04 + Math.abs(swing) * 0.07 : 0.04;
     leftLegRef.current.rotation.x  = moving ?  swing  * 0.7 : 0;
     rightLegRef.current.rotation.x = moving ? -swing  * 0.7 : 0;
-    if (!isSwinging.current) {
-      leftArmRef.current.rotation.x  = moving ? -swing * 0.55 : 0;
-      rightArmRef.current.rotation.x = moving ?  swing * 0.55 : 0;
-    }
 
-    // Sword swing
+    // ── Regular sword swing ───────────────────────────────────────
     if (isSwinging.current && swordGroupRef.current && rightArmRef.current) {
       swingTime.current += delta;
       const progress = swingTime.current / 0.3;
@@ -529,12 +481,42 @@ export function Player() {
         swordGroupRef.current.visible = true;
         rightArmRef.current.rotation.x = -1.2;
         rightArmRef.current.rotation.z = THREE.MathUtils.lerp(-Math.PI / 2, Math.PI / 2, progress);
-
-        // Sword hit zone: player pos + forward * 1.4 at Y=0.5 (reliable XZ hit)
-        const swordHitPos = pos.current.clone()
+        const hitPos = pos.current.clone()
           .addScaledVector(facingDir.current.clone().setY(0).normalize(), 1.4)
           .setY(0.5);
-        store.setSwordState(true, swordHitPos);
+        store.setSwordState(true, hitPos);
+      }
+      if (!isSwinging.current) {
+        leftArmRef.current.rotation.x = 0;
+        rightArmRef.current.rotation.x = 0;
+      }
+    } else if (!isSpinning.current) {
+      if (!isSwinging.current) {
+        leftArmRef.current.rotation.x  = moving ? -swing * 0.55 : 0;
+        rightArmRef.current.rotation.x = moving ?  swing * 0.55 : 0;
+      }
+    }
+
+    // ── Spin attack (360° sweep, 0.8s) ───────────────────────────
+    if (isSpinning.current && swordGroupRef.current) {
+      spinTime.current += delta;
+      const SPIN_DURATION = 0.8;
+      const progress = spinTime.current / SPIN_DURATION;
+
+      if (progress >= 1) {
+        isSpinning.current = false;
+        swordGroupRef.current.visible = false;
+        groupRef.current.rotation.y = targetYaw.current;
+        store.setSwordState(false, pos.current);
+        store.setSpinState(false, pos.current);
+      } else {
+        swordGroupRef.current.visible = true;
+        // Full rotation during spin
+        groupRef.current.rotation.y += (Math.PI * 2 / SPIN_DURATION) * delta;
+        rightArmRef.current.rotation.x = -1.5;
+        rightArmRef.current.rotation.z = 0;
+        // Spin hit zone: full circle around player
+        store.setSpinState(true, pos.current.clone().setY(0.5));
       }
     }
   });
@@ -545,13 +527,18 @@ export function Player() {
     }
   });
 
+  const armorLvl = useGameStore(s => s.armorLevel);
+  const isBlocking = useGameStore(s => s.isBlocking);
+
   return (
     <group ref={groupRef}>
       <group ref={bodyBobRef} position={[0, 0.04, 0]}>
         <HeroLeg side={-1} legRef={leftLegRef} />
         <HeroLeg side={1}  legRef={rightLegRef} />
-        <HeroTorso />
-        <HeroArm side={-1} armRef={leftArmRef} />
+        <HeroTorso armorLevel={armorLvl} />
+        <HeroArm side={-1} armRef={leftArmRef}>
+          {isBlocking && <ShieldRaised />}
+        </HeroArm>
         <HeroArm side={1}  armRef={rightArmRef}>
           <group ref={swordGroupRef} visible={false}>
             <SwordMesh />

@@ -10,6 +10,7 @@ export enum Controls {
   boomerang = 'boomerang',
   nextWeapon = 'nextWeapon',
   prevWeapon = 'prevWeapon',
+  shield = 'shield',
 }
 
 export const keyMap = [
@@ -24,6 +25,7 @@ export const keyMap = [
   { name: Controls.boomerang,  keys: ['KeyC'] },
   { name: Controls.nextWeapon, keys: ['KeyQ', 'Tab'] },
   { name: Controls.prevWeapon, keys: ['ShiftLeft'] },
+  { name: Controls.shield,     keys: ['KeyF'] },
 ];
 
 export const WEAPONS = ['sword', 'bow', 'bomb', 'boomerang'] as const;
