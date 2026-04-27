@@ -203,27 +203,72 @@ interface LegProps {
 }
 function HeroLeg({ side, legRef }: LegProps) {
   const x = side * 0.17;
+  // Boot colours
+  const bootMain = '#5a0e35';   // deep wine-plum boot shaft
+  const bootCuff = '#7a1a4a';   // slightly lighter cuff band
+  const bootToe  = '#3d0824';   // dark toe/sole
+  const stocking = '#f0c8a8';   // bare-skin upper thigh
+
   return (
     <group position={[x, 0.33, 0]}>
+      {/* ── UPPER THIGH (skin — visible below tunic skirt) ── */}
       <mesh castShadow>
-        <sphereGeometry args={[0.13, 9, 7]} />
-        <meshStandardMaterial color={C.tunic} />
+        <sphereGeometry args={[0.13, 10, 8]} />
+        <meshStandardMaterial color={stocking} roughness={0.88} />
       </mesh>
-      <mesh ref={legRef} position={[0, -0.22, 0]} castShadow>
-        <cylinderGeometry args={[0.12, 0.11, 0.32, 9]} />
-        <meshStandardMaterial color={C.tunic} roughness={0.7} />
+      <mesh ref={legRef} position={[0, -0.18, 0]} castShadow>
+        <cylinderGeometry args={[0.115, 0.105, 0.28, 10]} />
+        <meshStandardMaterial color={stocking} roughness={0.88} />
       </mesh>
-      <mesh position={[0, -0.42, 0]} castShadow>
-        <sphereGeometry args={[0.11, 9, 7]} />
-        <meshStandardMaterial color={C.boot} />
+
+      {/* ── KNEE JOINT ── */}
+      <mesh position={[0, -0.35, 0]} castShadow>
+        <sphereGeometry args={[0.105, 10, 8]} />
+        <meshStandardMaterial color={stocking} roughness={0.88} />
       </mesh>
-      <mesh position={[0, -0.58, 0]} castShadow>
-        <cylinderGeometry args={[0.11, 0.13, 0.3, 9]} />
-        <meshStandardMaterial color={C.boot} roughness={0.9} />
+
+      {/* ── BOOT CUFF (top fold of knee-high boot) ── */}
+      <mesh position={[0, -0.44, 0]} castShadow>
+        <cylinderGeometry args={[0.115, 0.108, 0.11, 12]} />
+        <meshStandardMaterial color={bootCuff} roughness={0.72} />
       </mesh>
-      <mesh position={[0, -0.77, 0.06]} castShadow>
-        <sphereGeometry args={[0.13, 9, 6]} />
-        <meshStandardMaterial color={C.boot} roughness={0.9} />
+      {/* Cuff rim band */}
+      <mesh position={[0, -0.39, 0]} castShadow>
+        <cylinderGeometry args={[0.118, 0.118, 0.03, 12]} />
+        <meshStandardMaterial color={C.gold} metalness={0.55} roughness={0.3} />
+      </mesh>
+
+      {/* ── BOOT SHAFT (lower leg) ── */}
+      <mesh position={[0, -0.6, 0]} castShadow>
+        <cylinderGeometry args={[0.105, 0.115, 0.3, 12]} />
+        <meshStandardMaterial color={bootMain} roughness={0.78} />
+      </mesh>
+
+      {/* ── ANKLE JOINT (smooth rounding into foot) ── */}
+      <mesh position={[0, -0.77, 0]} castShadow>
+        <sphereGeometry args={[0.108, 10, 8]} />
+        <meshStandardMaterial color={bootMain} roughness={0.8} />
+      </mesh>
+
+      {/* ── FOOT / TOE CAP ── */}
+      <mesh position={[0, -0.8, 0.1]} rotation={[-0.22, 0, 0]} castShadow>
+        <boxGeometry args={[0.18, 0.13, 0.32]} />
+        <meshStandardMaterial color={bootMain} roughness={0.78} />
+      </mesh>
+      {/* Rounded toe */}
+      <mesh position={[0, -0.8, 0.24]} rotation={[-0.22, 0, 0]} castShadow>
+        <sphereGeometry args={[0.1, 10, 8]} />
+        <meshStandardMaterial color={bootToe} roughness={0.75} />
+      </mesh>
+      {/* Sole strip */}
+      <mesh position={[0, -0.87, 0.09]} rotation={[-0.22, 0, 0]} castShadow>
+        <boxGeometry args={[0.2, 0.04, 0.34]} />
+        <meshStandardMaterial color={bootToe} roughness={0.95} />
+      </mesh>
+      {/* Heel */}
+      <mesh position={[0, -0.86, -0.1]} rotation={[-0.1, 0, 0]} castShadow>
+        <boxGeometry args={[0.16, 0.08, 0.14]} />
+        <meshStandardMaterial color={bootToe} roughness={0.95} />
       </mesh>
     </group>
   );
