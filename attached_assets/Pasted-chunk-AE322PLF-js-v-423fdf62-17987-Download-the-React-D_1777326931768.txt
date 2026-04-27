@@ -1,0 +1,71 @@
+chunk-AE322PLF.js?v=423fdf62:17987 Download the React DevTools for a better development experience: https://react.dev/link/react-devtools
+App.tsx:37 THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+warn @ chunk-QXHFEY3F.js?v=423fdf62:747
+Clock @ chunk-QXHFEY3F.js?v=423fdf62:29848
+(anonymous) @ chunk-LI2T3ZAE.js?v=423fdf62:1386
+createStoreImpl @ chunk-AQPHUQFC.js?v=423fdf62:20
+createStore @ chunk-AQPHUQFC.js?v=423fdf62:23
+createWithEqualityFnImpl @ chunk-LI2T3ZAE.js?v=423fdf62:487
+createWithEqualityFn @ chunk-LI2T3ZAE.js?v=423fdf62:492
+createStore2 @ chunk-LI2T3ZAE.js?v=423fdf62:1318
+createRoot @ chunk-LI2T3ZAE.js?v=423fdf62:9723
+(anonymous) @ chunk-LI2T3ZAE.js?v=423fdf62:10383
+react-stack-bottom-frame @ chunk-AE322PLF.js?v=423fdf62:17478
+runWithFiberInDEV @ chunk-AE322PLF.js?v=423fdf62:1485
+commitHookEffectListMount @ chunk-AE322PLF.js?v=423fdf62:8460
+commitHookLayoutEffects @ chunk-AE322PLF.js?v=423fdf62:8436
+commitLayoutEffectOnFiber @ chunk-AE322PLF.js?v=423fdf62:8957
+recursivelyTraverseLayoutEffects @ chunk-AE322PLF.js?v=423fdf62:9682
+commitLayoutEffectOnFiber @ chunk-AE322PLF.js?v=423fdf62:9096
+recursivelyTraverseLayoutEffects @ chunk-AE322PLF.js?v=423fdf62:9682
+commitLayoutEffectOnFiber @ chunk-AE322PLF.js?v=423fdf62:8960
+recursivelyTraverseLayoutEffects @ chunk-AE322PLF.js?v=423fdf62:9682
+commitLayoutEffectOnFiber @ chunk-AE322PLF.js?v=423fdf62:8956
+recursivelyTraverseLayoutEffects @ chunk-AE322PLF.js?v=423fdf62:9682
+commitLayoutEffectOnFiber @ chunk-AE322PLF.js?v=423fdf62:9096
+recursivelyTraverseLayoutEffects @ chunk-AE322PLF.js?v=423fdf62:9682
+commitLayoutEffectOnFiber @ chunk-AE322PLF.js?v=423fdf62:8956
+recursivelyTraverseLayoutEffects @ chunk-AE322PLF.js?v=423fdf62:9682
+commitLayoutEffectOnFiber @ chunk-AE322PLF.js?v=423fdf62:9045
+recursivelyTraverseLayoutEffects @ chunk-AE322PLF.js?v=423fdf62:9682
+commitLayoutEffectOnFiber @ chunk-AE322PLF.js?v=423fdf62:8956
+recursivelyTraverseLayoutEffects @ chunk-AE322PLF.js?v=423fdf62:9682
+commitLayoutEffectOnFiber @ chunk-AE322PLF.js?v=423fdf62:9016
+flushLayoutEffects @ chunk-AE322PLF.js?v=423fdf62:11174
+commitRoot @ chunk-AE322PLF.js?v=423fdf62:11080
+commitRootWhenReady @ chunk-AE322PLF.js?v=423fdf62:10512
+performWorkOnRoot @ chunk-AE322PLF.js?v=423fdf62:10457
+performWorkOnRootViaSchedulerTask @ chunk-AE322PLF.js?v=423fdf62:11623
+performWorkUntilDeadline @ chunk-AE322PLF.js?v=423fdf62:36
+<CanvasImpl>
+exports.jsx @ chunk-ZPAKAAQN.js?v=423fdf62:250
+Canvas @ chunk-LI2T3ZAE.js?v=423fdf62:10466
+react-stack-bottom-frame @ chunk-AE322PLF.js?v=423fdf62:17424
+renderWithHooks @ chunk-AE322PLF.js?v=423fdf62:4206
+updateFunctionComponent @ chunk-AE322PLF.js?v=423fdf62:6619
+beginWork @ chunk-AE322PLF.js?v=423fdf62:7654
+runWithFiberInDEV @ chunk-AE322PLF.js?v=423fdf62:1485
+performUnitOfWork @ chunk-AE322PLF.js?v=423fdf62:10868
+workLoopSync @ chunk-AE322PLF.js?v=423fdf62:10728
+renderRootSync @ chunk-AE322PLF.js?v=423fdf62:10711
+performWorkOnRoot @ chunk-AE322PLF.js?v=423fdf62:10330
+performWorkOnRootViaSchedulerTask @ chunk-AE322PLF.js?v=423fdf62:11623
+performWorkUntilDeadline @ chunk-AE322PLF.js?v=423fdf62:36
+<Canvas>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=423fdf62:250
+(anonymous) @ App.tsx:37
+react-stack-bottom-frame @ chunk-AE322PLF.js?v=423fdf62:17424
+renderWithHooks @ chunk-AE322PLF.js?v=423fdf62:4206
+updateFunctionComponent @ chunk-AE322PLF.js?v=423fdf62:6619
+beginWork @ chunk-AE322PLF.js?v=423fdf62:7654
+runWithFiberInDEV @ chunk-AE322PLF.js?v=423fdf62:1485
+performUnitOfWork @ chunk-AE322PLF.js?v=423fdf62:10868
+workLoopSync @ chunk-AE322PLF.js?v=423fdf62:10728
+renderRootSync @ chunk-AE322PLF.js?v=423fdf62:10711
+performWorkOnRoot @ chunk-AE322PLF.js?v=423fdf62:10330
+performWorkOnRootViaSchedulerTask @ chunk-AE322PLF.js?v=423fdf62:11623
+performWorkUntilDeadline @ chunk-AE322PLF.js?v=423fdf62:36
+<App>
+exports.jsxDEV @ react_jsx-dev-runtime.js?v=423fdf62:250
+(anonymous) @ main.tsx:5
+(index):1 <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
