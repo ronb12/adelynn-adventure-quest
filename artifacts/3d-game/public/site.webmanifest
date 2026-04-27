@@ -1,0 +1,18 @@
+{
+  "name": "Adelynn's Adventure Quest",
+  "short_name": "Hero's Quest",
+  "description": "A Zelda-inspired 3D action-adventure. Help Adelynn collect the Crystal Shards and defeat Shadow Sorcerer Malgrath!",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0f0520",
+  "theme_color": "#e91e8c",
+  "icons": [
+    {
+      "src": "/icon-512.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
