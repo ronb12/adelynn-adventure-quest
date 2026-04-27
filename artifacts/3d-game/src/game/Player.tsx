@@ -286,47 +286,51 @@ function SwordMesh() {
         <meshStandardMaterial color={SW.guardHi} metalness={0.7} roughness={0.12} />
       </mesh>
 
-      {/* ── Blade (flat, wide, light blue) ── */}
-      {/* Base / ricasso */}
-      <mesh castShadow position={[0, 0.41, 0]}>
-        <boxGeometry args={[0.13, 0.12, 0.038]} />
-        <meshStandardMaterial color={SW.blade} metalness={0.82} roughness={0.1} />
+      {/* ── Blade (chunky, always-visible, glowing blue) ── */}
+      {/* Ricasso / base block */}
+      <mesh castShadow position={[0, 0.42, 0]}>
+        <boxGeometry args={[0.15, 0.14, 0.13]} />
+        <meshStandardMaterial color={SW.blade} metalness={0.85} roughness={0.08}
+          emissive={SW.blade} emissiveIntensity={0.35} />
       </mesh>
-      {/* Main blade body — tapered via scale */}
-      <mesh castShadow position={[0, 0.98, 0]} scale={[1, 1, 1]}>
-        <boxGeometry args={[0.118, 1.08, 0.034]} />
-        <meshStandardMaterial color={SW.blade} metalness={0.82} roughness={0.1} />
+      {/* Main blade body — thick so it reads from every angle */}
+      <mesh castShadow position={[0, 1.0, 0]}>
+        <boxGeometry args={[0.13, 1.1, 0.11]} />
+        <meshStandardMaterial color={SW.blade} metalness={0.85} roughness={0.08}
+          emissive={SW.blade} emissiveIntensity={0.4} />
       </mesh>
-      {/* Left edge highlight */}
-      <mesh position={[-0.057, 0.98, 0]}>
-        <boxGeometry args={[0.009, 1.08, 0.038]} />
-        <meshStandardMaterial color={SW.bladeHi} metalness={1.0} roughness={0.0} />
+      {/* Left edge highlight bevel */}
+      <mesh position={[-0.062, 1.0, 0]}>
+        <boxGeometry args={[0.012, 1.1, 0.115]} />
+        <meshStandardMaterial color={SW.bladeHi} metalness={1.0} roughness={0.0}
+          emissive={SW.bladeHi} emissiveIntensity={0.6} />
       </mesh>
-      {/* Right edge highlight */}
-      <mesh position={[0.057, 0.98, 0]}>
-        <boxGeometry args={[0.009, 1.08, 0.038]} />
-        <meshStandardMaterial color={SW.bladeHi} metalness={1.0} roughness={0.0} />
+      {/* Right edge highlight bevel */}
+      <mesh position={[0.062, 1.0, 0]}>
+        <boxGeometry args={[0.012, 1.1, 0.115]} />
+        <meshStandardMaterial color={SW.bladeHi} metalness={1.0} roughness={0.0}
+          emissive={SW.bladeHi} emissiveIntensity={0.6} />
       </mesh>
-      {/* Central fuller ridge (front) */}
-      <mesh position={[0, 0.98, 0.018]}>
-        <boxGeometry args={[0.026, 1.0, 0.006]} />
-        <meshStandardMaterial color={SW.fuller} metalness={0.9} roughness={0.05} />
+      {/* Central fuller ridge (front face) */}
+      <mesh position={[0, 1.0, 0.057]}>
+        <boxGeometry args={[0.03, 1.04, 0.012]} />
+        <meshStandardMaterial color={SW.fuller} metalness={0.9} roughness={0.04}
+          emissive={SW.fuller} emissiveIntensity={0.5} />
       </mesh>
-      {/* Central fuller ridge (back) */}
-      <mesh position={[0, 0.98, -0.018]}>
-        <boxGeometry args={[0.026, 1.0, 0.006]} />
-        <meshStandardMaterial color={SW.fuller} metalness={0.9} roughness={0.05} />
+      {/* Central fuller ridge (back face) */}
+      <mesh position={[0, 1.0, -0.057]}>
+        <boxGeometry args={[0.03, 1.04, 0.012]} />
+        <meshStandardMaterial color={SW.fuller} metalness={0.9} roughness={0.04}
+          emissive={SW.fuller} emissiveIntensity={0.5} />
       </mesh>
-      {/* Blade tip — triangular cone */}
-      <mesh castShadow position={[0, 1.565, 0]}>
-        <coneGeometry args={[0.059, 0.22, 4]} />
-        <meshStandardMaterial color={SW.blade} metalness={0.82} roughness={0.1} />
+      {/* Blade tip */}
+      <mesh castShadow position={[0, 1.6, 0]}>
+        <coneGeometry args={[0.065, 0.24, 4]} />
+        <meshStandardMaterial color={SW.blade} metalness={0.85} roughness={0.08}
+          emissive={SW.blade} emissiveIntensity={0.4} />
       </mesh>
-      {/* Tip edge glint */}
-      <mesh position={[0, 1.57, 0.012]}>
-        <coneGeometry args={[0.014, 0.2, 4]} />
-        <meshStandardMaterial color={SW.bladeHi} metalness={1.0} roughness={0.0} />
-      </mesh>
+      {/* Glow light from blade — makes it pop in dark areas */}
+      <pointLight position={[0, 1.1, 0]} color="#80b8ff" intensity={1.2} distance={2.5} decay={2} />
     </group>
   );
 }
