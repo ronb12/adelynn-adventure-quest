@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { hitZones } from './hitZones';
 import { useGameStore } from './store';
+import { sfxExplosion } from './AudioManager';
 
 let _id = 0;
 const nextId = () => ++_id;
@@ -237,6 +238,7 @@ export function Weapons() {
   const removeProjAndMaybeExplode = useCallback((id: number, type: string, pos?: THREE.Vector3) => {
     setProjectiles(prev => prev.filter(p => p.id !== id));
     if (type === 'bomb' && pos) {
+      sfxExplosion();
       setExplosions(prev => [...prev, { id, pos }]);
     }
   }, []);

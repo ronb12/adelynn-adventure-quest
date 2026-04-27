@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useGameStore, AreaId } from './store';
 import { hitZones } from './hitZones';
+import { sfxHit, sfxDeath } from './AudioManager';
 
 // ── Area config ─────────────────────────────────────────────────
 const AREA_CONFIG: Record<AreaId, {
@@ -465,5 +466,10 @@ function applyHit(enemy: EnemyData, damage: number, sourcePos: THREE.Vector3) {
   enemy.invulnTimer = 0.55;
   const kb = enemy.pos.clone().sub(sourcePos).setY(0).normalize();
   enemy.pos.addScaledVector(kb, 1.3);
-  if (enemy.hp <= 0) enemy.dead = true;
+  if (enemy.hp <= 0) {
+    enemy.dead = true;
+    sfxDeath();
+  } else {
+    sfxHit();
+  }
 }

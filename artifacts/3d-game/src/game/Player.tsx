@@ -4,6 +4,7 @@ import { useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { Controls } from './controls';
 import { useGameStore } from './store';
+import { sfxSword, sfxArrow, sfxBomb, sfxBoomerang } from './AudioManager';
 
 const SPEED = 5;
 
@@ -303,11 +304,11 @@ export function Player() {
     prevNext.current = nextWeapon;
     prevPrev.current = prevWeapon;
 
-    // Fire sub-weapons on press
+    // Fire sub-weapons on press (dedicated keys)
     const sel = store.selectedWeapon;
-    if (bow  && !prevBow.current  && sel === 'bow')        store.fireWeapon('bow');
-    if (bomb && !prevBomb.current && sel === 'bomb')       store.fireWeapon('bomb');
-    if (boomerang && !prevBoom.current && sel === 'boomerang') store.fireWeapon('boomerang');
+    if (bow  && !prevBow.current  && sel === 'bow')            { store.fireWeapon('bow');       sfxArrow();     }
+    if (bomb && !prevBomb.current && sel === 'bomb')           { store.fireWeapon('bomb');      sfxBomb();      }
+    if (boomerang && !prevBoom.current && sel === 'boomerang') { store.fireWeapon('boomerang'); sfxBoomerang(); }
     prevBow.current  = bow;
     prevBomb.current = bomb;
     prevBoom.current = boomerang;
@@ -317,9 +318,10 @@ export function Player() {
       if (sel === 'sword' && !isSwinging.current) {
         isSwinging.current = true;
         swingTime.current  = 0;
-      } else if (sel === 'bow')       store.fireWeapon('bow');
-      else if (sel === 'bomb')        store.fireWeapon('bomb');
-      else if (sel === 'boomerang')   store.fireWeapon('boomerang');
+        sfxSword();
+      } else if (sel === 'bow')       { store.fireWeapon('bow');       sfxArrow();     }
+      else if (sel === 'bomb')        { store.fireWeapon('bomb');      sfxBomb();      }
+      else if (sel === 'boomerang')   { store.fireWeapon('boomerang'); sfxBoomerang(); }
     }
     prevAtk.current = attack;
 

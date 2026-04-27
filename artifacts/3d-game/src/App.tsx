@@ -10,6 +10,7 @@ import { TitleScreen, GameOverScreen, VictoryScreen } from './game/screens';
 import { Enemies } from './game/Enemy';
 import { Pickups } from './game/Pickups';
 import { Weapons } from './game/Weapons';
+import { AudioSystem, MuteButton } from './game/AudioSystem';
 
 function GameScene() {
   const currentArea = useGameStore(s => s.currentArea);
@@ -38,6 +39,8 @@ export default function App() {
         </Canvas>
       </KeyboardControls>
 
+      <AudioSystem />
+      <MuteButton />
       <HUD />
       {gameState === 'title'    && <TitleScreen />}
       {gameState === 'gameover' && <GameOverScreen />}
