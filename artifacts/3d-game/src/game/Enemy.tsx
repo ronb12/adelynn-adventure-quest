@@ -6,17 +6,25 @@ import { hitZones } from './hitZones';
 import { sfxHit, sfxDeath } from './AudioManager';
 
 // ── Area config ──────────────────────────────────────────────────
+type EnemyMeshType = 'slime' | 'bat' | 'knight' | 'briarwolf' | 'scorpion' | 'wraith';
+
 const AREA_CONFIG: Record<AreaId, {
   count: number; maxHp: number; speed: [number, number];
   body: string; accent: string; chaseRange: number;
+  meshType: EnemyMeshType;
 }[]> = {
-  field:  [{ count: 6, maxHp: 2, speed: [1.4, 2.5], body: '#c0392b', accent: '#922b21', chaseRange: 8 }],
-  forest: [{ count: 8, maxHp: 2, speed: [2.0, 3.2], body: '#4a235a', accent: '#6c3483', chaseRange: 12 }],
-  desert: [
-    { count: 5, maxHp: 3, speed: [0.9, 1.5], body: '#a04020', accent: '#c0703a', chaseRange: 6 },
-    { count: 3, maxHp: 2, speed: [2.0, 2.8], body: '#b7770d', accent: '#f0b03a', chaseRange: 10 },
+  field:  [{ count: 6, maxHp: 2, speed: [1.4, 2.5], body: '#c0392b', accent: '#922b21', chaseRange: 8,  meshType: 'slime' }],
+  forest: [
+    { count: 5, maxHp: 2, speed: [2.0, 3.2], body: '#4a235a', accent: '#6c3483', chaseRange: 12, meshType: 'bat' },
+    { count: 4, maxHp: 3, speed: [1.8, 2.6], body: '#2d6a2d', accent: '#81c784', chaseRange: 10, meshType: 'briarwolf' },
   ],
-  boss: [], // Boss handled separately
+  desert: [
+    { count: 4, maxHp: 3, speed: [0.9, 1.5], body: '#a04020', accent: '#c0703a', chaseRange: 6,  meshType: 'knight' },
+    { count: 4, maxHp: 2, speed: [2.0, 2.8], body: '#b7770d', accent: '#f0b03a', chaseRange: 10, meshType: 'scorpion' },
+  ],
+  boss: [
+    { count: 5, maxHp: 4, speed: [2.2, 3.0], body: '#1a0030', accent: '#7c4dff', chaseRange: 14, meshType: 'wraith' },
+  ],
 };
 
 // ── Visual meshes ────────────────────────────────────────────────
@@ -360,6 +368,210 @@ function KnightEnemy({ palette }: { palette: { body: string; accent: string } })
   );
 }
 
+// ── Briar Wolf (forest) ──────────────────────────────────────────
+function BriarWolfEnemy({ palette }: { palette: { body: string; accent: string } }) {
+  return (
+    <group>
+      {/* Body */}
+      <mesh castShadow position={[0, 0.62, 0]} scale={[1, 0.7, 1.5]}>
+        <sphereGeometry args={[0.42, 14, 10]} />
+        <meshStandardMaterial color={palette.body} roughness={0.9} />
+      </mesh>
+      {/* Neck */}
+      <mesh castShadow position={[0, 0.78, 0.38]} rotation={[-0.4, 0, 0]}>
+        <cylinderGeometry args={[0.19, 0.22, 0.38, 10]} />
+        <meshStandardMaterial color={palette.body} roughness={0.9} />
+      </mesh>
+      {/* Head */}
+      <mesh castShadow position={[0, 0.9, 0.62]} scale={[0.8, 0.7, 1.0]}>
+        <sphereGeometry args={[0.3, 12, 9]} />
+        <meshStandardMaterial color={palette.body} roughness={0.85} />
+      </mesh>
+      {/* Snout */}
+      <mesh castShadow position={[0, 0.78, 0.88]} scale={[0.6, 0.5, 1]}>
+        <sphereGeometry args={[0.2, 10, 7]} />
+        <meshStandardMaterial color="#1a3a1a" roughness={0.9} />
+      </mesh>
+      {/* Eyes */}
+      <mesh position={[-0.1, 0.96, 0.84]}>
+        <sphereGeometry args={[0.055, 8, 6]} />
+        <meshStandardMaterial color={palette.accent} emissive={palette.accent} emissiveIntensity={3} />
+      </mesh>
+      <mesh position={[0.1, 0.96, 0.84]}>
+        <sphereGeometry args={[0.055, 8, 6]} />
+        <meshStandardMaterial color={palette.accent} emissive={palette.accent} emissiveIntensity={3} />
+      </mesh>
+      {/* Ears */}
+      <mesh castShadow position={[-0.16, 1.16, 0.6]} rotation={[0.2, 0.2, 0.3]}>
+        <coneGeometry args={[0.09, 0.22, 6]} />
+        <meshStandardMaterial color="#1a3a1a" roughness={0.9} />
+      </mesh>
+      <mesh castShadow position={[0.16, 1.16, 0.6]} rotation={[0.2, -0.2, -0.3]}>
+        <coneGeometry args={[0.09, 0.22, 6]} />
+        <meshStandardMaterial color="#1a3a1a" roughness={0.9} />
+      </mesh>
+      {/* Thorn spines on back */}
+      {([[-0.22, 0.92, -0.1], [0, 1.0, -0.18], [0.22, 0.92, -0.08]] as [number,number,number][]).map(([x,y,z], i) => (
+        <mesh key={i} castShadow position={[x, y, z]} rotation={[0.3, 0, i === 1 ? 0 : (i === 0 ? 0.3 : -0.3)]}>
+          <coneGeometry args={[0.04, 0.24, 5]} />
+          <meshStandardMaterial color="#0d2e0d" roughness={0.85} />
+        </mesh>
+      ))}
+      {/* Legs */}
+      {([-0.2, 0.2] as number[]).map((x) =>
+        [-0.28, 0.28].map((z, j) => (
+          <mesh key={`${x}-${j}`} castShadow position={[x, 0.22, z]}>
+            <cylinderGeometry args={[0.07, 0.06, 0.44, 8]} />
+            <meshStandardMaterial color="#1a3a1a" roughness={0.9} />
+          </mesh>
+        ))
+      )}
+      {/* Tail */}
+      <mesh castShadow position={[0, 0.78, -0.54]} rotation={[-0.7, 0, 0]}>
+        <cylinderGeometry args={[0.04, 0.09, 0.44, 8]} />
+        <meshStandardMaterial color={palette.body} roughness={0.9} />
+      </mesh>
+    </group>
+  );
+}
+
+// ── Ember Scorpion (desert) ───────────────────────────────────────
+function EmberScorpionEnemy({ palette }: { palette: { body: string; accent: string } }) {
+  return (
+    <group>
+      {/* Main body */}
+      <mesh castShadow position={[0, 0.28, 0]} scale={[1.1, 0.6, 1.4]}>
+        <sphereGeometry args={[0.4, 14, 10]} />
+        <meshStandardMaterial color={palette.body} roughness={0.6} metalness={0.3} />
+      </mesh>
+      {/* Body segments */}
+      {([0.3, 0.0, -0.28] as number[]).map((z, i) => (
+        <mesh key={i} castShadow position={[0, 0.22, z]} scale={[0.9 - i*0.1, 0.5, 0.4]}>
+          <sphereGeometry args={[0.28, 10, 8]} />
+          <meshStandardMaterial color={i % 2 === 0 ? palette.body : palette.accent}
+            roughness={0.5} metalness={0.35} emissive={palette.accent} emissiveIntensity={0.4} />
+        </mesh>
+      ))}
+      {/* Head */}
+      <mesh castShadow position={[0, 0.32, 0.52]} scale={[0.9, 0.7, 0.8]}>
+        <sphereGeometry args={[0.28, 12, 9]} />
+        <meshStandardMaterial color={palette.body} roughness={0.5} metalness={0.3} />
+      </mesh>
+      {/* Eyes — glowing ember */}
+      <mesh position={[-0.1, 0.38, 0.72]}>
+        <sphereGeometry args={[0.045, 7, 5]} />
+        <meshStandardMaterial color="#ff4400" emissive="#ff6600" emissiveIntensity={5} />
+      </mesh>
+      <mesh position={[0.1, 0.38, 0.72]}>
+        <sphereGeometry args={[0.045, 7, 5]} />
+        <meshStandardMaterial color="#ff4400" emissive="#ff6600" emissiveIntensity={5} />
+      </mesh>
+      {/* Pincers */}
+      {([-1, 1] as number[]).map(side => (
+        <group key={side} position={[side * 0.5, 0.28, 0.54]} rotation={[0, side * -0.4, 0]}>
+          <mesh castShadow position={[0, 0, 0.18]}>
+            <cylinderGeometry args={[0.055, 0.08, 0.38, 8]} rotation={[Math.PI/2, 0, 0]} />
+            <meshStandardMaterial color={palette.body} roughness={0.5} metalness={0.3} />
+          </mesh>
+          <mesh castShadow position={[side * 0.08, 0.06, 0.38]}>
+            <boxGeometry args={[0.14, 0.1, 0.2]} />
+            <meshStandardMaterial color={palette.accent} roughness={0.4} metalness={0.4} />
+          </mesh>
+        </group>
+      ))}
+      {/* Legs */}
+      {([-0.3, -0.1, 0.1, 0.3] as number[]).map((z, j) =>
+        ([-1, 1] as number[]).map(side => (
+          <mesh key={`${j}-${side}`} castShadow
+            position={[side * 0.42, 0.1, z]} rotation={[0, 0, side * 0.5]}>
+            <cylinderGeometry args={[0.03, 0.025, 0.42, 6]} />
+            <meshStandardMaterial color={palette.body} roughness={0.55} metalness={0.25} />
+          </mesh>
+        ))
+      )}
+      {/* Tail segments curling up */}
+      {([
+        [0, 0.38, -0.42, -0.6, 0],
+        [0, 0.62, -0.56, -1.1, 0],
+        [0, 0.84, -0.48, -1.5, 0],
+      ] as [number,number,number,number,number][]).map(([x,y,z,rx], i) => (
+        <mesh key={i} castShadow position={[x, y, z]} rotation={[rx, 0, 0]}>
+          <sphereGeometry args={[0.12 - i*0.02, 8, 6]} />
+          <meshStandardMaterial color={i === 2 ? palette.accent : palette.body}
+            roughness={0.5} metalness={0.3}
+            emissive={i === 2 ? palette.accent : '#000'} emissiveIntensity={i === 2 ? 2 : 0} />
+        </mesh>
+      ))}
+      <pointLight color={palette.accent} intensity={0.5} distance={4} decay={2} position={[0, 0.5, 0]} />
+    </group>
+  );
+}
+
+// ── Void Wraith (boss area) ───────────────────────────────────────
+function VoidWraithEnemy({ palette }: { palette: { body: string; accent: string } }) {
+  return (
+    <group>
+      {/* Robes — taper from wide at bottom to narrow at top */}
+      <mesh castShadow position={[0, 0.55, 0]} scale={[1, 1, 1]}>
+        <coneGeometry args={[0.52, 1.1, 14]} />
+        <meshStandardMaterial color={palette.body} roughness={0.6} transparent opacity={0.88}
+          emissive={palette.accent} emissiveIntensity={0.15} />
+      </mesh>
+      {/* Robe hem wisps */}
+      {([0, 1, 2, 3, 4, 5] as number[]).map(i => {
+        const a = (i / 6) * Math.PI * 2;
+        return (
+          <mesh key={i} castShadow position={[Math.cos(a)*0.38, 0.08, Math.sin(a)*0.38]}>
+            <sphereGeometry args={[0.1, 7, 5]} />
+            <meshStandardMaterial color={palette.body} roughness={0.7} transparent opacity={0.55}
+              emissive={palette.accent} emissiveIntensity={0.2} />
+          </mesh>
+        );
+      })}
+      {/* Torso / upper body */}
+      <mesh castShadow position={[0, 1.18, 0]}>
+        <sphereGeometry args={[0.3, 12, 9]} />
+        <meshStandardMaterial color={palette.body} roughness={0.5} transparent opacity={0.9}
+          emissive={palette.accent} emissiveIntensity={0.2} />
+      </mesh>
+      {/* Hood */}
+      <mesh castShadow position={[0, 1.6, 0]}>
+        <sphereGeometry args={[0.28, 12, 9]} />
+        <meshStandardMaterial color={palette.body} roughness={0.55} transparent opacity={0.92}
+          emissive={palette.accent} emissiveIntensity={0.1} />
+      </mesh>
+      {/* Eyes — piercing violet */}
+      <mesh position={[-0.1, 1.63, 0.22]}>
+        <sphereGeometry args={[0.06, 8, 6]} />
+        <meshStandardMaterial color={palette.accent} emissive={palette.accent} emissiveIntensity={6} transparent opacity={0.95} />
+      </mesh>
+      <mesh position={[0.1, 1.63, 0.22]}>
+        <sphereGeometry args={[0.06, 8, 6]} />
+        <meshStandardMaterial color={palette.accent} emissive={palette.accent} emissiveIntensity={6} transparent opacity={0.95} />
+      </mesh>
+      {/* Claw hands */}
+      {([-1, 1] as number[]).map(side => (
+        <group key={side} position={[side * 0.48, 1.02, 0.14]} rotation={[0.3, side * -0.3, side * 0.4]}>
+          <mesh castShadow>
+            <sphereGeometry args={[0.1, 8, 6]} />
+            <meshStandardMaterial color={palette.body} roughness={0.6} emissive={palette.accent} emissiveIntensity={0.3} />
+          </mesh>
+          {([0, 1, 2] as number[]).map(f => (
+            <mesh key={f} castShadow
+              position={[side * 0.04, -0.06, 0.1 + f * 0.05]}
+              rotation={[-0.3 - f * 0.1, 0, side * 0.15]}>
+              <coneGeometry args={[0.025, 0.14, 5]} />
+              <meshStandardMaterial color="#0a0014" roughness={0.5} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+      {/* Inner void glow */}
+      <pointLight color={palette.accent} intensity={1.2} distance={5} decay={2} position={[0, 1.2, 0]} />
+    </group>
+  );
+}
+
 // ── Malgrath Boss Visual ─────────────────────────────────────────
 function MalgrathBoss({ hitFlash }: { hitFlash: boolean }) {
   return (
@@ -479,7 +691,7 @@ export function Enemies() {
   const { enemies, meshDefs } = useMemo(() => {
     const configs = AREA_CONFIG[currentArea] ?? [];
     const enemies: EnemyData[] = [];
-    const meshDefs: { type: AreaId; palette: { body: string; accent: string } }[] = [];
+    const meshDefs: { meshType: EnemyMeshType; palette: { body: string; accent: string } }[] = [];
     let idCounter = 0;
     configs.forEach((cfg) => {
       for (let i = 0; i < cfg.count; i++) {
@@ -499,7 +711,7 @@ export function Enemies() {
           baseColor: new THREE.Color(cfg.body),
           dead: false,
         });
-        meshDefs.push({ type: currentArea, palette: { body: cfg.body, accent: cfg.accent } });
+        meshDefs.push({ meshType: cfg.meshType, palette: { body: cfg.body, accent: cfg.accent } });
       }
     });
     return { enemies, meshDefs };
@@ -552,7 +764,11 @@ export function Enemies() {
       if (enemy.hitTimer > 0) { enemy.hitTimer -= delta; if (enemy.hitTimer <= 0) enemy.isHit = false; }
       if (enemy.invulnTimer > 0) enemy.invulnTimer -= delta;
 
-      const hoverY = currentArea === 'forest' ? 0.35 + Math.abs(Math.sin(t*3+enemy.wobble))*0.35 : 0;
+      const hoverY = currentArea === 'forest'
+        ? 0.35 + Math.abs(Math.sin(t*3+enemy.wobble))*0.35
+        : currentArea === 'boss'
+          ? 0.6 + Math.sin(t*2+enemy.wobble)*0.22
+          : 0;
       const squishY = 1 + Math.sin(t*5+enemy.wobble)*0.06;
       child.position.set(enemy.pos.x, hoverY, enemy.pos.z);
       child.scale.set(1, squishY, 1);
@@ -634,9 +850,12 @@ export function Enemies() {
     <group ref={groupRef}>
       {meshDefs.map((def, i) => (
         <group key={`e-${i}`}>
-          {def.type === 'field'  && <SlimeEnemy  palette={def.palette} />}
-          {def.type === 'forest' && <BatEnemy    palette={def.palette} />}
-          {def.type === 'desert' && <KnightEnemy palette={def.palette} />}
+          {def.meshType === 'slime'     && <SlimeEnemy        palette={def.palette} />}
+          {def.meshType === 'bat'       && <BatEnemy          palette={def.palette} />}
+          {def.meshType === 'knight'    && <KnightEnemy       palette={def.palette} />}
+          {def.meshType === 'briarwolf' && <BriarWolfEnemy    palette={def.palette} />}
+          {def.meshType === 'scorpion'  && <EmberScorpionEnemy palette={def.palette} />}
+          {def.meshType === 'wraith'    && <VoidWraithEnemy   palette={def.palette} />}
         </group>
       ))}
     </group>
