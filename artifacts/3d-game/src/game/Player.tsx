@@ -642,7 +642,7 @@ export function Player() {
     // Walk animation
     walkTime.current += delta * (moving ? 10 : 3);
     const swing = Math.sin(walkTime.current);
-    bodyBobRef.current.position.y = moving ? 0.04 + Math.abs(swing) * 0.07 : 0.04;
+    bodyBobRef.current.position.y = moving ? 0.58 + Math.abs(swing) * 0.07 : 0.58;
     leftLegRef.current.rotation.x  = moving ?  swing  * 0.7 : 0;
     rightLegRef.current.rotation.x = moving ? -swing  * 0.7 : 0;
 
@@ -712,7 +712,7 @@ export function Player() {
 
   return (
     <group ref={groupRef}>
-      <group ref={bodyBobRef} position={[0, 0.04, 0]}>
+      <group ref={bodyBobRef} position={[0, 0.58, 0]}>
         <HeroLeg side={-1} legRef={leftLegRef} />
         <HeroLeg side={1}  legRef={rightLegRef} />
         <HeroTorso armorLevel={armorLvl} />
