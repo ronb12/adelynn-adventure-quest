@@ -30,7 +30,7 @@ export function TitleScreen() {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-auto select-none overflow-hidden"
       style={{
-        backgroundImage: 'url(/title-bg.png)',
+        backgroundImage: `url(${import.meta.env.BASE_URL}title-bg.png)`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',

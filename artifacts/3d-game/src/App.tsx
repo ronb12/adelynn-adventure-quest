@@ -42,9 +42,9 @@ export default function App() {
       <AudioSystem />
       <MuteButton />
       <HUD />
-      {gameState === 'title'    && <TitleScreen />}
-      {gameState === 'gameover' && <GameOverScreen />}
-      {gameState === 'victory'  && <VictoryScreen />}
+      {gameState === 'title'    && <div className="absolute inset-0" style={{ zIndex: 9999 }}><TitleScreen /></div>}
+      {gameState === 'gameover' && <div className="absolute inset-0" style={{ zIndex: 9999 }}><GameOverScreen /></div>}
+      {gameState === 'victory'  && <div className="absolute inset-0" style={{ zIndex: 9999 }}><VictoryScreen /></div>}
     </div>
   );
 }
