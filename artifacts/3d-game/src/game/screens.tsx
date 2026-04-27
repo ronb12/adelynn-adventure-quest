@@ -3,7 +3,7 @@ import { useGameStore } from './store';
 import { Button } from '@/components/ui/button';
 
 const STORY = {
-  title: 'Adelynn Adventure Quest',
+  title: "Adelynn's Adventure Quest",
   subtitle: 'The Shattered Crown',
   lore: 'Malgrath shattered the Crown of Radiance into three Crystal Shards. Adelynn must recover them all and restore the kingdom of Aldenmere!',
   shards: [
