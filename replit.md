@@ -4,6 +4,10 @@
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 
+## Artifacts
+
+- **3d-game** (`artifacts/3d-game`) — "Hero's Quest", a Zelda-style top-down 3D action-adventure built with React Three Fiber, drei, and zustand. Player explores an overworld, fights enemies with a sword, collects hearts and rupees, and finds a chest to win.
+
 ## Stack
 
 - **Monorepo tool**: pnpm workspaces
