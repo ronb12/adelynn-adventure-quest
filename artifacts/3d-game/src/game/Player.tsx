@@ -14,19 +14,19 @@ const CHEST_POSITIONS: Record<string, THREE.Vector3> = {
   desert: new THREE.Vector3(0, 0, -24),
 };
 
-// ── Colour palette ──────────────────────────────────────────────
+// ── Colour palette — Adelynn (pink adventurer) ───────────────────
 const C = {
-  tunic:    '#2e7d32',
-  tunicDk:  '#1b5e20',
+  tunic:    '#e91e8c',   // hot pink outfit
+  tunicDk:  '#880e4f',   // deep magenta accent
   skin:     '#f5c9a0',
-  hair:     '#e8c84a',
-  boot:     '#3e2723',
-  belt:     '#5d4037',
+  hair:     '#7b2d14',   // rich auburn
+  boot:     '#6a1040',   // dark magenta boots
+  belt:     '#fce4ec',   // light pink belt
   gold:     '#fdd835',
   steel:    '#eceff1',
   steelDk:  '#90a4ae',
-  shBlue:   '#1565c0',
-  shGold:   '#f9a825',
+  shPink:   '#f06292',   // pink shield
+  shGold:   '#f8bbd0',   // light rose shield boss
 };
 
 // ── Sub-components (pure visuals) ───────────────────────────────
@@ -77,29 +77,59 @@ function HeroHead() {
         <sphereGeometry args={[0.05, 8, 6]} />
         <meshStandardMaterial color={C.skin} />
       </mesh>
-      {/* Mouth */}
-      <mesh position={[0, -0.12, 0.3]} rotation={[0, 0, 0]}>
-        <boxGeometry args={[0.12, 0.04, 0.02]} />
-        <meshStandardMaterial color="#c26060" />
+      {/* Lips — rosy pink */}
+      <mesh position={[0, -0.12, 0.3]}>
+        <boxGeometry args={[0.13, 0.045, 0.02]} />
+        <meshStandardMaterial color="#e91e8c" roughness={0.5} />
       </mesh>
-      {/* Sideburn hair */}
-      <mesh position={[-0.3, -0.05, 0.2]} castShadow>
-        <sphereGeometry args={[0.1, 8, 6]} />
-        <meshStandardMaterial color={C.hair} />
+      {/* Auburn hair — back mass */}
+      <mesh position={[0, 0.06, -0.22]} castShadow>
+        <sphereGeometry args={[0.3, 10, 8]} />
+        <meshStandardMaterial color={C.hair} roughness={0.8} />
       </mesh>
-      <mesh position={[0.3, -0.05, 0.2]} castShadow>
-        <sphereGeometry args={[0.1, 8, 6]} />
-        <meshStandardMaterial color={C.hair} />
+      {/* Hair side pieces */}
+      <mesh position={[-0.27, -0.02, 0.15]} castShadow>
+        <sphereGeometry args={[0.11, 8, 6]} />
+        <meshStandardMaterial color={C.hair} roughness={0.8} />
+      </mesh>
+      <mesh position={[0.27, -0.02, 0.15]} castShadow>
+        <sphereGeometry args={[0.11, 8, 6]} />
+        <meshStandardMaterial color={C.hair} roughness={0.8} />
+      </mesh>
+      {/* Ponytail base */}
+      <mesh position={[0, -0.02, -0.32]} castShadow>
+        <sphereGeometry args={[0.13, 9, 7]} />
+        <meshStandardMaterial color={C.hair} roughness={0.8} />
+      </mesh>
+      {/* Ponytail shaft */}
+      <mesh position={[0, -0.28, -0.34]} rotation={[0.3, 0, 0]} castShadow>
+        <cylinderGeometry args={[0.07, 0.05, 0.38, 8]} />
+        <meshStandardMaterial color={C.hair} roughness={0.8} />
+      </mesh>
+      {/* Ponytail tip */}
+      <mesh position={[0, -0.52, -0.28]} castShadow>
+        <sphereGeometry args={[0.07, 8, 6]} />
+        <meshStandardMaterial color={C.hair} roughness={0.8} />
+      </mesh>
+      {/* Pink bow / ribbon */}
+      <mesh position={[0.01, 0.02, -0.34]} rotation={[0, 0, Math.PI / 4]}>
+        <boxGeometry args={[0.22, 0.08, 0.05]} />
+        <meshStandardMaterial color="#ff4db8" roughness={0.4} />
       </mesh>
       {/* Hat brim */}
-      <mesh position={[0, 0.26, 0]} rotation={[0, 0, 0]} castShadow>
+      <mesh position={[0, 0.26, 0]} castShadow>
         <cylinderGeometry args={[0.42, 0.42, 0.08, 16]} />
-        <meshStandardMaterial color={C.tunic} />
+        <meshStandardMaterial color={C.tunic} roughness={0.55} />
       </mesh>
       {/* Hat cone */}
       <mesh position={[0, 0.76, -0.04]} rotation={[0.3, 0, 0]} castShadow>
         <coneGeometry args={[0.36, 1.0, 14]} />
-        <meshStandardMaterial color={C.tunic} roughness={0.65} />
+        <meshStandardMaterial color={C.tunic} roughness={0.55} />
+      </mesh>
+      {/* Hat star trim */}
+      <mesh position={[0, 0.32, 0.38]}>
+        <sphereGeometry args={[0.055, 7, 5]} />
+        <meshStandardMaterial color="#ffd6ec" metalness={0.4} roughness={0.2} />
       </mesh>
     </group>
   );
@@ -128,15 +158,25 @@ function HeroTorso() {
         <boxGeometry args={[0.14, 0.1, 0.04]} />
         <meshStandardMaterial color={C.gold} metalness={0.5} roughness={0.3} />
       </mesh>
-      {/* Shield on left hip */}
+      {/* Skirt flare — wider at bottom */}
+      <mesh position={[0, -0.52, 0]} castShadow>
+        <cylinderGeometry args={[0.48, 0.55, 0.28, 14]} />
+        <meshStandardMaterial color={C.tunicDk} roughness={0.65} />
+      </mesh>
+      {/* Pink shield on left hip */}
       <group position={[-0.3, -0.12, -0.25]} rotation={[0, -0.4, 0]}>
         <mesh castShadow>
           <cylinderGeometry args={[0.3, 0.25, 0.08, 16]} />
-          <meshStandardMaterial color={C.shBlue} roughness={0.5} />
+          <meshStandardMaterial color={C.shPink} roughness={0.5} />
         </mesh>
         <mesh position={[0, 0.05, 0]}>
           <cylinderGeometry args={[0.18, 0.15, 0.03, 10]} />
           <meshStandardMaterial color={C.shGold} metalness={0.4} roughness={0.4} />
+        </mesh>
+        {/* Heart emblem on shield */}
+        <mesh position={[0, 0.07, 0.16]}>
+          <sphereGeometry args={[0.07, 8, 6]} />
+          <meshStandardMaterial color="#ff4db8" emissive="#ff4db8" emissiveIntensity={0.3} />
         </mesh>
       </group>
     </group>
@@ -219,17 +259,17 @@ function HeroLeg({ side, legRef }: LegProps) {
   );
 }
 
-// Colours matching A Link to the Past sword design
+// Adelynn's sword — pink blade, chrome fittings
 const SW = {
-  blade:    '#a8c8e8',   // light blue-silver blade
-  bladeHi:  '#d8eeff',   // bright edge highlight
-  fuller:   '#cce4f8',   // central ridge line
-  guard:    '#e8c020',   // golden crossguard
-  guardHi:  '#f8e060',   // guard highlight face
-  grip:     '#1e3a8a',   // deep blue handle
-  gripWrap: '#c8a818',   // gold wrap rings
-  pommel:   '#d4a800',   // gold pommel
-  pommelHi: '#f0c830',   // pommel top sheen
+  blade:    '#f48fb1',   // medium pink blade
+  bladeHi:  '#fce4ec',   // bright pink-white edge
+  fuller:   '#e0e0e0',   // silver/chrome ridge
+  guard:    '#b0bec5',   // chrome crossguard
+  guardHi:  '#eceff1',   // bright chrome face
+  grip:     '#e91e8c',   // hot pink grip
+  gripWrap: '#cfd8dc',   // silver wrap rings
+  pommel:   '#b0bec5',   // chrome pommel
+  pommelHi: '#eceff1',   // bright chrome sheen
 };
 
 function SwordMesh() {
@@ -329,8 +369,8 @@ function SwordMesh() {
         <meshStandardMaterial color={SW.blade} metalness={0.85} roughness={0.08}
           emissive={SW.blade} emissiveIntensity={0.4} />
       </mesh>
-      {/* Glow light from blade — makes it pop in dark areas */}
-      <pointLight position={[0, 1.1, 0]} color="#80b8ff" intensity={1.2} distance={2.5} decay={2} />
+      {/* Glow light from blade — pink shimmer */}
+      <pointLight position={[0, 1.1, 0]} color="#ff80c0" intensity={1.2} distance={2.5} decay={2} />
     </group>
   );
 }

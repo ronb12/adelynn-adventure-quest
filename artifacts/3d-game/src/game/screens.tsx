@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 
 // ── Story constants ───────────────────────────────────────────────
 const STORY = {
-  title: "Hero's Quest",
+  title: 'Adelynn Adventure Quest',
   subtitle: 'The Shattered Crown',
   lore: [
     'The kingdom of Aldenmere once thrived under the light of the',
@@ -13,8 +13,8 @@ const STORY = {
     'He shattered the Crown into three Crystal Shards and scattered',
     'them across the land, plunging the realm into chaos.',
     '',
-    'You are the last guardian. Seek the three shards,',
-    'reunite the Crown, and end Malgrath\'s curse forever.',
+    'Adelynn, brave guardian of Aldenmere, takes up her sword.',
+    'Seek the three shards, reunite the Crown, and end the curse!',
   ],
   shards: [
     { area: 'field',  name: 'Shard of Dawn',  place: 'Sunfield Plains' },
@@ -100,7 +100,7 @@ export function GameOverScreen() {
         Darkness Falls
       </h1>
       <p className="text-red-300 text-lg mb-4 font-serif italic">
-        "Aldenmere's last hope perishes…"
+        "Adelynn falls… but the legend lives on."
       </p>
       <p className="text-gray-400 text-sm mb-8">
         {shardsCount === 0
@@ -148,8 +148,8 @@ export function VictoryScreen() {
         The Crown Restored!
       </h1>
       <p className="text-amber-200/80 font-serif text-lg italic mb-6 text-center max-w-sm">
-        "The darkness crumbles. The light of Aldenmere shines once more.
-        Malgrath's curse is broken — the realm is saved!"
+        "Adelynn has done it! The Crown is restored, the darkness
+        crumbles, and Aldenmere shines once more!"
       </p>
 
       {/* All three shards */}
