@@ -1,0 +1,80 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#0f0520"/>
+
+  <!-- Outer glow ring -->
+  <circle cx="256" cy="256" r="230" fill="none" stroke="#e91e8c" stroke-width="4" opacity="0.25"/>
+
+  <!-- Shield shadow -->
+  <path d="M256 64 L408 128 L408 288 C408 388 340 448 256 488 C172 448 104 388 104 288 L104 128 Z"
+        fill="#4a0030" opacity="0.6"/>
+
+  <!-- Shield base (deep pink) -->
+  <path d="M256 72 L400 133 L400 286 C400 382 335 440 256 478 C177 440 112 382 112 286 L112 133 Z"
+        fill="#880e4f"/>
+
+  <!-- Shield mid -->
+  <path d="M256 84 L388 141 L388 285 C388 376 326 431 256 467 C186 431 124 376 124 285 L124 141 Z"
+        fill="#c2185b"/>
+
+  <!-- Shield face (bright pink) -->
+  <path d="M256 96 L376 149 L376 284 C376 370 318 422 256 456 C194 422 136 370 136 284 L136 149 Z"
+        fill="#e91e8c"/>
+
+  <!-- Shield highlight (inner gleam) -->
+  <path d="M256 108 L310 130 L310 200 C310 220 290 240 256 260 C260 240 268 220 270 200 L270 130 Z"
+        fill="white" opacity="0.10"/>
+
+  <!-- Crown base bar -->
+  <rect x="186" y="210" width="140" height="20" rx="6" fill="#ffc107"/>
+
+  <!-- Crown points -->
+  <polygon points="186,230 186,185 210,205 256,178 302,205 326,185 326,230" fill="#ffd54f"/>
+
+  <!-- Crown gemstones -->
+  <circle cx="186" cy="183" r="14" fill="#f06292"/>
+  <circle cx="186" cy="183" r="8"  fill="#fce4ec"/>
+  <circle cx="256" cy="172" r="17" fill="#e91e8c"/>
+  <circle cx="256" cy="172" r="10" fill="#fff9c4"/>
+  <circle cx="326" cy="183" r="14" fill="#f06292"/>
+  <circle cx="326" cy="183" r="8"  fill="#fce4ec"/>
+
+  <!-- Crown inner gems (smaller) -->
+  <circle cx="221" cy="198" r="7" fill="#ff8a65"/>
+  <circle cx="291" cy="198" r="7" fill="#ff8a65"/>
+
+  <!-- Heart emblem on shield -->
+  <path d="M256 390
+           C256 390 188 344 188 298
+           C188 272 208 254 232 262
+           C242 266 256 278 256 278
+           C256 278 270 266 280 262
+           C304 254 324 272 324 298
+           C324 344 256 390 256 390Z"
+        fill="white" opacity="0.92"/>
+
+  <!-- Heart inner shine -->
+  <ellipse cx="236" cy="286" rx="12" ry="8" fill="white" opacity="0.4" transform="rotate(-30 236 286)"/>
+
+  <!-- Sparkle top-left -->
+  <g opacity="0.7">
+    <line x1="140" y1="110" x2="140" y2="90" stroke="#ffd54f" stroke-width="3" stroke-linecap="round"/>
+    <line x1="130" y1="100" x2="150" y2="100" stroke="#ffd54f" stroke-width="3" stroke-linecap="round"/>
+    <line x1="133" y1="93"  x2="147" y2="107" stroke="#ffd54f" stroke-width="2" stroke-linecap="round"/>
+    <line x1="147" y1="93"  x2="133" y2="107" stroke="#ffd54f" stroke-width="2" stroke-linecap="round"/>
+  </g>
+
+  <!-- Sparkle top-right -->
+  <g opacity="0.6">
+    <line x1="372" y1="120" x2="372" y2="104" stroke="#f48fb1" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="364" y1="112" x2="380" y2="112" stroke="#f48fb1" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="366.5" y1="106.5" x2="377.5" y2="117.5" stroke="#f48fb1" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="377.5" y1="106.5" x2="366.5" y2="117.5" stroke="#f48fb1" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Crystal shards bottom decoration -->
+  <polygon points="200,470 212,445 224,470" fill="#f48fb1" opacity="0.5"/>
+  <polygon points="220,478 228,458 236,478" fill="#e91e8c" opacity="0.4"/>
+  <polygon points="276,478 284,458 292,478" fill="#e91e8c" opacity="0.4"/>
+  <polygon points="288,470 300,445 312,470" fill="#f48fb1" opacity="0.5"/>
+</svg>
