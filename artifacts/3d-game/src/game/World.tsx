@@ -18,14 +18,14 @@ export const PORTALS: Record<AreaId, PortalDef[]> = {
     {
       pos: [0, 0, -29],
       rot: [0, 0, 0],
-      label: 'Lost Woods',
+      label: 'Whisper Woods',
       destination: { area: 'forest', spawnPos: new THREE.Vector3(0, 0, 26) },
       color: '#44ff44',
     },
     {
       pos: [29, 0, 0],
       rot: [0, -Math.PI / 2, 0],
-      label: 'Death Mountain',
+      label: 'Ashrock Summit',
       destination: { area: 'desert', spawnPos: new THREE.Vector3(-26, 0, 0) },
       color: '#ff8822',
     },
@@ -34,7 +34,7 @@ export const PORTALS: Record<AreaId, PortalDef[]> = {
     {
       pos: [0, 0, 29],
       rot: [0, Math.PI, 0],
-      label: 'Hyrule Field',
+      label: 'Sunfield Plains',
       destination: { area: 'field', spawnPos: new THREE.Vector3(0, 0, -24) },
       color: '#88aaff',
     },
@@ -43,7 +43,7 @@ export const PORTALS: Record<AreaId, PortalDef[]> = {
     {
       pos: [-29, 0, 0],
       rot: [0, Math.PI / 2, 0],
-      label: 'Hyrule Field',
+      label: 'Sunfield Plains',
       destination: { area: 'field', spawnPos: new THREE.Vector3(26, 0, 0) },
       color: '#88aaff',
     },

@@ -16,9 +16,9 @@ const WEAPON_LABELS: Record<WeaponId, string> = {
 };
 
 const AREA_NAMES: Record<string, string> = {
-  field:  'Hyrule Field',
-  forest: 'Lost Woods',
-  desert: 'Death Mountain',
+  field:  'Sunfield Plains',
+  forest: 'Whisper Woods',
+  desert: 'Ashrock Summit',
 };
 
 function HeartRow() {
