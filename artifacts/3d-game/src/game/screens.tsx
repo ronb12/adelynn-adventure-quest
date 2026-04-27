@@ -29,18 +29,16 @@ export function TitleScreen() {
 
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-auto select-none overflow-hidden"
-      style={{ background: 'radial-gradient(ellipse at 50% 30%, #1a1040 0%, #0a0818 100%)' }}>
+      style={{
+        backgroundImage: 'url(/title-bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}>
 
-      {/* Star field */}
-      {Array.from({ length: 60 }).map((_, i) => (
-        <div key={i} className="absolute rounded-full bg-white"
-          style={{
-            width: `${1 + (i % 3)}px`, height: `${1 + (i % 3)}px`,
-            left: `${(i * 37.1) % 100}%`, top: `${(i * 61.3) % 75}%`,
-            opacity: 0.3 + (i % 4) * 0.18,
-            animation: `pulse ${1.5 + (i % 4) * 0.6}s ease-in-out ${(i % 8) * 0.2}s infinite alternate`,
-          }} />
-      ))}
+      {/* Dark gradient overlay so text stays readable over the image */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: 'linear-gradient(to bottom, rgba(8,4,24,0.55) 0%, rgba(8,4,24,0.72) 60%, rgba(8,4,24,0.88) 100%)' }} />
 
       {/* Crown icon */}
       <div className="text-7xl mb-2" style={{ filter: 'drop-shadow(0 0 18px #f0c030)' }}>♛</div>

@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "Hl2Qgr52dvsjXDIlZk_bC"
+uri = "file://artifacts/3d-game/public/title-bg.png"
+type = "image"
+title = "dark fantasy title background"
