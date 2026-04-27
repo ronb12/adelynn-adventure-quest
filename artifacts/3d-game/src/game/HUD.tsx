@@ -1,5 +1,6 @@
 import { useGameStore } from './store';
 import { WEAPONS, WeaponId } from './controls';
+import { NPC_DATA } from './npcData';
 
 const WEAPON_ICONS: Record<WeaponId, string> = {
   sword:     '⚔',
@@ -129,10 +130,15 @@ function WeaponBar() {
 }
 
 export function HUD() {
-  const { gameState, rupees, currentArea, nearChest } = useGameStore();
+  const { gameState, rupees, currentArea, nearChest, nearNPC, activeDialogue } = useGameStore();
 
   // Find which shard this area has
   const shardInfo = SHARD_INFO.find(s => s.area === currentArea);
+
+  // Active NPC dialogue data
+  const dialogueNPC = activeDialogue
+    ? NPC_DATA.find(n => n.id === activeDialogue.npcId)
+    : null;
 
   if (gameState !== 'playing') return null;
 
@@ -161,7 +167,7 @@ export function HUD() {
       </div>
 
       {/* Chest interaction hint */}
-      {nearChest && shardInfo && (
+      {nearChest && !activeDialogue && shardInfo && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
           <div
             className="font-bold px-5 py-3 rounded-xl text-base border animate-pulse flex flex-col items-center gap-1"
@@ -178,11 +184,63 @@ export function HUD() {
         </div>
       )}
 
+      {/* NPC proximity hint */}
+      {nearNPC && !nearChest && !activeDialogue && (() => {
+        const npc = NPC_DATA.find(n => n.id === nearNPC);
+        return npc ? (
+          <div className="absolute top-[44%] left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl border border-pink-400/60 animate-pulse"
+              style={{ background: 'rgba(10,5,25,0.85)' }}>
+              <span className="text-pink-300 font-bold text-sm">{npc.name}</span>
+              <span className="text-white/50 text-xs">Press E to talk</span>
+            </div>
+          </div>
+        ) : null;
+      })()}
+
+      {/* ── Dialogue box ── */}
+      {activeDialogue && dialogueNPC && (
+        <div className="absolute bottom-28 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4">
+          <div
+            className="rounded-2xl border-2 p-4 shadow-2xl"
+            style={{ background: 'rgba(8,4,20,0.95)', borderColor: '#e91e8c' }}
+          >
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-3 pb-2 border-b border-pink-900/50">
+              {/* NPC avatar circle */}
+              <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: dialogueNPC.bodyColor }}>
+                <span className="text-base">👤</span>
+              </div>
+              <div>
+                <div className="text-pink-300 font-bold text-sm">{dialogueNPC.name}</div>
+                <div className="text-pink-600 text-xs">{dialogueNPC.title}</div>
+              </div>
+              {/* Line counter */}
+              <div className="ml-auto text-pink-800 text-xs">
+                {activeDialogue.line + 1} / {activeDialogue.maxLines}
+              </div>
+            </div>
+            {/* Dialogue text */}
+            <p className="text-amber-100 text-sm leading-relaxed min-h-[2.5rem]">
+              {dialogueNPC.dialogue[activeDialogue.line]}
+            </p>
+            {/* Continue hint */}
+            <div className="mt-2 text-right text-xs text-pink-500 animate-pulse">
+              {activeDialogue.line < activeDialogue.maxLines - 1
+                ? 'Press E to continue ▶'
+                : 'Press E to close ✕'
+              }
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bottom: weapon bar + controls */}
       <div className="flex flex-col items-center gap-2">
         <WeaponBar />
         <div className="bg-black/55 text-white text-xs font-mono px-4 py-1.5 rounded-full backdrop-blur-sm">
-          WASD move&nbsp;·&nbsp;Space use weapon&nbsp;·&nbsp;Q/Shift cycle&nbsp;·&nbsp;E claim shard&nbsp;·&nbsp;Walk through portals to travel
+          WASD move&nbsp;·&nbsp;Space use weapon&nbsp;·&nbsp;Q/Shift cycle&nbsp;·&nbsp;E talk/claim&nbsp;·&nbsp;Walk through portals to travel
         </div>
       </div>
     </div>

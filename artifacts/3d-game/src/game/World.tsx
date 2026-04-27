@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { Sky } from '@react-three/drei';
 import { useGameStore, AreaId, AreaTransition } from './store';
+import { Village } from './Village';
+import { NPCManager } from './NPCs';
 
 // ─── Portal definitions ───────────────────────────────────────────
 export interface PortalDef {
@@ -240,6 +242,9 @@ function FieldArea() {
       {/* Shard of Dawn chest */}
       <TreasureChest pos={chestPos} area="field" />
 
+      {/* Village */}
+      <Village />
+
       {/* World boundary walls (invisible) */}
       <Boundary />
     </>
@@ -452,6 +457,7 @@ export function World() {
       {currentArea === 'field'  && <FieldArea />}
       {currentArea === 'forest' && <ForestArea />}
       {currentArea === 'desert' && <DesertArea />}
+      <NPCManager />
     </>
   );
 }

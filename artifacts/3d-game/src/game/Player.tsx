@@ -396,12 +396,13 @@ export function Player() {
   const velocity    = useRef(new THREE.Vector3());
   const facingDir   = useRef(new THREE.Vector3(0, 0, -1));
 
-  const prevNext = useRef(false);
-  const prevPrev = useRef(false);
-  const prevBow  = useRef(false);
-  const prevBomb = useRef(false);
-  const prevBoom = useRef(false);
-  const prevAtk  = useRef(false);
+  const prevNext     = useRef(false);
+  const prevPrev     = useRef(false);
+  const prevBow      = useRef(false);
+  const prevBomb     = useRef(false);
+  const prevBoom     = useRef(false);
+  const prevAtk      = useRef(false);
+  const prevInteract = useRef(false);
 
   useFrame((_, delta) => {
     const store = useGameStore.getState();
@@ -489,7 +490,19 @@ export function Player() {
       ? pos.current.distanceTo(chestPos) < 2.5
       : false;
     store.setNearChest(nearChest);
-    if (interact && nearChest) store.openChest(store.currentArea);
+
+    // E key rising-edge interaction (dialogue > chest > NPC)
+    const interactJustPressed = interact && !prevInteract.current;
+    prevInteract.current = interact;
+    if (interactJustPressed) {
+      if (store.activeDialogue) {
+        store.advanceDialogue();
+      } else if (nearChest) {
+        store.openChest(store.currentArea);
+      } else if (store.nearNPC) {
+        store.startDialogue(store.nearNPC);
+      }
+    }
 
     // Walk animation
     walkTime.current += delta * (moving ? 10 : 3);

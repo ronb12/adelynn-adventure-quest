@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import * as THREE from 'three';
 import { WeaponId, WEAPONS } from './controls';
+import { NPC_DATA } from './npcData';
 
 export type GameState = 'title' | 'playing' | 'gameover' | 'victory';
 export type AreaId = 'field' | 'forest' | 'desert';
@@ -28,6 +29,9 @@ interface GameStore {
   nearChest: boolean;
   shardsCollected: number;
   chestsOpened: string[];
+  nearNPC: string | null;
+  activeDialogue: { npcId: string; line: number; maxLines: number } | null;
+  talkedToNPCs: string[];
 
   setGameState: (state: GameState) => void;
   addRupees: (amount: number) => void;
@@ -47,6 +51,9 @@ interface GameStore {
   triggerAreaTransition: (t: AreaTransition) => void;
   setNearChest: (v: boolean) => void;
   openChest: (area: string) => void;
+  setNearNPC: (id: string | null) => void;
+  startDialogue: (npcId: string) => void;
+  advanceDialogue: () => void;
   resetGame: () => void;
 }
 
@@ -68,6 +75,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   nearChest: false,
   shardsCollected: 0,
   chestsOpened: [],
+  nearNPC: null,
+  activeDialogue: null,
+  talkedToNPCs: [],
 
   setGameState: (state) => set({ gameState: state }),
   addRupees: (amount) => set((s) => ({ rupees: s.rupees + amount })),
@@ -104,6 +114,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
   clearPendingWeaponFire: () => set({ pendingWeaponFire: null }),
   triggerAreaTransition: (t) => set({ currentArea: t.area, pendingTransition: t }),
   setNearChest: (v) => set({ nearChest: v }),
+  setNearNPC: (id) => set({ nearNPC: id }),
+
+  startDialogue: (npcId) => set((s) => {
+    const npc = NPC_DATA.find(n => n.id === npcId);
+    if (!npc) return {};
+    const alreadyTalked = s.talkedToNPCs.includes(npcId);
+    return {
+      activeDialogue: { npcId, line: 0, maxLines: npc.dialogue.length },
+      talkedToNPCs: alreadyTalked ? s.talkedToNPCs : [...s.talkedToNPCs, npcId],
+    };
+  }),
+
+  advanceDialogue: () => set((s) => {
+    if (!s.activeDialogue) return {};
+    const next = s.activeDialogue.line + 1;
+    if (next >= s.activeDialogue.maxLines) return { activeDialogue: null };
+    return { activeDialogue: { ...s.activeDialogue, line: next } };
+  }),
 
   openChest: (area) => set((s) => {
     if (s.chestsOpened.includes(area)) return {};          // already opened
@@ -133,5 +161,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     nearChest: false,
     shardsCollected: 0,
     chestsOpened: [],
+    nearNPC: null,
+    activeDialogue: null,
+    talkedToNPCs: [],
   }),
 }));
