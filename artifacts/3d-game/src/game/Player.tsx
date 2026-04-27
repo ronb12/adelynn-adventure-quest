@@ -209,7 +209,7 @@ function HeroArm({ side, armRef, children }: ArmProps) {
 
 interface LegProps {
   side: -1 | 1;
-  legRef?: React.RefObject<THREE.Mesh>;
+  legRef?: React.RefObject<THREE.Group>;
 }
 function HeroLeg({ side, legRef }: LegProps) {
   const x = side * 0.17;
@@ -220,13 +220,13 @@ function HeroLeg({ side, legRef }: LegProps) {
   const stocking = '#f0c8a8';   // bare-skin upper thigh
 
   return (
-    <group position={[x, 0.33, 0]}>
+    <group ref={legRef} position={[x, 0.33, 0]}>
       {/* ── UPPER THIGH (skin — visible below tunic skirt) ── */}
       <mesh castShadow>
         <sphereGeometry args={[0.13, 10, 8]} />
         <meshStandardMaterial color={stocking} roughness={0.88} />
       </mesh>
-      <mesh ref={legRef} position={[0, -0.18, 0]} castShadow>
+      <mesh position={[0, -0.18, 0]} castShadow>
         <cylinderGeometry args={[0.115, 0.105, 0.28, 10]} />
         <meshStandardMaterial color={stocking} roughness={0.88} />
       </mesh>
@@ -456,8 +456,8 @@ function SwordMesh({ swordId }: { swordId: SwordId }) {
 export function Player() {
   const groupRef      = useRef<THREE.Group>(null!);
   const bodyBobRef    = useRef<THREE.Group>(null!);
-  const leftLegRef    = useRef<THREE.Mesh>(null!);
-  const rightLegRef   = useRef<THREE.Mesh>(null!);
+  const leftLegRef    = useRef<THREE.Group>(null!);
+  const rightLegRef   = useRef<THREE.Group>(null!);
   const leftArmRef    = useRef<THREE.Group>(null!);
   const rightArmRef   = useRef<THREE.Group>(null!);
   const swordGroupRef = useRef<THREE.Group>(null!);
@@ -640,11 +640,32 @@ export function Player() {
     }
 
     // Walk animation
-    walkTime.current += delta * (moving ? 10 : 3);
+    walkTime.current += delta * (moving ? 9 : 4);
     const swing = Math.sin(walkTime.current);
-    bodyBobRef.current.position.y = moving ? 0.58 + Math.abs(swing) * 0.07 : 0.58;
-    leftLegRef.current.rotation.x  = moving ?  swing  * 0.7 : 0;
-    rightLegRef.current.rotation.x = moving ? -swing  * 0.7 : 0;
+    const swingAbs = Math.abs(swing);
+
+    // Body bob — slight up-down as feet push off
+    bodyBobRef.current.position.y = moving ? 0.58 + swingAbs * 0.05 : 0.58;
+
+    // Legs swing front-to-back from the hip pivot
+    const legSwing = moving ? swing * 0.85 : 0;
+    leftLegRef.current.rotation.x  =  legSwing;
+    rightLegRef.current.rotation.x = -legSwing;
+
+    // Idle: legs smoothly return to neutral
+    if (!moving) {
+      leftLegRef.current.rotation.x  = THREE.MathUtils.lerp(leftLegRef.current.rotation.x,  0, delta * 8);
+      rightLegRef.current.rotation.x = THREE.MathUtils.lerp(rightLegRef.current.rotation.x, 0, delta * 8);
+    }
+
+    // Arms counter-swing opposite to legs (only when not attacking)
+    if (!isSwinging.current && !isSpinning.current) {
+      const armSwing = moving ? -swing * 0.45 : 0;
+      leftArmRef.current.rotation.x  = moving ? armSwing : THREE.MathUtils.lerp(leftArmRef.current.rotation.x,  0, delta * 8);
+      rightArmRef.current.rotation.x = moving ? -armSwing : THREE.MathUtils.lerp(rightArmRef.current.rotation.x, 0, delta * 8);
+      leftArmRef.current.rotation.z  = 0;
+      rightArmRef.current.rotation.z = 0;
+    }
 
     // ── Regular sword swing ───────────────────────────────────────
     if (isSwinging.current && swordGroupRef.current && rightArmRef.current) {
