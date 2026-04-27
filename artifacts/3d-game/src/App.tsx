@@ -18,10 +18,10 @@ function GameScene() {
       {/* World renders its own sky/fog/lighting per area */}
       <World />
       <CameraRig />
-      {/* key resets enemy state on area change */}
-      <Enemies key={currentArea} />
+      {/* key resets state on area change */}
+      <Enemies key={`enemies-${currentArea}`} />
       <Player />
-      <Pickups key={currentArea} />
+      <Pickups key={`pickups-${currentArea}`} />
       <Weapons />
     </>
   );
