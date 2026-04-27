@@ -6,6 +6,40 @@ import { NPC_DATA } from './npcData';
 export type GameState = 'title' | 'playing' | 'gameover' | 'victory';
 export type AreaId = 'field' | 'forest' | 'desert' | 'boss';
 
+export type SwordId =
+  | 'crystal' | 'flame' | 'thunder' | 'frost' | 'shadow'
+  | 'holy'    | 'viper' | 'storm'   | 'dragon' | 'cosmos';
+
+export const SWORD_DEFS: Record<SwordId, {
+  name: string; damage: number; desc: string; icon: string;
+  blade: string; guard: string; grip: string;
+  emissive: string; emissiveInt: number; light: string;
+}> = {
+  crystal: { name: 'Crystal Sword',  damage: 1.0, desc: 'Your trusty starting blade.',        icon: '⚔️',  blade: '#f48fb1', guard: '#b0bec5', grip: '#e91e8c', emissive: '#ff80c0', emissiveInt: 0.4, light: '#ff80c0' },
+  flame:   { name: 'Flame Sword',    damage: 1.5, desc: 'Fiery blade. +50% damage.',           icon: '🔥',  blade: '#ff7733', guard: '#cc3300', grip: '#880000', emissive: '#ff5500', emissiveInt: 1.5, light: '#ff6600' },
+  thunder: { name: 'Thunder Blade',  damage: 1.2, desc: 'Crackles with lightning energy.',     icon: '⚡',  blade: '#ffee22', guard: '#aa8800', grip: '#443300', emissive: '#ffcc00', emissiveInt: 1.8, light: '#ffdd00' },
+  frost:   { name: 'Frost Edge',     damage: 1.1, desc: 'Ice-cold precision blade.',           icon: '❄️',  blade: '#80d4ff', guard: '#4488bb', grip: '#003366', emissive: '#00aaff', emissiveInt: 1.2, light: '#44ccff' },
+  shadow:  { name: 'Shadow Blade',   damage: 1.3, desc: 'Strikes from the darkness.',          icon: '🌑',  blade: '#9933ff', guard: '#440088', grip: '#1a0033', emissive: '#6600cc', emissiveInt: 1.5, light: '#8800ff' },
+  holy:    { name: 'Holy Blade',     damage: 2.0, desc: 'Sacred light. Double damage!',        icon: '✨',  blade: '#fffff0', guard: '#ddcc66', grip: '#996600', emissive: '#ffffc0', emissiveInt: 2.2, light: '#ffffaa' },
+  viper:   { name: 'Viper Fang',     damage: 1.2, desc: 'Venomous strike from the shadows.',   icon: '🐍',  blade: '#22dd55', guard: '#115522', grip: '#002200', emissive: '#00ff55', emissiveInt: 1.2, light: '#00ee44' },
+  storm:   { name: 'Storm Sword',    damage: 1.4, desc: 'Wind-forged. Wider spin radius.',      icon: '🌪️', blade: '#00d4cc', guard: '#005566', grip: '#001a1a', emissive: '#00cccc', emissiveInt: 1.5, light: '#00ddcc' },
+  dragon:  { name: 'Dragon Blade',   damage: 2.5, desc: 'Immense power. 2.5× base damage!',    icon: '🐉',  blade: '#ff2200', guard: '#880000', grip: '#330000', emissive: '#cc1100', emissiveInt: 2.0, light: '#ff3300' },
+  cosmos:  { name: 'Cosmos Blade',   damage: 2.0, desc: 'Star-forged. The ultimate weapon.',   icon: '🌟',  blade: '#cc00ff', guard: '#660099', grip: '#220033', emissive: '#aa00ff', emissiveInt: 2.5, light: '#cc00ff' },
+};
+
+// Sword chest definitions — shared between Player.tsx (proximity) and World.tsx (visuals)
+export const SWORD_CHESTS: { key: string; pos: [number, number, number]; area: AreaId; swordId: SwordId }[] = [
+  { key: 'sword-flame',   pos: [20, 0, -20],  area: 'field',  swordId: 'flame'   },
+  { key: 'sword-viper',   pos: [-20, 0, 20],  area: 'field',  swordId: 'viper'   },
+  { key: 'sword-thunder', pos: [-15, 0, -20], area: 'desert', swordId: 'thunder' },
+  { key: 'sword-storm',   pos: [15, 0, 20],   area: 'desert', swordId: 'storm'   },
+  { key: 'sword-frost',   pos: [-18, 0, 15],  area: 'forest', swordId: 'frost'   },
+  { key: 'sword-shadow',  pos: [18, 0, 15],   area: 'forest', swordId: 'shadow'  },
+  { key: 'sword-holy',    pos: [10, 0, 5],    area: 'boss',   swordId: 'holy'    },
+  { key: 'sword-dragon',  pos: [-10, 0, -5],  area: 'boss',   swordId: 'dragon'  },
+  { key: 'sword-cosmos',  pos: [0, 0, -15],   area: 'boss',   swordId: 'cosmos'  },
+];
+
 export interface AreaTransition {
   area: AreaId;
   spawnPos: THREE.Vector3;
@@ -24,6 +58,7 @@ interface GameStore {
   rupees: number;
   arrows: number;
   bombs: number;
+  shurikens: number;
   playerPosition: THREE.Vector3;
   playerDirection: THREE.Vector3;
   swordActive: boolean;
@@ -32,6 +67,8 @@ interface GameStore {
   spinPosition: THREE.Vector3;
   isBlocking: boolean;
   selectedWeapon: WeaponId;
+  activeSword: SwordId;
+  unlockedSwords: SwordId[];
   currentArea: AreaId;
   pendingTransition: AreaTransition | null;
   pendingWeaponFire: WeaponId | null;
@@ -55,8 +92,10 @@ interface GameStore {
   addRupees: (amount: number) => void;
   addArrows: (amount: number) => void;
   addBombs:  (amount: number) => void;
+  addShurikens: (amount: number) => void;
   useArrow: () => boolean;
   useBomb: () => boolean;
+  useShuriken: () => boolean;
   damagePlayer: (amount: number) => void;
   healPlayer: (amount: number) => void;
   fullHeal: () => void;
@@ -67,6 +106,8 @@ interface GameStore {
   setBlocking: (v: boolean) => void;
   setSelectedWeapon: (w: WeaponId) => void;
   cycleWeapon: (dir: 1 | -1) => void;
+  cycleSword: (dir: 1 | -1) => void;
+  unlockSword: (id: SwordId) => void;
   fireWeapon: (w: WeaponId) => void;
   clearPendingWeaponFire: () => void;
   triggerAreaTransition: (t: AreaTransition) => void;
@@ -81,7 +122,7 @@ interface GameStore {
   setNearShop: (v: boolean) => void;
   openShop: () => void;
   closeShop: () => void;
-  buyItem: (item: 'arrows' | 'bombs' | 'heart', cost: number) => boolean;
+  buyItem: (item: 'arrows' | 'bombs' | 'heart' | 'shurikens', cost: number) => boolean;
   setNearFountain: (v: boolean) => void;
   useFountain: () => void;
   setArmorLevel: (level: 0 | 1 | 2) => void;
@@ -95,6 +136,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   rupees: 0,
   arrows: 10,
   bombs: 5,
+  shurikens: 15,
   playerPosition: new THREE.Vector3(0, 0, 0),
   playerDirection: new THREE.Vector3(0, 0, -1),
   swordActive: false,
@@ -103,6 +145,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   spinPosition: new THREE.Vector3(0, 0, 0),
   isBlocking: false,
   selectedWeapon: 'sword',
+  activeSword: 'crystal',
+  unlockedSwords: ['crystal'],
   currentArea: 'field',
   pendingTransition: null,
   pendingWeaponFire: null,
@@ -126,6 +170,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   addRupees: (amount) => set((s) => ({ rupees: s.rupees + amount })),
   addArrows: (amount) => set((s) => ({ arrows: Math.min(s.arrows + amount, 99) })),
   addBombs:  (amount) => set((s) => ({ bombs:  Math.min(s.bombs  + amount, 20) })),
+  addShurikens: (amount) => set((s) => ({ shurikens: Math.min(s.shurikens + amount, 60) })),
+
   useArrow: () => {
     const arrows = get().arrows;
     if (arrows <= 0) return false;
@@ -138,11 +184,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ bombs: bombs - 1 });
     return true;
   },
+  useShuriken: () => {
+    const shurikens = get().shurikens;
+    if (shurikens <= 0) return false;
+    set({ shurikens: shurikens - 1 });
+    return true;
+  },
 
   damagePlayer: (amount) => set((s) => {
-    // Armor reduces damage
     const reduction = s.armorLevel === 2 ? 0.5 : s.armorLevel === 1 ? 0.75 : 1.0;
-    // Blocking reduces damage further
     const blockReduction = s.isBlocking ? 0.25 : 1.0;
     const finalAmount = amount * reduction * blockReduction;
     const newHearts = Math.max(0, s.hearts - finalAmount);
@@ -158,11 +208,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setSpinState: (active, pos) => set({ spinActive: active, spinPosition: pos }),
   setBlocking: (v) => set({ isBlocking: v }),
   setSelectedWeapon: (w) => set({ selectedWeapon: w }),
+
   cycleWeapon: (dir) => set((s) => {
     const idx = WEAPONS.indexOf(s.selectedWeapon);
     const next = (idx + dir + WEAPONS.length) % WEAPONS.length;
     return { selectedWeapon: WEAPONS[next] };
   }),
+
+  cycleSword: (dir) => set((s) => {
+    const ids = s.unlockedSwords;
+    if (ids.length <= 1) return {};
+    const idx = ids.indexOf(s.activeSword);
+    const next = (idx + dir + ids.length) % ids.length;
+    return { activeSword: ids[next] };
+  }),
+
+  unlockSword: (id) => set((s) => {
+    if (s.unlockedSwords.includes(id)) return {};
+    const unlockedSwords = [...s.unlockedSwords, id];
+    return { unlockedSwords, activeSword: id };
+  }),
+
   fireWeapon: (w) => set({ pendingWeaponFire: w }),
   clearPendingWeaponFire: () => set({ pendingWeaponFire: null }),
   triggerAreaTransition: (t) => set({ currentArea: t.area, pendingTransition: t }),
@@ -171,7 +237,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   openChest: (area) => set((s) => {
     if (s.chestsOpened.includes(area)) return {};
     const newOpened = [...s.chestsOpened, area];
-    // Armor chest in boss area
+
+    // Armor chest
     if (area === 'boss-armor') {
       return {
         chestsOpened: newOpened,
@@ -185,6 +252,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
         },
       };
     }
+
+    // Sword chests
+    const swordChest = SWORD_CHESTS.find(c => c.key === area);
+    if (swordChest) {
+      const { swordId } = swordChest;
+      const def = SWORD_DEFS[swordId];
+      const alreadyHave = s.unlockedSwords.includes(swordId);
+      return {
+        chestsOpened: newOpened,
+        unlockedSwords: alreadyHave ? s.unlockedSwords : [...s.unlockedSwords, swordId],
+        activeSword: swordId,
+        itemFanfare: {
+          name: def.name,
+          icon: def.icon,
+          desc: alreadyHave ? 'You already have this blade!' : def.desc,
+        },
+      };
+    }
+
+    // Crystal shard chests
     const rupeesGain = 25 + Math.floor(Math.random() * 20);
     const newRupees  = s.rupees + rupeesGain;
     const newShards  = s.shardsCollected + 1;
@@ -226,7 +313,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
   collectHeartPiece: (id) => set((s) => {
     if (s.heartPiecesCollected.includes(id)) return {};
     const newCollected = [...s.heartPiecesCollected, id];
-    // Every 4 pieces = +1 max heart
     const newMax = 3 + Math.floor(newCollected.length / 4);
     return {
       heartPiecesCollected: newCollected,
@@ -254,11 +340,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setNearShop: (v) => set({ nearShop: v }),
   openShop: () => set({ showShop: true }),
   closeShop: () => set({ showShop: false }),
+
   buyItem: (item, cost) => {
     const s = get();
     if (s.rupees < cost) return false;
-    if (item === 'arrows') set({ rupees: s.rupees - cost, arrows: Math.min(s.arrows + 10, 99) });
+    if (item === 'arrows')    set({ rupees: s.rupees - cost, arrows: Math.min(s.arrows + 10, 99) });
     else if (item === 'bombs') set({ rupees: s.rupees - cost, bombs: Math.min(s.bombs + 5, 20) });
+    else if (item === 'shurikens') set({ rupees: s.rupees - cost, shurikens: Math.min(s.shurikens + 15, 60) });
     else if (item === 'heart') set((st) => ({ rupees: st.rupees - cost, hearts: Math.min(st.hearts + 1, st.maxHearts) }));
     return true;
   },
@@ -274,12 +362,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     rupees: 0,
     arrows: 10,
     bombs: 5,
+    shurikens: 15,
     playerPosition: new THREE.Vector3(0, 0, 0),
     playerDirection: new THREE.Vector3(0, 0, -1),
     swordActive: false,
     spinActive: false,
     isBlocking: false,
     selectedWeapon: 'sword',
+    activeSword: 'crystal',
+    unlockedSwords: ['crystal'],
     currentArea: 'field',
     pendingTransition: null,
     pendingWeaponFire: null,

@@ -20,6 +20,16 @@ const BOOM_LIFE      = 3.5;
 const BOMB_FUSE   = 2.2;
 const BOMB_RADIUS = 3.4;
 
+const WAND_SPEED  = 14;
+const WAND_LIFE   = 1.4;
+const WAND_RADIUS = 0.9;
+const WAND_DAMAGE = 1.5;
+
+const SHURIKEN_SPEED  = 16;
+const SHURIKEN_LIFE   = 0.9;
+const SHURIKEN_RADIUS = 0.6;
+const SHURIKEN_DAMAGE = 0.6;
+
 // ── Individual projectile components ──────────────────────────────
 
 function ArrowProjectile({ id, startPos, vel, onDone }: {
@@ -152,6 +162,120 @@ function BoomerangProjectile({ id, startPos, vel, onDone }: {
   );
 }
 
+// ── Wand of Sparks projectile ─────────────────────────────────────
+function WandProjectile({ id, startPos, vel, onDone }: {
+  id: number; startPos: THREE.Vector3; vel: THREE.Vector3; onDone: (id: number) => void;
+}) {
+  const ref = useRef<THREE.Group>(null);
+  const pos = useRef(startPos.clone());
+  const age = useRef(0);
+  const spin = useRef(0);
+
+  useFrame((_, delta) => {
+    if (useGameStore.getState().gameState !== 'playing') return;
+    age.current += delta;
+    spin.current += delta * 8;
+    pos.current.addScaledVector(vel, delta);
+    if (ref.current) {
+      ref.current.position.copy(pos.current);
+      ref.current.rotation.y = spin.current;
+      // Fade out near end of life
+      const fade = Math.max(0, 1 - age.current / WAND_LIFE);
+      ref.current.scale.setScalar(0.6 + fade * 0.6);
+    }
+
+    hitZones.wand.push({ id, pos: pos.current.clone(), radius: WAND_RADIUS, damage: WAND_DAMAGE });
+
+    if (age.current > WAND_LIFE ||
+        Math.abs(pos.current.x) > 31 || Math.abs(pos.current.z) > 31) {
+      onDone(id);
+    }
+  });
+
+  return (
+    <group ref={ref} position={startPos}>
+      {/* Core orb */}
+      <mesh>
+        <sphereGeometry args={[0.28, 14, 11]} />
+        <meshStandardMaterial
+          color="#cc44ff" emissive="#aa00ff" emissiveIntensity={3}
+          transparent opacity={0.85} roughness={0} metalness={0}
+        />
+      </mesh>
+      {/* Outer shell */}
+      <mesh>
+        <sphereGeometry args={[0.4, 10, 8]} />
+        <meshStandardMaterial
+          color="#ff88ff" emissive="#cc00ff" emissiveIntensity={1.5}
+          transparent opacity={0.3} roughness={0}
+        />
+      </mesh>
+      {/* Spark ring */}
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.35, 0.04, 6, 14]} />
+        <meshStandardMaterial color="#ffaaff" emissive="#ff44ff" emissiveIntensity={4} />
+      </mesh>
+      <pointLight color="#cc44ff" intensity={4} distance={5} decay={2} />
+    </group>
+  );
+}
+
+// ── Shuriken (throwing star) projectile ───────────────────────────
+function ShurikenProjectile({ id, startPos, vel, onDone }: {
+  id: number; startPos: THREE.Vector3; vel: THREE.Vector3; onDone: (id: number) => void;
+}) {
+  const ref = useRef<THREE.Group>(null);
+  const pos = useRef(startPos.clone());
+  const age = useRef(0);
+  const spin = useRef(Math.random() * Math.PI * 2);
+
+  useFrame((_, delta) => {
+    if (useGameStore.getState().gameState !== 'playing') return;
+    age.current += delta;
+    spin.current += delta * 18;
+    pos.current.addScaledVector(vel, delta);
+    if (ref.current) {
+      ref.current.position.copy(pos.current);
+      ref.current.rotation.z = spin.current;
+    }
+
+    hitZones.shurikens.push({ id, pos: pos.current.clone(), radius: SHURIKEN_RADIUS, damage: SHURIKEN_DAMAGE });
+
+    if (age.current > SHURIKEN_LIFE ||
+        Math.abs(pos.current.x) > 31 || Math.abs(pos.current.z) > 31) {
+      onDone(id);
+    }
+  });
+
+  return (
+    <group ref={ref} position={startPos}>
+      {/* 4-point star made of crossed boxes */}
+      <mesh>
+        <boxGeometry args={[0.38, 0.1, 0.1]} />
+        <meshStandardMaterial color="#c0c8d8" metalness={0.88} roughness={0.1} />
+      </mesh>
+      <mesh rotation={[0, 0, Math.PI / 2]}>
+        <boxGeometry args={[0.38, 0.1, 0.1]} />
+        <meshStandardMaterial color="#c0c8d8" metalness={0.88} roughness={0.1} />
+      </mesh>
+      <mesh rotation={[0, 0, Math.PI / 4]}>
+        <boxGeometry args={[0.38, 0.1, 0.1]} />
+        <meshStandardMaterial color="#aabbcc" metalness={0.85} roughness={0.15} />
+      </mesh>
+      <mesh rotation={[0, 0, -Math.PI / 4]}>
+        <boxGeometry args={[0.38, 0.1, 0.1]} />
+        <meshStandardMaterial color="#aabbcc" metalness={0.85} roughness={0.15} />
+      </mesh>
+      {/* Centre disc */}
+      <mesh>
+        <cylinderGeometry args={[0.1, 0.1, 0.12, 8]} />
+        <meshStandardMaterial color="#ffffff" metalness={0.9} roughness={0.05} />
+      </mesh>
+      <pointLight color="#88aaff" intensity={1.5} distance={3} decay={2} />
+    </group>
+  );
+}
+
 // Explosion flash (post-boom visual)
 function ExplosionFlash({ pos, id, onDone }: { pos: THREE.Vector3; id: number; onDone: (id: number) => void }) {
   const ref = useRef<THREE.Mesh>(null);
@@ -179,10 +303,10 @@ function ExplosionFlash({ pos, id, onDone }: { pos: THREE.Vector3; id: number; o
   );
 }
 
-// ── Weapon manager (called from Player on keypress) ───────────────
+// ── Weapon manager ────────────────────────────────────────────────
 interface ProjEntry {
   id: number;
-  type: 'arrow' | 'bomb' | 'boomerang';
+  type: 'arrow' | 'bomb' | 'boomerang' | 'wand' | 'shuriken';
   startPos: THREE.Vector3;
   vel: THREE.Vector3;
 }
@@ -193,13 +317,14 @@ export function Weapons() {
   const [projectiles, setProjectiles] = useState<ProjEntry[]>([]);
   const [explosions, setExplosions] = useState<ExplosionEntry[]>([]);
 
-  // Clear hit zones each frame
   useFrame(() => {
+    // Clear hit zones each frame
     hitZones.arrows.length = 0;
     hitZones.boomerang = null;
     hitZones.explosions.length = 0;
+    hitZones.wand.length = 0;
+    hitZones.shurikens.length = 0;
 
-    // Check for pending weapon fire
     const store = useGameStore.getState();
     if (store.pendingWeaponFire) {
       const w = store.pendingWeaponFire;
@@ -231,6 +356,26 @@ export function Weapons() {
             startPos, vel: dir.clone().multiplyScalar(BOOM_SPEED),
           }]);
         }
+      } else if (w === 'wand') {
+        // Wand: magic orb — unlimited (cooldown handled in Player.tsx)
+        setProjectiles(prev => [...prev, {
+          id: nextId(), type: 'wand',
+          startPos, vel: dir.clone().multiplyScalar(WAND_SPEED),
+        }]);
+      } else if (w === 'shuriken') {
+        // 3 shurikens in a spread, uses 1 shuriken each
+        if (store.useShuriken()) {
+          const right = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
+          const offsets = [0, -0.22, 0.22]; // center, left, right spread
+          offsets.forEach(offset => {
+            const spreadVel = dir.clone().addScaledVector(right, offset).normalize().multiplyScalar(SHURIKEN_SPEED);
+            setProjectiles(prev => [...prev, {
+              id: nextId(), type: 'shuriken',
+              startPos: startPos.clone().addScaledVector(right, offset * 0.4),
+              vel: spreadVel,
+            }]);
+          });
+        }
       }
     }
   });
@@ -259,9 +404,15 @@ export function Weapons() {
               const entry = projectiles.find(pp => pp.id === id);
               removeProjAndMaybeExplode(id, 'bomb', entry?.startPos);
             }} />
-        ) : (
+        ) : p.type === 'boomerang' ? (
           <BoomerangProjectile key={p.id} id={p.id} startPos={p.startPos} vel={p.vel}
             onDone={(id) => removeProjAndMaybeExplode(id, 'boomerang')} />
+        ) : p.type === 'wand' ? (
+          <WandProjectile key={p.id} id={p.id} startPos={p.startPos} vel={p.vel}
+            onDone={(id) => removeProjAndMaybeExplode(id, 'wand')} />
+        ) : (
+          <ShurikenProjectile key={p.id} id={p.id} startPos={p.startPos} vel={p.vel}
+            onDone={(id) => removeProjAndMaybeExplode(id, 'shuriken')} />
         )
       )}
       {explosions.map(e => (

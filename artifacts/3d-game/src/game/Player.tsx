@@ -3,17 +3,27 @@ import { useFrame } from '@react-three/fiber';
 import { useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { Controls } from './controls';
-import { useGameStore } from './store';
+import { useGameStore, SWORD_DEFS, SWORD_CHESTS, SwordId } from './store';
 import { sfxSword, sfxArrow, sfxBomb, sfxBoomerang } from './AudioManager';
 
 const SPEED = 5;
 
-const CHEST_POSITIONS: Record<string, THREE.Vector3> = {
-  field:   new THREE.Vector3(0, 0, -22),
-  forest:  new THREE.Vector3(0, 0, 0),
-  desert:  new THREE.Vector3(0, 0, -24),
+// Main shard/armor chests
+const MAIN_CHEST_POSITIONS: Record<string, THREE.Vector3> = {
+  field:        new THREE.Vector3(0, 0, -22),
+  forest:       new THREE.Vector3(0, 0, 0),
+  desert:       new THREE.Vector3(0, 0, -24),
   'boss-armor': new THREE.Vector3(-8, 0, 8),
 };
+
+// All chest positions (main + sword upgrade chests)
+const ALL_CHESTS: { key: string; pos: THREE.Vector3; area: string }[] = [
+  { key: 'field',       pos: new THREE.Vector3(0, 0, -22),   area: 'field'  },
+  { key: 'forest',      pos: new THREE.Vector3(0, 0, 0),     area: 'forest' },
+  { key: 'desert',      pos: new THREE.Vector3(0, 0, -24),   area: 'desert' },
+  { key: 'boss-armor',  pos: new THREE.Vector3(-8, 0, 8),    area: 'boss'   },
+  ...SWORD_CHESTS.map(c => ({ key: c.key, pos: new THREE.Vector3(...c.pos), area: c.area })),
+];
 
 // ── Colour palette — Adelynn ─────────────────────────────────────
 const C = {
@@ -294,45 +304,150 @@ function ShieldRaised() {
   );
 }
 
-// Sword mesh
-const SW = {
-  blade: '#f48fb1', bladeHi: '#fce4ec', fuller: '#e0e0e0',
-  guard: '#b0bec5', guardHi: '#eceff1', grip: '#e91e8c',
-  gripWrap: '#cfd8dc', pommel: '#b0bec5', pommelHi: '#eceff1',
-};
-
-function SwordMesh() {
+function SwordMesh({ swordId }: { swordId: SwordId }) {
+  const def = SWORD_DEFS[swordId];
   return (
     <group position={[0.04, -0.88, 0]}>
+      {/* Pommel */}
       <mesh castShadow position={[0, -0.18, 0]}>
         <sphereGeometry args={[0.09, 12, 9]} />
-        <meshStandardMaterial color={SW.pommel} metalness={0.65} roughness={0.2} />
+        <meshStandardMaterial color={def.guard} metalness={0.65} roughness={0.2} />
       </mesh>
+      {/* Grip */}
       <mesh castShadow position={[0, 0.04, 0]}>
         <cylinderGeometry args={[0.048, 0.056, 0.42, 9]} />
-        <meshStandardMaterial color={SW.grip} roughness={0.72} />
+        <meshStandardMaterial color={def.grip} roughness={0.72} />
       </mesh>
+      {/* Grip wraps */}
       {[-0.08, 0.04, 0.16].map((y, i) => (
         <mesh key={i} position={[0, y, 0]}>
           <torusGeometry args={[0.056, 0.011, 6, 14]} />
-          <meshStandardMaterial color={SW.gripWrap} metalness={0.55} roughness={0.28} />
+          <meshStandardMaterial color="#cfd8dc" metalness={0.55} roughness={0.28} />
         </mesh>
       ))}
+      {/* Guard */}
       <mesh castShadow position={[0, 0.27, 0]}>
         <boxGeometry args={[0.64, 0.078, 0.096]} />
-        <meshStandardMaterial color={SW.guard} metalness={0.58} roughness={0.22} />
+        <meshStandardMaterial color={def.guard} metalness={0.58} roughness={0.22} />
       </mesh>
+      {/* Blade body */}
       <mesh castShadow position={[0, 1.0, 0]}>
         <boxGeometry args={[0.13, 1.1, 0.11]} />
-        <meshStandardMaterial color={SW.blade} metalness={0.85} roughness={0.08}
-          emissive={SW.blade} emissiveIntensity={0.4} />
+        <meshStandardMaterial color={def.blade} metalness={0.85} roughness={0.08}
+          emissive={def.emissive} emissiveIntensity={def.emissiveInt} />
       </mesh>
+      {/* Blade tip */}
       <mesh castShadow position={[0, 1.6, 0]}>
         <coneGeometry args={[0.065, 0.24, 4]} />
-        <meshStandardMaterial color={SW.blade} metalness={0.85} roughness={0.08}
-          emissive={SW.blade} emissiveIntensity={0.4} />
+        <meshStandardMaterial color={def.blade} metalness={0.85} roughness={0.08}
+          emissive={def.emissive} emissiveIntensity={def.emissiveInt} />
       </mesh>
-      <pointLight position={[0, 1.1, 0]} color="#ff80c0" intensity={1.2} distance={2.5} decay={2} />
+
+      {/* ── Per-sword special decorations ── */}
+      {swordId === 'flame' && <>
+        <mesh position={[0, 1.76, 0]}>
+          <coneGeometry args={[0.15, 0.5, 8]} />
+          <meshStandardMaterial color="#ff4400" emissive="#ff6600" emissiveIntensity={4} transparent opacity={0.7} />
+        </mesh>
+        <mesh position={[0, 2.05, 0]}>
+          <coneGeometry args={[0.08, 0.35, 6]} />
+          <meshStandardMaterial color="#ffcc00" emissive="#ffdd00" emissiveIntensity={5} transparent opacity={0.6} />
+        </mesh>
+      </>}
+
+      {swordId === 'thunder' && <>
+        {[0.45, 0.85, 1.25].map((y, i) => (
+          <mesh key={i} position={[i % 2 === 0 ? 0.08 : -0.08, y, 0.07]} rotation={[0, 0, i % 2 === 0 ? 0.5 : -0.5]}>
+            <boxGeometry args={[0.07, 0.18, 0.03]} />
+            <meshStandardMaterial color="#ffee00" emissive="#ffcc00" emissiveIntensity={4} />
+          </mesh>
+        ))}
+      </>}
+
+      {swordId === 'frost' && <>
+        <mesh position={[0, 0.27, 0.08]} rotation={[0, 0, Math.PI / 6]}>
+          <torusGeometry args={[0.16, 0.026, 6, 6]} />
+          <meshStandardMaterial color="#80d4ff" emissive="#00aaff" emissiveIntensity={2.5} />
+        </mesh>
+        <mesh position={[0, 1.75, 0]}>
+          <sphereGeometry args={[0.07, 8, 6]} />
+          <meshStandardMaterial color="#ffffff" emissive="#80d4ff" emissiveIntensity={3} transparent opacity={0.85} />
+        </mesh>
+      </>}
+
+      {swordId === 'shadow' && <>
+        <mesh position={[0, 1.1, 0.08]}>
+          <boxGeometry args={[0.03, 1.0, 0.02]} />
+          <meshStandardMaterial color="#220033" emissive="#6600cc" emissiveIntensity={1.5} />
+        </mesh>
+        <mesh position={[0, 1.72, 0]}>
+          <sphereGeometry args={[0.08, 8, 6]} />
+          <meshStandardMaterial color="#440077" emissive="#9900ff" emissiveIntensity={4} transparent opacity={0.8} />
+        </mesh>
+      </>}
+
+      {swordId === 'holy' && <>
+        <mesh position={[0, 0.27, 0.06]}>
+          <boxGeometry args={[0.6, 0.03, 0.03]} />
+          <meshStandardMaterial color="#ffffcc" emissive="#ffffaa" emissiveIntensity={3} />
+        </mesh>
+        <mesh position={[0, 1.82, 0]}>
+          <sphereGeometry args={[0.12, 10, 8]} />
+          <meshStandardMaterial color="#ffffee" emissive="#ffffcc" emissiveIntensity={5} transparent opacity={0.85} />
+        </mesh>
+      </>}
+
+      {swordId === 'viper' && <>
+        <mesh position={[0.07, 1.66, 0]} rotation={[0, 0, -0.45]}>
+          <coneGeometry args={[0.04, 0.28, 5]} />
+          <meshStandardMaterial color="#00cc44" emissive="#00ff55" emissiveIntensity={3} />
+        </mesh>
+        <mesh position={[0, 0.9, 0.08]}>
+          <sphereGeometry args={[0.045, 6, 5]} />
+          <meshStandardMaterial color="#00ff55" emissive="#00ff55" emissiveIntensity={4} transparent opacity={0.7} />
+        </mesh>
+      </>}
+
+      {swordId === 'storm' && <>
+        <mesh position={[0, 0.28, 0]}>
+          <torusGeometry args={[0.22, 0.035, 8, 14]} />
+          <meshStandardMaterial color="#00d4cc" emissive="#00cccc" emissiveIntensity={2.5} transparent opacity={0.9} />
+        </mesh>
+        {[0.55, 1.05, 1.45].map((y, i) => (
+          <mesh key={i} position={[i % 2 === 0 ? 0.06 : -0.06, y, 0.07]}>
+            <sphereGeometry args={[0.04, 6, 5]} />
+            <meshStandardMaterial color="#aaffff" emissive="#00cccc" emissiveIntensity={3} />
+          </mesh>
+        ))}
+      </>}
+
+      {swordId === 'dragon' && <>
+        {[0.5, 0.8, 1.1, 1.4].map((y, i) => (
+          <mesh key={i} position={[0.09, y, 0.07]}>
+            <boxGeometry args={[0.05, 0.1, 0.05]} />
+            <meshStandardMaterial color="#ff2200" emissive="#cc1100" emissiveIntensity={2.5} />
+          </mesh>
+        ))}
+        <mesh position={[0, 1.78, 0]}>
+          <sphereGeometry args={[0.1, 8, 6]} />
+          <meshStandardMaterial color="#ff4400" emissive="#ff2200" emissiveIntensity={4} transparent opacity={0.9} />
+        </mesh>
+      </>}
+
+      {swordId === 'cosmos' && <>
+        {[0.5, 0.85, 1.2, 1.55].map((y, i) => (
+          <mesh key={i} position={[i % 2 === 0 ? 0.07 : -0.07, y, 0.07]}>
+            <sphereGeometry args={[0.055, 8, 6]} />
+            <meshStandardMaterial color="#cc00ff" emissive="#aa00ff" emissiveIntensity={4} />
+          </mesh>
+        ))}
+        <mesh position={[0, 1.8, 0]}>
+          <sphereGeometry args={[0.1, 10, 8]} />
+          <meshStandardMaterial color="#ee88ff" emissive="#cc00ff" emissiveIntensity={5} transparent opacity={0.85} />
+        </mesh>
+      </>}
+
+      <pointLight position={[0, 1.1, 0]} color={def.light} intensity={1.5} distance={2.5} decay={2} />
     </group>
   );
 }
@@ -363,12 +478,14 @@ export function Player() {
   const facingDir     = useRef(new THREE.Vector3(0, 0, -1));
   const armorLevel    = useRef(0);
 
-  const prevNext     = useRef(false);
-  const prevPrev     = useRef(false);
-  const prevBow      = useRef(false);
-  const prevBomb     = useRef(false);
-  const prevBoom     = useRef(false);
-  const prevInteract = useRef(false);
+  const prevNext      = useRef(false);
+  const prevPrev      = useRef(false);
+  const prevBow       = useRef(false);
+  const prevBomb      = useRef(false);
+  const prevBoom      = useRef(false);
+  const prevInteract  = useRef(false);
+  const prevSwordCycle = useRef(false);
+  const wandCooldown  = useRef(0);
 
   // Track armor level without re-renders
   useGameStore.subscribe((s) => { armorLevel.current = s.armorLevel; });
@@ -386,16 +503,22 @@ export function Player() {
     }
 
     const { forward, back, left, right, attack, interact,
-            nextWeapon, prevWeapon, bow, bomb, boomerang, shield } = getState();
+            nextWeapon, prevWeapon, bow, bomb, boomerang, shield, swordCycle } = getState();
 
     // Shield block
     store.setBlocking(shield);
 
-    // Weapon cycling
+    // Weapon cycling (Q/Shift = cycle sub-weapon, Z = cycle sword)
     if (nextWeapon && !prevNext.current) store.cycleWeapon(1);
     if (prevWeapon && !prevPrev.current) store.cycleWeapon(-1);
     prevNext.current = nextWeapon;
     prevPrev.current = prevWeapon;
+
+    if (swordCycle && !prevSwordCycle.current) store.cycleSword(1);
+    prevSwordCycle.current = swordCycle;
+
+    // Wand cooldown tick
+    if (wandCooldown.current > 0) wandCooldown.current -= delta;
 
     const sel = store.selectedWeapon;
 
@@ -431,9 +554,17 @@ export function Player() {
       if (!attack) chargeTime.current = 0;
     } else {
       if (attack && !wasHeld) {
-        if (sel === 'bow')       { store.fireWeapon('bow');       sfxArrow();     }
-        else if (sel === 'bomb') { store.fireWeapon('bomb');      sfxBomb();      }
+        if (sel === 'bow')        { store.fireWeapon('bow');       sfxArrow();     }
+        else if (sel === 'bomb')  { store.fireWeapon('bomb');      sfxBomb();      }
         else if (sel === 'boomerang') { store.fireWeapon('boomerang'); sfxBoomerang(); }
+        else if (sel === 'wand') {
+          if (wandCooldown.current <= 0) {
+            store.fireWeapon('wand');
+            wandCooldown.current = 0.8;
+            sfxArrow();
+          }
+        }
+        else if (sel === 'shuriken') { store.fireWeapon('shuriken'); sfxArrow(); }
       }
     }
 
@@ -476,15 +607,18 @@ export function Player() {
     store.setPlayerPosition(pos.current.clone());
     store.setPlayerDirection(facingDir.current.clone());
 
-    // Chest check
-    const chestArea = store.currentArea;
-    const chestKey  = chestArea === 'boss' ? 'boss-armor' : chestArea;
-    const chestPos  = CHEST_POSITIONS[chestKey];
-    const alreadyOpened = store.chestsOpened.includes(chestKey);
-    const nearChest = chestPos && !alreadyOpened
-      ? pos.current.distanceTo(chestPos) < 2.5
-      : false;
-    store.setNearChest(nearChest);
+    // Multi-chest proximity check (shard/armor + sword upgrade chests)
+    const chestsOpened = store.chestsOpened;
+    let nearChestId: string | null = null;
+    for (const c of ALL_CHESTS) {
+      if (c.area !== store.currentArea) continue;
+      if (chestsOpened.includes(c.key)) continue;
+      if (pos.current.distanceTo(c.pos) < 2.5) {
+        nearChestId = c.key;
+        break;
+      }
+    }
+    store.setNearChest(nearChestId !== null);
 
     // E key rising-edge interaction
     const interactJustPressed = interact && !prevInteract.current;
@@ -494,8 +628,8 @@ export function Player() {
         store.closeShop();
       } else if (store.activeDialogue) {
         store.advanceDialogue();
-      } else if (nearChest) {
-        store.openChest(chestKey);
+      } else if (nearChestId !== null) {
+        store.openChest(nearChestId);
       } else if (store.nearShop) {
         store.openShop();
       } else if (store.nearFountain) {
@@ -572,8 +706,9 @@ export function Player() {
     }
   });
 
-  const armorLvl = useGameStore(s => s.armorLevel);
+  const armorLvl   = useGameStore(s => s.armorLevel);
   const isBlocking = useGameStore(s => s.isBlocking);
+  const activeSword = useGameStore(s => s.activeSword);
 
   return (
     <group ref={groupRef}>
@@ -586,7 +721,7 @@ export function Player() {
         </HeroArm>
         <HeroArm side={1}  armRef={rightArmRef}>
           <group ref={swordGroupRef} visible={false}>
-            <SwordMesh />
+            <SwordMesh swordId={activeSword} />
           </group>
         </HeroArm>
         <HeroHead />

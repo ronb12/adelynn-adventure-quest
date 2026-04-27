@@ -1,7 +1,7 @@
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { useGameStore, AreaId } from './store';
+import { useGameStore, AreaId, SWORD_DEFS } from './store';
 import { hitZones } from './hitZones';
 import { sfxHit, sfxDeath } from './AudioManager';
 
@@ -512,6 +512,8 @@ export function Enemies() {
     const store = useGameStore.getState();
     if (store.gameState !== 'playing' || !groupRef.current) return;
     const { playerPosition, swordActive, swordPosition, spinActive, spinPosition } = store;
+    const swordDmg = SWORD_DEFS[store.activeSword].damage;
+    const spinRadius = store.activeSword === 'storm' ? 4.0 : 2.8;
     const t = state.clock.elapsedTime;
     const children = groupRef.current.children;
 
@@ -567,14 +569,14 @@ export function Enemies() {
       // Sword hit
       if (swordActive && enemy.invulnTimer <= 0) {
         if (enemy.pos.clone().setY(0).distanceTo(swordPosition.clone().setY(0)) < 1.7) {
-          applyHit(enemy, 1, swordPosition);
+          applyHit(enemy, swordDmg, swordPosition);
           if (enemy.dead) child.visible = false;
         }
       }
-      // Spin attack — large radius
+      // Spin attack — radius depends on active sword (storm = wider)
       if (spinActive && enemy.invulnTimer <= 0) {
-        if (enemy.pos.clone().setY(0).distanceTo(spinPosition.clone().setY(0)) < 2.8) {
-          applyHit(enemy, 2, spinPosition);
+        if (enemy.pos.clone().setY(0).distanceTo(spinPosition.clone().setY(0)) < spinRadius) {
+          applyHit(enemy, swordDmg * 2, spinPosition);
           if (enemy.dead) child.visible = false;
         }
       }
@@ -583,6 +585,24 @@ export function Enemies() {
         if (enemy.invulnTimer <= 0 &&
             enemy.pos.clone().setY(0).distanceTo(zone.pos.clone().setY(0)) < zone.radius+0.3) {
           applyHit(enemy, 1, zone.pos);
+          if (enemy.dead) child.visible = false;
+          break;
+        }
+      }
+      // Wand of Sparks hits
+      for (const zone of hitZones.wand) {
+        if (enemy.invulnTimer <= 0 &&
+            enemy.pos.clone().setY(0).distanceTo(zone.pos.clone().setY(0)) < zone.radius+0.2) {
+          applyHit(enemy, zone.damage ?? 1.5, zone.pos);
+          if (enemy.dead) child.visible = false;
+          break;
+        }
+      }
+      // Shuriken hits
+      for (const zone of hitZones.shurikens) {
+        if (enemy.invulnTimer <= 0 &&
+            enemy.pos.clone().setY(0).distanceTo(zone.pos.clone().setY(0)) < zone.radius+0.15) {
+          applyHit(enemy, zone.damage ?? 0.6, zone.pos);
           if (enemy.dead) child.visible = false;
           break;
         }
@@ -726,17 +746,17 @@ export function BossEnemy() {
     }
 
     // Player weapon hits boss
-    const bossDist = bossPos.current.clone().setY(0).distanceTo(
-      swordPosition.clone().setY(0)
-    );
+    const bossDmg    = SWORD_DEFS[store.activeSword].damage;
+    const bossSpinR  = store.activeSword === 'storm' ? 4.5 : 3.5;
+    const bossDist   = bossPos.current.clone().setY(0).distanceTo(swordPosition.clone().setY(0));
     if (swordActive && bossInvuln.current <= 0 && bossDist < 2.0) {
-      store.damageBoss(1);
+      store.damageBoss(bossDmg);
       bossInvuln.current = 0.5;
       sfxHit();
     }
     if (spinActive && bossInvuln.current <= 0 &&
-        bossPos.current.clone().setY(0).distanceTo(spinPosition.clone().setY(0)) < 3.5) {
-      store.damageBoss(2);
+        bossPos.current.clone().setY(0).distanceTo(spinPosition.clone().setY(0)) < bossSpinR) {
+      store.damageBoss(bossDmg * 2);
       bossInvuln.current = 0.5;
       sfxHit();
     }
@@ -745,6 +765,24 @@ export function BossEnemy() {
           bossPos.current.clone().setY(0).distanceTo(zone.pos.clone().setY(0)) < zone.radius+0.6) {
         store.damageBoss(1);
         bossInvuln.current = 0.4;
+        sfxHit();
+        break;
+      }
+    }
+    for (const zone of hitZones.wand) {
+      if (bossInvuln.current <= 0 &&
+          bossPos.current.clone().setY(0).distanceTo(zone.pos.clone().setY(0)) < zone.radius+0.5) {
+        store.damageBoss(zone.damage ?? 1.5);
+        bossInvuln.current = 0.4;
+        sfxHit();
+        break;
+      }
+    }
+    for (const zone of hitZones.shurikens) {
+      if (bossInvuln.current <= 0 &&
+          bossPos.current.clone().setY(0).distanceTo(zone.pos.clone().setY(0)) < zone.radius+0.4) {
+        store.damageBoss(zone.damage ?? 0.6);
+        bossInvuln.current = 0.3;
         sfxHit();
         break;
       }

@@ -6,11 +6,14 @@ export interface HitZone {
   id: number;
   pos: THREE.Vector3;
   radius: number;
-  stun?: boolean; // does not kill, only stuns
+  damage?: number;
+  stun?: boolean;
 }
 
 export const hitZones = {
-  arrows: [] as HitZone[],
+  arrows:    [] as HitZone[],
   boomerang: null as HitZone | null,
-  explosions: [] as HitZone[], // single-frame explosion hits
+  explosions: [] as HitZone[],
+  wand:      [] as HitZone[],
+  shurikens: [] as HitZone[],
 };

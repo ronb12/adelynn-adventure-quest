@@ -11,6 +11,7 @@ export enum Controls {
   nextWeapon = 'nextWeapon',
   prevWeapon = 'prevWeapon',
   shield = 'shield',
+  swordCycle = 'swordCycle',
 }
 
 export const keyMap = [
@@ -26,7 +27,8 @@ export const keyMap = [
   { name: Controls.nextWeapon, keys: ['KeyQ', 'Tab'] },
   { name: Controls.prevWeapon, keys: ['ShiftLeft'] },
   { name: Controls.shield,     keys: ['KeyF'] },
+  { name: Controls.swordCycle, keys: ['KeyZ'] },
 ];
 
-export const WEAPONS = ['sword', 'bow', 'bomb', 'boomerang'] as const;
+export const WEAPONS = ['sword', 'bow', 'bomb', 'boomerang', 'wand', 'shuriken'] as const;
 export type WeaponId = typeof WEAPONS[number];

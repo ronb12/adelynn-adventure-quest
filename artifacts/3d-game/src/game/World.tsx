@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { Sky } from '@react-three/drei';
-import { useGameStore, AreaId, AreaTransition } from './store';
+import { useGameStore, AreaId, AreaTransition, SWORD_CHESTS, SWORD_DEFS } from './store';
 import { Village } from './Village';
 import { NPCManager } from './NPCs';
 
@@ -140,6 +140,86 @@ function TreasureChest({ pos, area }: { pos: [number, number, number]; area: str
   );
 }
 
+// ─── Sword Upgrade Chest ─────────────────────────────────────────
+function SwordChest({ chestKey, pos, swordId }: {
+  chestKey: string;
+  pos: [number, number, number];
+  swordId: string;
+}) {
+  const chestsOpened = useGameStore(s => s.chestsOpened);
+  const opened = chestsOpened.includes(chestKey);
+  const def = SWORD_DEFS[swordId as keyof typeof SWORD_DEFS];
+  const glow = def?.light ?? '#ffdd88';
+
+  return (
+    <group position={[pos[0], pos[1] + 0.5, pos[2]]}>
+      {/* Gold chest base */}
+      <mesh castShadow>
+        <boxGeometry args={[1.3, 0.85, 0.95]} />
+        <meshStandardMaterial color="#8b6820" roughness={0.75} metalness={0.2} />
+      </mesh>
+      {/* Gold trim sides */}
+      <mesh castShadow position={[-0.45, 0.24, 0]}>
+        <boxGeometry args={[0.07, 0.9, 0.97]} />
+        <meshStandardMaterial color="#ddaa20" metalness={0.8} roughness={0.2} />
+      </mesh>
+      <mesh castShadow position={[0.45, 0.24, 0]}>
+        <boxGeometry args={[0.07, 0.9, 0.97]} />
+        <meshStandardMaterial color="#ddaa20" metalness={0.8} roughness={0.2} />
+      </mesh>
+      {/* Lid */}
+      <group position={[0, 0.5, -0.45]} rotation={[opened ? -Math.PI * 0.72 : 0, 0, 0]}>
+        <mesh castShadow position={[0, 0.09, 0.48]}>
+          <boxGeometry args={[1.38, 0.22, 0.97]} />
+          <meshStandardMaterial color="#aa8824" roughness={0.6} metalness={0.35} />
+        </mesh>
+      </group>
+      {/* Gold lock (hidden when opened) */}
+      {!opened && (
+        <mesh position={[0, 0.44, 0.49]}>
+          <boxGeometry args={[0.28, 0.26, 0.06]} />
+          <meshStandardMaterial color={glow} metalness={0.9} roughness={0.05}
+            emissive={glow} emissiveIntensity={1.2} />
+        </mesh>
+      )}
+      {/* Beacon beam (unopened) */}
+      {!opened && <>
+        <mesh position={[0, 3.5, 0]}>
+          <cylinderGeometry args={[0.06, 0.18, 7, 8]} />
+          <meshStandardMaterial color={glow} emissive={glow} emissiveIntensity={2}
+            transparent opacity={0.25} />
+        </mesh>
+        <mesh position={[0, 2.5, 0]}>
+          <sphereGeometry args={[0.1, 9, 7]} />
+          <meshStandardMaterial color={glow} emissive={glow} emissiveIntensity={5} />
+        </mesh>
+      </>}
+      {/* Sword icon floating when opened */}
+      {opened && (
+        <mesh position={[0, 0.9, 0]} rotation={[0.3, Math.PI / 4, 0]}>
+          <octahedronGeometry args={[0.22, 0]} />
+          <meshStandardMaterial color={glow} transparent opacity={0.75}
+            emissive={glow} emissiveIntensity={3} metalness={0.5} />
+        </mesh>
+      )}
+      <pointLight position={[0, opened ? 1.2 : 2.5, 0]} color={glow}
+        intensity={opened ? 0.8 : 4} distance={opened ? 5 : 12} decay={2} />
+    </group>
+  );
+}
+
+// Renders all sword chests belonging to a given area
+function SwordChestsForArea({ area }: { area: string }) {
+  const chestsInArea = SWORD_CHESTS.filter(c => c.area === area);
+  return (
+    <>
+      {chestsInArea.map(c => (
+        <SwordChest key={c.key} chestKey={c.key} pos={c.pos} swordId={c.swordId} />
+      ))}
+    </>
+  );
+}
+
 // ─── Fairy Fountain ───────────────────────────────────────────────
 function FairyFountain({ pos }: { pos: [number, number, number] }) {
   const t = useRef(0);
@@ -270,6 +350,7 @@ function FieldArea() {
       ))}
 
       <TreasureChest pos={chestPos} area="field" />
+      <SwordChestsForArea area="field" />
       <Village />
 
       {/* Fairy Fountain */}
@@ -350,6 +431,7 @@ function ForestArea() {
       ))}
 
       <TreasureChest pos={[0, 0.5, 0]} area="forest" />
+      <SwordChestsForArea area="forest" />
       {/* Fairy Fountain */}
       <FairyFountain pos={[18, 0, -18]} />
       <Boundary />
@@ -425,6 +507,7 @@ function DesertArea() {
       ))}
 
       <TreasureChest pos={chestPos} area="desert" />
+      <SwordChestsForArea area="desert" />
       {/* Fairy Fountain */}
       <FairyFountain pos={[20, 0, 20]} />
       <Boundary />
@@ -493,6 +576,7 @@ function BossArea() {
 
       {/* Armor chest */}
       <TreasureChest pos={[-8, 0.5, 8]} area="boss-armor" />
+      <SwordChestsForArea area="boss" />
 
       <Boundary />
     </>

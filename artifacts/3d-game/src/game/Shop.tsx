@@ -1,7 +1,7 @@
 import { useGameStore } from './store';
 
 interface ShopItem {
-  id: 'arrows' | 'bombs' | 'heart';
+  id: 'arrows' | 'bombs' | 'heart' | 'shurikens';
   icon: string;
   name: string;
   desc: string;
@@ -9,9 +9,10 @@ interface ShopItem {
 }
 
 const ITEMS: ShopItem[] = [
-  { id: 'arrows', icon: '🏹', name: '10 Arrows',   desc: 'Restock your quiver',    cost: 20 },
-  { id: 'bombs',  icon: '💣', name: '5 Bombs',      desc: 'Blast your foes',        cost: 30 },
-  { id: 'heart',  icon: '❤️', name: 'Potion',       desc: 'Restore 1 heart',        cost: 25 },
+  { id: 'arrows',   icon: '🏹', name: '10 Arrows',    desc: 'Restock your quiver',      cost: 20 },
+  { id: 'bombs',    icon: '💣', name: '5 Bombs',       desc: 'Blast your foes',           cost: 30 },
+  { id: 'heart',    icon: '❤️', name: 'Potion',        desc: 'Restore 1 heart',           cost: 25 },
+  { id: 'shurikens',icon: '⭐', name: '15 Shurikens',  desc: 'Razor-sharp throwing stars', cost: 25 },
 ];
 
 export function ShopUI() {
@@ -59,11 +60,11 @@ export function ShopUI() {
               >
                 <span className="text-2xl">{item.icon}</span>
                 <div className="flex-1">
-                  <div className="text-amber-100 font-bold text-sm">{item.name}</div>
-                  <div className="text-gray-400 text-xs">{item.desc}</div>
+                  <div className="text-amber-200 font-semibold text-sm">{item.name}</div>
+                  <div className="text-amber-600 text-xs">{item.desc}</div>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-4 bg-green-400 rotate-45 border border-green-600 scale-75" />
+                  <div className="w-3 h-3.5 bg-green-400 rotate-45 border border-green-600" />
                   <span className={`font-bold text-sm ${canAfford ? 'text-green-300' : 'text-gray-500'}`}>
                     {item.cost}
                   </span>
@@ -73,14 +74,10 @@ export function ShopUI() {
           })}
         </div>
 
-        {/* Close */}
-        <button
-          onClick={closeShop}
-          className="w-full py-2 rounded-xl border border-amber-600 text-amber-300 text-sm font-bold hover:bg-amber-900/30 cursor-pointer transition-all"
-        >
-          Leave Shop (E)
-        </button>
-        <p className="text-center text-gray-600 text-xs mt-2 font-mono">Press E again to close</p>
+        {/* Close hint */}
+        <div className="text-center text-amber-700 text-xs">
+          Press <kbd className="bg-amber-900/50 px-1 rounded">E</kbd> to close
+        </div>
       </div>
     </div>
   );

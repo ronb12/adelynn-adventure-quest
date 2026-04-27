@@ -1,13 +1,13 @@
 import { useEffect } from 'react';
-import { useGameStore } from './store';
+import { useGameStore, SWORD_DEFS } from './store';
 import { WEAPONS, WeaponId } from './controls';
 import { NPC_DATA } from './npcData';
 
 const WEAPON_ICONS: Record<WeaponId, string> = {
-  sword: '⚔', bow: '🏹', bomb: '💣', boomerang: '🪃',
+  sword: '⚔', bow: '🏹', bomb: '💣', boomerang: '🪃', wand: '🪄', shuriken: '⭐',
 };
 const WEAPON_LABELS: Record<WeaponId, string> = {
-  sword: 'Sword', bow: 'Bow', bomb: 'Bomb', boomerang: 'Rang',
+  sword: 'Sword', bow: 'Bow', bomb: 'Bomb', boomerang: 'Rang', wand: 'Wand', shuriken: 'Stars',
 };
 const AREA_NAMES: Record<string, string> = {
   field: 'Sunfield Plains', forest: 'Whisper Woods', desert: 'Ashrock Summit', boss: "Malgrath's Lair",
@@ -84,30 +84,49 @@ function ShardTracker() {
 
 // ── Weapon Bar ────────────────────────────────────────────────────
 function WeaponBar() {
-  const selected = useGameStore(s => s.selectedWeapon);
-  const arrows   = useGameStore(s => s.arrows);
-  const bombs    = useGameStore(s => s.bombs);
-  const ammo: Partial<Record<WeaponId, number>> = { bow: arrows, bomb: bombs };
+  const selected      = useGameStore(s => s.selectedWeapon);
+  const arrows        = useGameStore(s => s.arrows);
+  const bombs         = useGameStore(s => s.bombs);
+  const shurikens     = useGameStore(s => s.shurikens);
+  const activeSword   = useGameStore(s => s.activeSword);
+  const unlockedSwords = useGameStore(s => s.unlockedSwords);
+  const ammo: Partial<Record<WeaponId, number>> = { bow: arrows, bomb: bombs, shuriken: shurikens };
   return (
-    <div className="flex gap-1 items-end">
-      {WEAPONS.map(w => {
-        const active = w === selected;
-        return (
-          <div key={w}
-            className={`flex flex-col items-center px-1.5 py-0.5 rounded-lg border-2 transition-all
-              ${active ? 'bg-amber-400/90 border-amber-600 scale-110 shadow-lg' : 'bg-black/50 border-gray-600 opacity-70'}`}>
-            <span className="text-base leading-none">{WEAPON_ICONS[w]}</span>
-            <span className={`text-xs font-bold ${active ? 'text-amber-900' : 'text-gray-300'}`}>
-              {WEAPON_LABELS[w]}
-            </span>
-            {ammo[w] !== undefined && (
-              <span className={`text-xs font-mono ${active ? 'text-amber-800' : 'text-gray-400'}`}>
-                ×{ammo[w]}
-              </span>
-            )}
+    <div className="flex flex-col gap-1">
+      {/* Active sword info (Z to cycle) */}
+      {selected === 'sword' && unlockedSwords.length > 1 && (
+        <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-black/60 border border-purple-700/60">
+          <span className="text-sm">{SWORD_DEFS[activeSword].icon}</span>
+          <div className="flex flex-col">
+            <span className="text-purple-200 text-xs font-bold leading-tight">{SWORD_DEFS[activeSword].name}</span>
+            <span className="text-purple-500 text-xs leading-tight">[Z] to cycle</span>
           </div>
-        );
-      })}
+          <span className="text-purple-400 text-xs ml-auto">{unlockedSwords.indexOf(activeSword)+1}/{unlockedSwords.length}</span>
+        </div>
+      )}
+      <div className="flex gap-1 items-end">
+        {WEAPONS.map(w => {
+          const active = w === selected;
+          return (
+            <div key={w}
+              className={`flex flex-col items-center px-1.5 py-0.5 rounded-lg border-2 transition-all
+                ${active ? 'bg-amber-400/90 border-amber-600 scale-110 shadow-lg' : 'bg-black/50 border-gray-600 opacity-70'}`}>
+              <span className="text-base leading-none">{WEAPON_ICONS[w]}</span>
+              <span className={`text-xs font-bold ${active ? 'text-amber-900' : 'text-gray-300'}`}>
+                {WEAPON_LABELS[w]}
+              </span>
+              {ammo[w] !== undefined && (
+                <span className={`text-xs font-mono ${active ? 'text-amber-800' : 'text-gray-400'}`}>
+                  ×{ammo[w]}
+                </span>
+              )}
+              {w === 'wand' && active && (
+                <span className="text-xs text-amber-800">∞</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -447,7 +466,7 @@ export function HUD() {
         <div className="flex flex-col items-center gap-1">
           <WeaponBar />
           <div className="bg-black/55 text-white text-xs font-mono px-3 py-1 rounded-full backdrop-blur-sm">
-            WASD move · Space attack · Hold Space=spin · F shield · Q/Shift cycle · E interact
+            WASD move · Space attack · Hold Space=spin · F shield · Q/Shift cycle weapons · Z cycle sword · E interact
           </div>
         </div>
 
