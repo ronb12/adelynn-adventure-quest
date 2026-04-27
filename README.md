@@ -12,3 +12,4 @@ A Zelda-inspired 3D browser game built with React Three Fiber.
 
 ## Play
 Built and deployed on Replit.
+Property of Bradley Virtual Solutions, LLC
