@@ -917,20 +917,25 @@ function LorePopup() {
   if (!visible || !content) return null;
 
   return (
-    <div className="absolute bottom-40 left-1/2 -translate-x-1/2 w-full max-w-lg px-4 pointer-events-none"
-      style={{ zIndex: 6500, animation: 'loreIn 0.4s ease-out forwards' }}>
-      <div className="rounded-2xl border p-4 shadow-2xl"
-        style={{ background: 'rgba(10,5,25,0.93)', borderColor: '#7c44cc' }}>
-        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-purple-900/50">
-          <span className="text-purple-400 text-lg">📜</span>
-          <div className="text-purple-200 font-bold text-sm">{content.title}</div>
+    <div className="absolute inset-x-2 bottom-2 pointer-events-none"
+      style={{ zIndex: 6500, animation: 'loreIn 0.4s ease-out forwards',
+        maxWidth: '520px', margin: '0 auto', left: 0, right: 0 }}>
+      <div className="rounded-2xl border shadow-2xl flex flex-col"
+        style={{ background: 'rgba(10,5,25,0.95)', borderColor: '#7c44cc',
+          maxHeight: 'min(260px, 38vh)' }}>
+        <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-purple-900/50 flex-shrink-0">
+          <span className="text-purple-400 text-base">📜</span>
+          <div className="text-purple-200 font-bold text-sm leading-tight">{content.title}</div>
           {loreRead.includes(nearLore ?? '') && (
-            <span className="ml-auto text-xs text-purple-600">Read ✓</span>
+            <span className="ml-auto text-xs text-purple-600 whitespace-nowrap">Read ✓</span>
           )}
         </div>
-        <p className="text-gray-200 text-sm leading-relaxed italic">{content.text}</p>
+        <div className="overflow-y-auto px-4 py-3 pointer-events-auto"
+          style={{ WebkitOverflowScrolling: 'touch' }}>
+          <p className="text-gray-200 text-sm leading-relaxed italic">{content.text}</p>
+        </div>
       </div>
-      <style>{`@keyframes loreIn{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}`}</style>
+      <style>{`@keyframes loreIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`}</style>
     </div>
   );
 }
