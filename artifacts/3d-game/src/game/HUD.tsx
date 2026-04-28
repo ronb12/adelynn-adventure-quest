@@ -408,11 +408,134 @@ function SaveToast() {
   );
 }
 
+// ── Score Panel (top-right) ───────────────────────────────────────
+function ScorePanel() {
+  const score        = useGameStore(s => s.score);
+  const comboCount   = useGameStore(s => s.comboCount);
+  const comboTimer   = useGameStore(s => s.comboTimer);
+  const runStartTime = useGameStore(s => s.runStartTime);
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!runStartTime) return;
+    const iv = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - runStartTime) / 1000));
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [runStartTime]);
+
+  const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const ss = String(elapsed % 60).padStart(2, '0');
+  const multiplier = Math.min(comboCount, 5);
+
+  return (
+    <div className="flex flex-col items-end gap-0.5">
+      <div className="bg-black/55 rounded-lg px-2 py-1 backdrop-blur-sm flex items-center gap-2">
+        <span className="text-gray-400 font-mono text-xs">⏱</span>
+        <span className="text-white font-mono text-sm font-bold">{mm}:{ss}</span>
+      </div>
+      <div className="bg-black/55 rounded-lg px-2 py-1 backdrop-blur-sm flex items-center gap-1.5">
+        <span className="text-amber-400 text-xs">✦</span>
+        <span className="text-amber-200 font-bold text-sm">{score.toLocaleString()}</span>
+      </div>
+      {multiplier >= 2 && comboTimer > 0 && (
+        <div className="bg-purple-900/75 rounded-lg px-2 py-0.5 border border-purple-400/50 backdrop-blur-sm">
+          <span className="text-purple-200 font-bold text-xs">×{multiplier} COMBO</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Combo popup (center-top burst) ───────────────────────────────
+function ComboPopup() {
+  const comboCount = useGameStore(s => s.comboCount);
+  const comboTimer = useGameStore(s => s.comboTimer);
+  const [shown, setShown] = useState(0);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (comboCount >= 3 && comboCount !== shown) {
+      setShown(comboCount);
+      setVisible(true);
+      const t = setTimeout(() => setVisible(false), 900);
+      return () => clearTimeout(t);
+    }
+  }, [comboCount]);
+
+  if (!visible || comboCount < 3 || comboTimer <= 0) return null;
+  const mult = Math.min(comboCount, 5);
+  const colors = ['', '', '', '#ffcc00', '#ff8800', '#ff4400'];
+  return (
+    <div className="absolute top-28 left-1/2 -translate-x-1/2 pointer-events-none"
+      style={{ zIndex: 8000, animation: 'comboIn 0.9s ease-out forwards' }}>
+      <div className="flex flex-col items-center" style={{ color: colors[mult] ?? '#ff4400' }}>
+        <span className="font-bold text-3xl drop-shadow-lg" style={{ textShadow: `0 0 20px ${colors[mult]}` }}>
+          ×{mult} COMBO!
+        </span>
+        <span className="text-sm font-bold opacity-80">{comboCount} kills</span>
+      </div>
+      <style>{`@keyframes comboIn{0%{opacity:0;transform:translateX(-50%) scale(0.5)}30%{opacity:1;transform:translateX(-50%) scale(1.2)}70%{opacity:1;transform:translateX(-50%) scale(1)}100%{opacity:0;transform:translateX(-50%) scale(0.95) translateY(-20px)}}`}</style>
+    </div>
+  );
+}
+
+// ── Lore Popup ────────────────────────────────────────────────────
+function LorePopup() {
+  const nearLore   = useGameStore(s => s.nearLore);
+  const loreRead   = useGameStore(s => s.loreRead);
+  const markLoreRead = useGameStore(s => s.markLoreRead);
+  const [content, setContent] = useState<{ title: string; text: string } | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (!nearLore) { setVisible(false); return; }
+    // Import lore data
+    const LORE: Record<string, { title: string; text: string }> = {
+      'lore-field-1': { title: 'Ancient Boundary Stone', text: 'Here stood the Northern Gate of Sunfield, raised in the Age of Accord. The glyph reads: "Let no shadow pass while Solara watches." The carving still glows faintly at noon.' },
+      'lore-field-2': { title: "Fallen Knight's Grave", text: "Sir Aldous of the Dawn Order — fell defending Sunfield during Malgrath's first raid. His sword broke, but his shield held firm until the last. They say he still walks these plains in moonlight." },
+      'lore-field-3': { title: 'Weathered Map Stone', text: "A carved relief shows ancient Aldenmere — seven shining points mark the Bound Spirits' sanctuaries. All seven glow on this stone. Outside, none do. Seven hopes. One hero." },
+      'lore-forest-1': { title: "Druid's Warning", text: '"The trees remember what men forget. Thornwick planted each root as a living prayer. Should the Spirit of the Wild fall silent, the forest will turn against all who enter." — Archdruid Selene, 33 years before Malgrath.' },
+      'lore-forest-2': { title: 'Spirit Tree Marker', text: "This ancient oak grew from a seed blessed by Thornwick himself. Its bark used to glow gold at dusk. Malgrath's darkness has turned it grey. Even the oldest things wither without the Crown's light." },
+      'lore-forest-3': { title: "Lost Ranger's Journal", text: 'Entry 47: The wolf-things grow bolder — they used to flee torchlight, now they stare through it. Malgrath\'s shadow changed them. Entry 48: (ink-smeared) they found the camp.' },
+      'lore-desert-1': { title: 'Temple Fragment', text: 'Part of the great Embris Temple, built above the Spirit Forge where Embris first taught metalworking. The smelting chamber is buried under the summit. Embris melted iron with a song no smith has replicated since.' },
+      'lore-desert-2': { title: "Stone Sentinel's Last Order", text: 'Etched at the base of the first frozen soldier: "HOLD. THE. PASS." Captain Dren\'s final command before Malgrath\'s spell swept through the garrison. They obeyed. Perfectly. Forever.' },
+      'lore-desert-3': { title: "Glacira's Spring", text: "The cracked basin before you once held the purest water in Aldenmere — Glacira's gift to the desert people. The old maps call it \"The Mercy Pool.\" The people here named their daughters after her for three generations." },
+    };
+    const lore = LORE[nearLore];
+    if (lore) {
+      setContent(lore);
+      setVisible(true);
+      if (!loreRead.includes(nearLore)) markLoreRead(nearLore);
+    }
+  }, [nearLore]);
+
+  if (!visible || !content) return null;
+
+  return (
+    <div className="absolute bottom-40 left-1/2 -translate-x-1/2 w-full max-w-lg px-4 pointer-events-none"
+      style={{ zIndex: 6500, animation: 'loreIn 0.4s ease-out forwards' }}>
+      <div className="rounded-2xl border p-4 shadow-2xl"
+        style={{ background: 'rgba(10,5,25,0.93)', borderColor: '#7c44cc' }}>
+        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-purple-900/50">
+          <span className="text-purple-400 text-lg">📜</span>
+          <div className="text-purple-200 font-bold text-sm">{content.title}</div>
+          {loreRead.includes(nearLore ?? '') && (
+            <span className="ml-auto text-xs text-purple-600">Read ✓</span>
+          )}
+        </div>
+        <p className="text-gray-200 text-sm leading-relaxed italic">{content.text}</p>
+      </div>
+      <style>{`@keyframes loreIn{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}`}</style>
+    </div>
+  );
+}
+
 // ── Main HUD ──────────────────────────────────────────────────────
 export function HUD() {
   const {
     gameState, rupees, currentArea, nearChest, nearNPC, activeDialogue,
-    isBlocking, armorLevel, nearShop, showShop, nearFountain, shardsCollected,
+    isBlocking, armorLevel, nearShop, showShop, nearFountain, shardsCollected, nearLore,
   } = useGameStore();
 
   const shardInfo = SHARD_INFO.find(s => s.area === currentArea);
@@ -431,6 +554,12 @@ export function HUD() {
       {/* Item Fanfare */}
       <ItemFanfare />
 
+      {/* Combo burst */}
+      <ComboPopup />
+
+      {/* Lore popup */}
+      <LorePopup />
+
       {/* Top row */}
       <div className="flex justify-between items-start gap-2">
         {/* Left: Hearts + Heart Pieces + Armor */}
@@ -447,7 +576,7 @@ export function HUD() {
         {/* Center: Shard Tracker */}
         <ShardTracker />
 
-        {/* Right: Area + Rupees + Mini-map */}
+        {/* Right: Score + Timer + Area + Rupees + Mini-map */}
         <div className="flex flex-col items-end gap-1">
           <div className="bg-black/55 rounded-lg px-2 py-0.5 text-white font-bold text-xs backdrop-blur-sm">
             {AREA_NAMES[currentArea] ?? currentArea}
@@ -456,6 +585,7 @@ export function HUD() {
             <div className="w-3 h-4 bg-green-400 rotate-45 border border-green-600" />
             <span className="text-green-300 font-bold text-base">{rupees}</span>
           </div>
+          <ScorePanel />
           {/* Mini-map */}
           <div className="bg-black/60 rounded-lg p-0.5 border border-gray-700/50 backdrop-blur-sm">
             <MiniMap />

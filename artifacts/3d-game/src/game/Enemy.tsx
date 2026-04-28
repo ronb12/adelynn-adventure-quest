@@ -6,24 +6,30 @@ import { hitZones } from './hitZones';
 import { sfxHit, sfxDeath } from './AudioManager';
 
 // ── Area config ──────────────────────────────────────────────────
-type EnemyMeshType = 'slime' | 'bat' | 'knight' | 'briarwolf' | 'scorpion' | 'wraith';
+type EnemyMeshType = 'slime' | 'bat' | 'knight' | 'briarwolf' | 'scorpion' | 'wraith' | 'goblin' | 'thornspitter';
+type EnemyBehavior = 'chase' | 'charge' | 'ranged';
 
 const AREA_CONFIG: Record<AreaId, {
   count: number; maxHp: number; speed: [number, number];
   body: string; accent: string; chaseRange: number;
   meshType: EnemyMeshType;
+  behavior?: EnemyBehavior;
 }[]> = {
-  field:  [{ count: 6, maxHp: 2, speed: [1.4, 2.5], body: '#c0392b', accent: '#922b21', chaseRange: 8,  meshType: 'slime' }],
+  field: [
+    { count: 5, maxHp: 2, speed: [1.4, 2.5], body: '#c0392b', accent: '#922b21', chaseRange: 8,  meshType: 'slime' },
+    { count: 3, maxHp: 1, speed: [2.8, 3.6], body: '#2d7d20', accent: '#55cc44', chaseRange: 14, meshType: 'goblin', behavior: 'charge' },
+  ],
   forest: [
-    { count: 5, maxHp: 2, speed: [2.0, 3.2], body: '#4a235a', accent: '#6c3483', chaseRange: 12, meshType: 'bat' },
-    { count: 4, maxHp: 3, speed: [1.8, 2.6], body: '#2d6a2d', accent: '#81c784', chaseRange: 10, meshType: 'briarwolf' },
+    { count: 4, maxHp: 2, speed: [2.0, 3.2], body: '#4a235a', accent: '#6c3483', chaseRange: 12, meshType: 'bat' },
+    { count: 3, maxHp: 3, speed: [1.8, 2.6], body: '#2d6a2d', accent: '#81c784', chaseRange: 10, meshType: 'briarwolf', behavior: 'charge' },
+    { count: 2, maxHp: 2, speed: [1.0, 1.4], body: '#4a6e2a', accent: '#9acd50', chaseRange: 13, meshType: 'thornspitter', behavior: 'ranged' },
   ],
   desert: [
-    { count: 4, maxHp: 3, speed: [0.9, 1.5], body: '#a04020', accent: '#c0703a', chaseRange: 6,  meshType: 'knight' },
-    { count: 4, maxHp: 2, speed: [2.0, 2.8], body: '#b7770d', accent: '#f0b03a', chaseRange: 10, meshType: 'scorpion' },
+    { count: 3, maxHp: 3, speed: [0.9, 1.5], body: '#a04020', accent: '#c0703a', chaseRange: 6,  meshType: 'knight' },
+    { count: 4, maxHp: 2, speed: [2.0, 2.8], body: '#b7770d', accent: '#f0b03a', chaseRange: 11, meshType: 'scorpion', behavior: 'ranged' },
   ],
   boss: [
-    { count: 5, maxHp: 4, speed: [2.2, 3.0], body: '#1a0030', accent: '#7c4dff', chaseRange: 14, meshType: 'wraith' },
+    { count: 5, maxHp: 4, speed: [2.2, 3.0], body: '#1a0030', accent: '#7c4dff', chaseRange: 14, meshType: 'wraith', behavior: 'ranged' },
   ],
 };
 
@@ -650,6 +656,141 @@ function ShadowBolt({ pos }: { pos: THREE.Vector3 }) {
   );
 }
 
+// ── New enemy mesh: Goblin (small, fast, charge) ──────────────────
+function GoblinEnemy({ palette }: { palette: { body: string; accent: string } }) {
+  return (
+    <group scale={[0.72, 0.72, 0.72]}>
+      {/* Body */}
+      <mesh castShadow position={[0, 0.7, 0]}>
+        <capsuleGeometry args={[0.28, 0.5, 8, 12]} />
+        <meshStandardMaterial color={palette.body} roughness={0.75} />
+      </mesh>
+      {/* Head - large pointed */}
+      <mesh castShadow position={[0, 1.24, 0]}>
+        <sphereGeometry args={[0.36, 14, 12]} />
+        <meshStandardMaterial color={palette.body} roughness={0.7} />
+      </mesh>
+      {/* Pointy ears */}
+      <mesh castShadow position={[-0.32, 1.48, 0]} rotation={[0, 0, 0.7]}>
+        <coneGeometry args={[0.1, 0.42, 6]} />
+        <meshStandardMaterial color={palette.accent} roughness={0.7} />
+      </mesh>
+      <mesh castShadow position={[0.32, 1.48, 0]} rotation={[0, 0, -0.7]}>
+        <coneGeometry args={[0.1, 0.42, 6]} />
+        <meshStandardMaterial color={palette.accent} roughness={0.7} />
+      </mesh>
+      {/* Eyes - angry red */}
+      <mesh position={[-0.14, 1.28, 0.3]}>
+        <sphereGeometry args={[0.07, 8, 6]} />
+        <meshStandardMaterial color="#ff2200" emissive="#cc1100" emissiveIntensity={2} />
+      </mesh>
+      <mesh position={[0.14, 1.28, 0.3]}>
+        <sphereGeometry args={[0.07, 8, 6]} />
+        <meshStandardMaterial color="#ff2200" emissive="#cc1100" emissiveIntensity={2} />
+      </mesh>
+      {/* Club arm */}
+      <mesh castShadow position={[0.38, 0.75, 0.1]} rotation={[0.2, 0, 0.5]}>
+        <cylinderGeometry args={[0.06, 0.1, 0.55, 7]} />
+        <meshStandardMaterial color="#5a3a1a" roughness={0.9} />
+      </mesh>
+      <mesh castShadow position={[0.52, 1.0, 0.15]}>
+        <sphereGeometry args={[0.14, 8, 6]} />
+        <meshStandardMaterial color="#3a2a0a" roughness={0.85} />
+      </mesh>
+      {/* Stubby legs */}
+      <mesh castShadow position={[-0.14, 0.22, 0]}>
+        <cylinderGeometry args={[0.09, 0.07, 0.34, 7]} />
+        <meshStandardMaterial color={palette.body} roughness={0.8} />
+      </mesh>
+      <mesh castShadow position={[0.14, 0.22, 0]}>
+        <cylinderGeometry args={[0.09, 0.07, 0.34, 7]} />
+        <meshStandardMaterial color={palette.body} roughness={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+// ── New enemy mesh: Thornspitter (plant, ranged) ──────────────────
+function ThornspitterEnemy({ palette }: { palette: { body: string; accent: string } }) {
+  return (
+    <group>
+      {/* Root base */}
+      <mesh castShadow position={[0, 0.18, 0]}>
+        <cylinderGeometry args={[0.38, 0.55, 0.35, 10]} />
+        <meshStandardMaterial color="#3a2a10" roughness={1} />
+      </mesh>
+      {/* Vine stem */}
+      <mesh castShadow position={[0, 0.85, 0]}>
+        <cylinderGeometry args={[0.18, 0.24, 1.0, 10]} />
+        <meshStandardMaterial color={palette.body} roughness={0.85} />
+      </mesh>
+      {/* Flower-head / mouth */}
+      <mesh castShadow position={[0, 1.45, 0]}>
+        <sphereGeometry args={[0.42, 14, 12]} />
+        <meshStandardMaterial color={palette.accent} roughness={0.6} />
+      </mesh>
+      {/* Spiky petals */}
+      {[0,1,2,3,4,5].map(i => {
+        const a = (i/6)*Math.PI*2;
+        return (
+          <mesh key={i} castShadow
+            position={[Math.cos(a)*0.46, 1.45, Math.sin(a)*0.46]}
+            rotation={[0, -a, 0.6]}>
+            <coneGeometry args={[0.1, 0.5, 6]} />
+            <meshStandardMaterial color="#2d5a10" roughness={0.75} />
+          </mesh>
+        );
+      })}
+      {/* Glowing centre (loading shot) */}
+      <mesh position={[0, 1.45, 0]}>
+        <sphereGeometry args={[0.22, 10, 8]} />
+        <meshStandardMaterial color={palette.accent} emissive={palette.accent}
+          emissiveIntensity={1.8} roughness={0} transparent opacity={0.9} />
+      </mesh>
+      {/* Leaf arms */}
+      <mesh castShadow position={[-0.52, 0.95, 0]} rotation={[0, 0, 0.5]}>
+        <ellipsoidGeometry />
+        <boxGeometry args={[0.06, 0.55, 0.28]} />
+        <meshStandardMaterial color={palette.body} roughness={0.8} />
+      </mesh>
+      <mesh castShadow position={[0.52, 0.95, 0]} rotation={[0, 0, -0.5]}>
+        <boxGeometry args={[0.06, 0.55, 0.28]} />
+        <meshStandardMaterial color={palette.body} roughness={0.8} />
+      </mesh>
+      {/* Eyes on head */}
+      <mesh position={[-0.18, 1.52, 0.34]}>
+        <sphereGeometry args={[0.09, 8, 6]} />
+        <meshStandardMaterial color="#ffe030" emissive="#ffcc00" emissiveIntensity={2} />
+      </mesh>
+      <mesh position={[0.18, 1.52, 0.34]}>
+        <sphereGeometry args={[0.09, 8, 6]} />
+        <meshStandardMaterial color="#ffe030" emissive="#ffcc00" emissiveIntensity={2} />
+      </mesh>
+    </group>
+  );
+}
+
+// ── Enemy projectile (fired by ranged enemies) ────────────────────
+interface EnemyProj {
+  pos: THREE.Vector3;
+  dir: THREE.Vector3;
+  speed: number;
+  life: number;
+  damage: number;
+  color: string;
+  active: boolean;
+}
+
+function EnemyProjMesh({ color }: { color: string }) {
+  return (
+    <mesh>
+      <sphereGeometry args={[0.18, 8, 6]} />
+      <meshStandardMaterial color={color} emissive={color} emissiveIntensity={2.5}
+        transparent opacity={0.9} />
+    </mesh>
+  );
+}
+
 // ── EnemyData ────────────────────────────────────────────────────
 interface EnemyData {
   id: number;
@@ -668,6 +809,14 @@ interface EnemyData {
   chaseRange: number;
   baseColor: THREE.Color;
   dead: boolean;
+  // New behavior fields
+  behavior: EnemyBehavior;
+  chargeTimer: number;       // cooldown between charges (when > 0, cooling down)
+  isCharging: boolean;
+  chargeSpeed: number;       // speed multiplier during charge
+  chargeWindup: number;      // time spent charging (auto-ends after 1.8s)
+  rangedTimer: number;       // time until next ranged shot
+  projColor: string;         // projectile color for this enemy type
 }
 
 // Boss shadow bolt data
@@ -684,10 +833,20 @@ function seeded(n: number, s: number) {
 }
 
 // ── Regular Enemies ───────────────────────────────────────────────
+const MAX_ENEMY_PROJS = 12;
 export function Enemies() {
   const groupRef    = useRef<THREE.Group>(null!);
+  const projGroupRef = useRef<THREE.Group>(null!);
   const damagePlayer = useGameStore(state => state.damagePlayer);
   const currentArea  = useGameStore(state => state.currentArea);
+
+  // Pre-allocated enemy projectile pool
+  const projs = useRef<EnemyProj[]>(
+    Array.from({ length: MAX_ENEMY_PROJS }, () => ({
+      pos: new THREE.Vector3(), dir: new THREE.Vector3(1,0,0),
+      speed: 5, life: 0, damage: 0.5, color: '#ff8800', active: false,
+    }))
+  );
 
   const { enemies, meshDefs } = useMemo(() => {
     const configs = AREA_CONFIG[currentArea] ?? [];
@@ -699,6 +858,11 @@ export function Enemies() {
         const n = idCounter++;
         const angle = seeded(n, 1) * Math.PI * 2;
         const r = 8 + seeded(n, 2) * 16;
+        const projColorMap: Record<EnemyMeshType, string> = {
+          slime: '#ff6666', bat: '#cc44ff', knight: '#ff8800',
+          briarwolf: '#66ff44', scorpion: '#ffcc00', wraith: '#aa00ff',
+          goblin: '#88ff44', thornspitter: '#88dd00',
+        };
         enemies.push({
           id: n,
           pos: new THREE.Vector3(Math.cos(angle)*r, 0, Math.sin(angle)*r),
@@ -711,6 +875,13 @@ export function Enemies() {
           chaseRange: cfg.chaseRange,
           baseColor: new THREE.Color(cfg.body),
           dead: false,
+          behavior: cfg.behavior ?? 'chase',
+          chargeTimer: seeded(n,8)*2,
+          isCharging: false,
+          chargeSpeed: 6.5,
+          chargeWindup: 0,
+          rangedTimer: 2 + seeded(n,9)*3,
+          projColor: projColorMap[cfg.meshType],
         });
         meshDefs.push({ meshType: cfg.meshType, palette: { body: cfg.body, accent: cfg.accent } });
       }
@@ -729,6 +900,27 @@ export function Enemies() {
     const spinRadius = store.activeSword === 'storm' ? 4.0 : 2.8;
     const t = state.clock.elapsedTime;
     const children = groupRef.current.children;
+
+    // Tick combo timer
+    store.tickCombo(delta);
+
+    // Update enemy projectiles
+    const projChildren = projGroupRef.current?.children ?? [];
+    projs.current.forEach((proj, pi) => {
+      const pm = projChildren[pi] as THREE.Mesh | undefined;
+      if (!proj.active) { if (pm) pm.visible = false; return; }
+      proj.life -= delta;
+      if (proj.life <= 0) { proj.active = false; if (pm) pm.visible = false; return; }
+      proj.pos.addScaledVector(proj.dir, proj.speed * delta);
+      if (pm) { pm.visible = true; pm.position.copy(proj.pos); }
+      // Hit player
+      const pdist = proj.pos.distanceTo(playerPosition);
+      if (pdist < 0.9) {
+        store.damagePlayer(proj.damage);
+        proj.active = false;
+        if (pm) pm.visible = false;
+      }
+    });
 
     enemiesRef.current.forEach((enemy, index) => {
       const child = children[index] as THREE.Group | undefined;
@@ -749,20 +941,101 @@ export function Enemies() {
       }
 
       const playerInvisible = Date.now() < store.shadowEndTime;
-      enemy.changeDirTimer -= delta;
-      if (enemy.changeDirTimer <= 0) {
-        enemy.changeDirTimer = 1.2 + Math.random() * 2;
-        const dist = enemy.pos.distanceTo(playerPosition);
-        if (!playerInvisible && Math.random() > 0.38 && dist < enemy.chaseRange) {
-          enemy.dir.copy(playerPosition).sub(enemy.pos).setY(0).normalize();
+      const dist = enemy.pos.distanceTo(playerPosition);
+
+      // ── CHARGE behavior ──────────────────────────────────────────
+      if (enemy.behavior === 'charge') {
+        if (enemy.chargeTimer > 0) enemy.chargeTimer -= delta;
+        if (enemy.isCharging) {
+          enemy.chargeWindup += delta;
+          if (enemy.chargeWindup >= 1.8 || dist > 18) {
+            enemy.isCharging = false;
+            enemy.chargeTimer = 3.0 + Math.random();
+            enemy.chargeWindup = 0;
+          } else {
+            // Sprint toward player
+            if (!playerInvisible) enemy.dir.copy(playerPosition).sub(enemy.pos).setY(0).normalize();
+            const moveSpeed = enemy.slowTimer > 0 ? enemy.chargeSpeed * 0.28 : enemy.chargeSpeed;
+            enemy.pos.addScaledVector(enemy.dir, moveSpeed * delta);
+          }
         } else {
-          enemy.dir.set(Math.random()-0.5, 0, Math.random()-0.5).normalize();
+          // Normal wander, then trigger charge
+          enemy.changeDirTimer -= delta;
+          if (enemy.changeDirTimer <= 0) {
+            enemy.changeDirTimer = 1.0 + Math.random() * 1.5;
+            if (!playerInvisible && dist < enemy.chaseRange && enemy.chargeTimer <= 0 && Math.random() > 0.35) {
+              // Start charge!
+              enemy.isCharging = true;
+              enemy.chargeWindup = 0;
+              enemy.dir.copy(playerPosition).sub(enemy.pos).setY(0).normalize();
+            } else if (!playerInvisible && dist < enemy.chaseRange * 0.5) {
+              enemy.dir.copy(playerPosition).sub(enemy.pos).setY(0).normalize();
+            } else {
+              enemy.dir.set(Math.random()-0.5, 0, Math.random()-0.5).normalize();
+            }
+          }
+          if (enemy.slowTimer > 0) enemy.slowTimer -= delta;
+          const moveSpeed = enemy.slowTimer > 0 ? enemy.speed * 0.28 : enemy.speed;
+          enemy.pos.addScaledVector(enemy.dir, moveSpeed * delta);
         }
       }
-
-      if (enemy.slowTimer > 0) { enemy.slowTimer -= delta; }
-      const moveSpeed = enemy.slowTimer > 0 ? enemy.speed * 0.28 : enemy.speed;
-      enemy.pos.addScaledVector(enemy.dir, moveSpeed * delta);
+      // ── RANGED behavior ──────────────────────────────────────────
+      else if (enemy.behavior === 'ranged') {
+        const preferredDist = 8;
+        enemy.changeDirTimer -= delta;
+        if (enemy.changeDirTimer <= 0) {
+          enemy.changeDirTimer = 0.8 + Math.random() * 1.2;
+          if (!playerInvisible && dist < enemy.chaseRange) {
+            if (dist < preferredDist - 1.5) {
+              // Too close — back away
+              enemy.dir.copy(enemy.pos).sub(playerPosition).setY(0).normalize();
+            } else if (dist > preferredDist + 1.5) {
+              // Too far — close in
+              enemy.dir.copy(playerPosition).sub(enemy.pos).setY(0).normalize();
+            } else {
+              // At good range — strafe
+              const perpX = -enemy.dir.z;
+              const perpZ = enemy.dir.x;
+              enemy.dir.set(perpX + (Math.random()-0.5)*0.4, 0, perpZ + (Math.random()-0.5)*0.4).normalize();
+            }
+          } else {
+            enemy.dir.set(Math.random()-0.5, 0, Math.random()-0.5).normalize();
+          }
+        }
+        if (enemy.slowTimer > 0) enemy.slowTimer -= delta;
+        const moveSpeed = enemy.slowTimer > 0 ? enemy.speed * 0.28 : enemy.speed;
+        enemy.pos.addScaledVector(enemy.dir, moveSpeed * delta);
+        // Fire projectile when in range and ready
+        if (!playerInvisible && enemy.rangedTimer > 0) enemy.rangedTimer -= delta;
+        if (!playerInvisible && enemy.rangedTimer <= 0 && dist < enemy.chaseRange && dist > 2.5) {
+          const slot = projs.current.find(p => !p.active);
+          if (slot) {
+            slot.active = true;
+            slot.pos.copy(enemy.pos).setY(0.8);
+            slot.dir.copy(playerPosition).sub(enemy.pos).setY(0).normalize();
+            slot.speed = 5.5 + Math.random() * 1.5;
+            slot.life = 4.5;
+            slot.damage = 0.5;
+            slot.color = enemy.projColor;
+          }
+          enemy.rangedTimer = 2.2 + Math.random() * 1.5;
+        }
+      }
+      // ── CHASE behavior (default) ─────────────────────────────────
+      else {
+        enemy.changeDirTimer -= delta;
+        if (enemy.changeDirTimer <= 0) {
+          enemy.changeDirTimer = 1.2 + Math.random() * 2;
+          if (!playerInvisible && Math.random() > 0.38 && dist < enemy.chaseRange) {
+            enemy.dir.copy(playerPosition).sub(enemy.pos).setY(0).normalize();
+          } else {
+            enemy.dir.set(Math.random()-0.5, 0, Math.random()-0.5).normalize();
+          }
+        }
+        if (enemy.slowTimer > 0) enemy.slowTimer -= delta;
+        const moveSpeed = enemy.slowTimer > 0 ? enemy.speed * 0.28 : enemy.speed;
+        enemy.pos.addScaledVector(enemy.dir, moveSpeed * delta);
+      }
       enemy.pos.x = THREE.MathUtils.clamp(enemy.pos.x, -27, 27);
       enemy.pos.z = THREE.MathUtils.clamp(enemy.pos.z, -27, 27);
       if (enemy.hitTimer > 0) { enemy.hitTimer -= delta; if (enemy.hitTimer <= 0) enemy.isHit = false; }
@@ -888,18 +1161,32 @@ export function Enemies() {
   });
 
   return (
-    <group ref={groupRef}>
-      {meshDefs.map((def, i) => (
-        <group key={`e-${i}`}>
-          {def.meshType === 'slime'     && <SlimeEnemy        palette={def.palette} />}
-          {def.meshType === 'bat'       && <BatEnemy          palette={def.palette} />}
-          {def.meshType === 'knight'    && <KnightEnemy       palette={def.palette} />}
-          {def.meshType === 'briarwolf' && <BriarWolfEnemy    palette={def.palette} />}
-          {def.meshType === 'scorpion'  && <EmberScorpionEnemy palette={def.palette} />}
-          {def.meshType === 'wraith'    && <VoidWraithEnemy   palette={def.palette} />}
-        </group>
-      ))}
-    </group>
+    <>
+      <group ref={groupRef}>
+        {meshDefs.map((def, i) => (
+          <group key={`e-${i}`}>
+            {def.meshType === 'slime'        && <SlimeEnemy         palette={def.palette} />}
+            {def.meshType === 'bat'          && <BatEnemy           palette={def.palette} />}
+            {def.meshType === 'knight'       && <KnightEnemy        palette={def.palette} />}
+            {def.meshType === 'briarwolf'    && <BriarWolfEnemy     palette={def.palette} />}
+            {def.meshType === 'scorpion'     && <EmberScorpionEnemy palette={def.palette} />}
+            {def.meshType === 'wraith'       && <VoidWraithEnemy    palette={def.palette} />}
+            {def.meshType === 'goblin'       && <GoblinEnemy        palette={def.palette} />}
+            {def.meshType === 'thornspitter' && <ThornspitterEnemy  palette={def.palette} />}
+          </group>
+        ))}
+      </group>
+      {/* Enemy projectiles pool */}
+      <group ref={projGroupRef}>
+        {projs.current.map((proj, i) => (
+          <mesh key={`ep-${i}`} visible={false}>
+            <sphereGeometry args={[0.18, 7, 5]} />
+            <meshStandardMaterial color={proj.color} emissive={proj.color}
+              emissiveIntensity={2.5} transparent opacity={0.9} />
+          </mesh>
+        ))}
+      </group>
+    </>
   );
 }
 
@@ -1119,5 +1406,12 @@ function applyHit(enemy: EnemyData, damage: number, sourcePos: THREE.Vector3) {
   enemy.invulnTimer = 0.55;
   const kb = enemy.pos.clone().sub(sourcePos).setY(0).normalize();
   enemy.pos.addScaledVector(kb, 1.3);
-  if (enemy.hp <= 0) { enemy.dead = true; sfxDeath(); } else { sfxHit(); }
+  if (enemy.hp <= 0) {
+    enemy.dead = true;
+    sfxDeath();
+    // Award score based on enemy difficulty
+    useGameStore.getState().addKill(Math.ceil(enemy.maxHp * 50));
+  } else {
+    sfxHit();
+  }
 }

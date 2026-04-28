@@ -156,11 +156,21 @@ export function TitleScreen() {
 }
 
 // ── Game Over Screen ─────────────────────────────────────────────
+function formatTime(ms: number | null): string {
+  if (!ms) return '00:00';
+  const s = Math.floor((Date.now() - ms) / 1000);
+  return `${String(Math.floor(s / 60)).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
+}
+
 export function GameOverScreen() {
   const resetGame    = useGameStore(state => state.resetGame);
   const loadFromSave = useGameStore(state => state.loadFromSave);
   const shardsCount  = useGameStore(state => state.shardsCollected);
+  const score        = useGameStore(state => state.score);
+  const runStartTime = useGameStore(state => state.runStartTime);
+  const loreRead     = useGameStore(state => state.loreRead);
   const [saveMeta]   = useState(getSaveMeta());
+  const elapsed = formatTime(runStartTime);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') resetGame(); };
@@ -180,14 +190,30 @@ export function GameOverScreen() {
       <p className="text-red-300 text-base mb-3 font-serif italic">
         "Adelynn falls… but the legend lives on."
       </p>
-      <p className="text-gray-400 text-sm mb-6">
+      <p className="text-gray-400 text-sm mb-4">
         {shardsCount === 0
           ? 'Your quest ends before it began.'
           : `You claimed ${shardsCount} of 3 Crystal Shards before falling.`}
       </p>
 
+      {/* Run stats */}
+      <div className="flex gap-4 mb-5">
+        <div className="flex flex-col items-center bg-black/40 rounded-xl px-5 py-2 border border-red-900/50">
+          <span className="text-amber-400 font-bold text-lg">{score.toLocaleString()}</span>
+          <span className="text-gray-500 text-xs mt-0.5">Score</span>
+        </div>
+        <div className="flex flex-col items-center bg-black/40 rounded-xl px-5 py-2 border border-red-900/50">
+          <span className="text-white font-mono font-bold text-lg">{elapsed}</span>
+          <span className="text-gray-500 text-xs mt-0.5">Time</span>
+        </div>
+        <div className="flex flex-col items-center bg-black/40 rounded-xl px-5 py-2 border border-red-900/50">
+          <span className="text-purple-300 font-bold text-lg">{loreRead.length}/9</span>
+          <span className="text-gray-500 text-xs mt-0.5">Lore</span>
+        </div>
+      </div>
+
       {shardsCount > 0 && (
-        <div className="flex gap-3 mb-6">
+        <div className="flex gap-3 mb-4">
           {STORY.shards.map((s, i) => (
             <div key={s.area} className={`text-2xl ${i < shardsCount ? 'opacity-100' : 'opacity-20'}`}>💎</div>
           ))}
@@ -223,7 +249,11 @@ export function GameOverScreen() {
 export function VictoryScreen() {
   const resetGame  = useGameStore(state => state.resetGame);
   const rupees     = useGameStore(state => state.rupees);
+  const score      = useGameStore(state => state.score);
+  const runStartTime = useGameStore(state => state.runStartTime);
+  const loreRead   = useGameStore(state => state.loreRead);
   const deleteSaveData = useGameStore(state => state.deleteSaveData);
+  const elapsed = formatTime(runStartTime);
 
   useEffect(() => {
     // Clear save on true victory
@@ -263,9 +293,25 @@ export function VictoryScreen() {
         ))}
       </div>
 
-      <p className="text-amber-400 text-base mb-6">
-        Rupees: <span className="font-bold text-amber-200">{rupees}</span>
-      </p>
+      {/* Run stats */}
+      <div className="flex gap-3 mb-6">
+        <div className="flex flex-col items-center bg-amber-900/25 rounded-xl px-4 py-2 border border-amber-600/40">
+          <span className="text-amber-300 font-bold text-lg">{score.toLocaleString()}</span>
+          <span className="text-amber-600/80 text-xs mt-0.5">Score</span>
+        </div>
+        <div className="flex flex-col items-center bg-amber-900/25 rounded-xl px-4 py-2 border border-amber-600/40">
+          <span className="text-white font-mono font-bold text-lg">{elapsed}</span>
+          <span className="text-amber-600/80 text-xs mt-0.5">Time</span>
+        </div>
+        <div className="flex flex-col items-center bg-amber-900/25 rounded-xl px-4 py-2 border border-amber-600/40">
+          <span className="text-green-300 font-bold text-lg">{rupees}</span>
+          <span className="text-amber-600/80 text-xs mt-0.5">Rupees</span>
+        </div>
+        <div className="flex flex-col items-center bg-amber-900/25 rounded-xl px-4 py-2 border border-amber-600/40">
+          <span className="text-purple-300 font-bold text-lg">{loreRead.length}/9</span>
+          <span className="text-amber-600/80 text-xs mt-0.5">Lore</span>
+        </div>
+      </div>
 
       <Button
         size="lg"

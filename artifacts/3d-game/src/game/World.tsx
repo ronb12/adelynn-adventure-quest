@@ -6,6 +6,124 @@ import { useGameStore, AreaId, AreaTransition, SWORD_CHESTS, SWORD_DEFS } from '
 import { Village } from './Village';
 import { NPCManager } from './NPCs';
 
+// ─── Lore Stone Definitions ───────────────────────────────────────
+interface LoreStoneDef {
+  id: string;
+  area: AreaId;
+  pos: [number, number, number];
+  title: string;
+  text: string;
+}
+const LORE_STONES: LoreStoneDef[] = [
+  // ── Sunfield Plains ──
+  { id: 'lore-field-1', area: 'field', pos: [15, 0, -5], title: 'Ancient Boundary Stone',
+    text: 'Here stood the Northern Gate of Sunfield, raised in the Age of Accord. The glyph reads: "Let no shadow pass while Solara watches." The carving still glows faintly at noon.' },
+  { id: 'lore-field-2', area: 'field', pos: [-18, 0, -12], title: "Fallen Knight's Grave",
+    text: 'Sir Aldous of the Dawn Order — fell defending Sunfield during Malgrath\'s first raid. His sword broke, but his shield held firm until the last. They say he still walks these plains in moonlight.' },
+  { id: 'lore-field-3', area: 'field', pos: [10, 0, -20], title: 'Weathered Map Stone',
+    text: 'A carved relief shows ancient Aldenmere — seven shining points mark the Bound Spirits\' sanctuaries. All seven glow on this stone. Outside, none do. Seven hopes. One hero.' },
+  // ── Whisper Woods ──
+  { id: 'lore-forest-1', area: 'forest', pos: [-6, 0, -10], title: "Druid's Warning",
+    text: '"The trees remember what men forget. Thornwick planted each root as a living prayer. Should the Spirit of the Wild fall silent, the forest will turn against all who enter." — Archdruid Selene, 33 years before Malgrath.' },
+  { id: 'lore-forest-2', area: 'forest', pos: [14, 0, -8], title: 'Spirit Tree Marker',
+    text: 'This ancient oak grew from a seed blessed by Thornwick himself. Its bark used to glow gold at dusk. Malgrath\'s darkness has turned it grey. Even the oldest things wither without the Crown\'s light.' },
+  { id: 'lore-forest-3', area: 'forest', pos: [-12, 0, -18], title: "Lost Ranger's Journal",
+    text: 'Entry 47: The wolf-things grow bolder — they used to flee torchlight, now they stare through it. Malgrath\'s shadow changed them. Entry 48: (ink-smeared) they found the camp.' },
+  // ── Ashrock Summit ──
+  { id: 'lore-desert-1', area: 'desert', pos: [14, 0, -10], title: 'Temple Fragment',
+    text: 'Part of the great Embris Temple, built above the Spirit Forge where Embris first taught metalworking. The smelting chamber is buried under the summit. Embris melted iron with a song no smith has replicated since.' },
+  { id: 'lore-desert-2', area: 'desert', pos: [6, 0, 14], title: "Stone Sentinel's Last Order",
+    text: 'Etched at the base of the first frozen soldier: "HOLD. THE. PASS." Captain Dren\'s final command before Malgrath\'s spell swept through the garrison. They obeyed. Perfectly. Forever.' },
+  { id: 'lore-desert-3', area: 'desert', pos: [-18, 0, 14], title: "Glacira's Spring",
+    text: 'The cracked basin before you once held the purest water in Aldenmere — Glacira\'s gift to the desert people. The old maps call it "The Mercy Pool." The people here named their daughters after her for three generations.' },
+];
+
+// ── Lore Stone: 3D glow tablet (self-animating) ───────────────────
+function LoreStone({ def }: { def: LoreStoneDef }) {
+  const tabletRef = useRef<THREE.Group>(null!);
+  const runeFaceRef = useRef<THREE.Mesh>(null!);
+  const lightRef = useRef<THREE.PointLight>(null!);
+
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    const glow = 0.5 + Math.sin(t * 1.8 + def.id.length) * 0.3;
+    const floatY = 0.05 * Math.sin(t * 1.2 + def.id.length * 0.5);
+    const near = useGameStore.getState().nearLore === def.id;
+
+    if (tabletRef.current) tabletRef.current.position.y = 0.65 + floatY;
+    if (runeFaceRef.current) {
+      const mat = runeFaceRef.current.material as THREE.MeshStandardMaterial;
+      mat.emissiveIntensity = near ? glow * 2.5 : glow;
+    }
+    if (lightRef.current) {
+      lightRef.current.intensity = near ? glow * 3 : glow * 0.8;
+      lightRef.current.distance = near ? 6 : 3;
+    }
+  });
+
+  return (
+    <group position={def.pos}>
+      {/* Stone base */}
+      <mesh castShadow position={[0, 0.18, 0]}>
+        <boxGeometry args={[0.55, 0.35, 0.18]} />
+        <meshStandardMaterial color="#5a5070" roughness={0.85} />
+      </mesh>
+      {/* Floating tablet */}
+      <group ref={tabletRef} position={[0, 0.65, 0]}>
+        <mesh castShadow>
+          <boxGeometry args={[0.62, 0.8, 0.1]} />
+          <meshStandardMaterial color="#2a1a4a" roughness={0.6} metalness={0.1} />
+        </mesh>
+        {/* Glowing rune face */}
+        <mesh ref={runeFaceRef} position={[0, 0, 0.056]}>
+          <planeGeometry args={[0.5, 0.66]} />
+          <meshStandardMaterial
+            color="#8844cc" emissive="#4422aa" emissiveIntensity={0.5}
+            transparent opacity={0.92}
+          />
+        </mesh>
+        {/* Rune lines */}
+        {[0, 1, 2, 3].map(i => (
+          <mesh key={i} position={[0, 0.22 - i * 0.14, 0.062]}>
+            <planeGeometry args={[0.36, 0.025]} />
+            <meshStandardMaterial color="#ffffff" emissive="#ffffff"
+              emissiveIntensity={1} transparent opacity={0.7} />
+          </mesh>
+        ))}
+      </group>
+      <pointLight ref={lightRef} position={[0, 0.65, 0]}
+        color="#6622aa" intensity={0.4} distance={3} decay={2} />
+    </group>
+  );
+}
+
+// ── Lore Stones Manager — proximity detection ─────────────────────
+function LoreStonesForArea({ area }: { area: AreaId }) {
+  const stones = useMemo(() => LORE_STONES.filter(s => s.area === area), [area]);
+  const nearLoreRef = useRef<string | null>(null);
+
+  useFrame(() => {
+    const pp = useGameStore.getState().playerPosition;
+    const { setNearLore } = useGameStore.getState();
+    let found: string | null = null;
+    for (const s of stones) {
+      const dx = pp.x - s.pos[0];
+      const dz = pp.z - s.pos[2];
+      if (Math.sqrt(dx*dx + dz*dz) < 3.5) { found = s.id; break; }
+    }
+    if (found !== nearLoreRef.current) {
+      nearLoreRef.current = found;
+      setNearLore(found);
+    }
+  });
+
+  return (
+    <>
+      {stones.map(s => <LoreStone key={s.id} def={s} />)}
+    </>
+  );
+}
+
 // ─── Portal definitions ───────────────────────────────────────────
 export interface PortalDef {
   pos: [number, number, number];
@@ -351,6 +469,7 @@ function FieldArea() {
 
       <TreasureChest pos={chestPos} area="field" />
       <SwordChestsForArea area="field" />
+      <LoreStonesForArea area="field" />
       <Village />
 
       {/* Fairy Fountain */}
@@ -431,6 +550,7 @@ function ForestArea() {
       ))}
 
       <TreasureChest pos={[0, 0.5, 0]} area="forest" />
+      <LoreStonesForArea area="forest" />
       <SwordChestsForArea area="forest" />
       {/* Fairy Fountain */}
       <FairyFountain pos={[18, 0, -18]} />
@@ -507,6 +627,7 @@ function DesertArea() {
       ))}
 
       <TreasureChest pos={chestPos} area="desert" />
+      <LoreStonesForArea area="desert" />
       <SwordChestsForArea area="desert" />
       {/* Fairy Fountain */}
       <FairyFountain pos={[20, 0, 20]} />

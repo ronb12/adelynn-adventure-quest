@@ -153,6 +153,18 @@ interface GameStore {
   setArmorLevel: (level: 0 | 1 | 2) => void;
   resetGame: () => void;
   lastSaveTime: number;
+  // Score / combo / timer
+  score: number;
+  comboCount: number;
+  comboTimer: number;
+  runStartTime: number;
+  addKill: (pts: number) => void;
+  tickCombo: (delta: number) => void;
+  // Lore stones
+  nearLore: string | null;
+  loreRead: string[];
+  setNearLore: (id: string | null) => void;
+  markLoreRead: (id: string) => void;
   triggerSave: () => void;
   performSave: () => void;
   loadFromSave: () => boolean;
@@ -204,8 +216,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
   nearShop: false,
   nearFountain: false,
   lastSaveTime: 0,
+  score: 0,
+  comboCount: 0,
+  comboTimer: 0,
+  runStartTime: 0,
+  nearLore: null,
+  loreRead: [],
 
-  setGameState: (state) => set({ gameState: state }),
+  setGameState: (state) => set((s) => ({
+    gameState: state,
+    runStartTime: state === 'playing' && s.runStartTime === 0 ? Date.now() : s.runStartTime,
+  })),
   addRupees: (amount) => set((s) => ({ rupees: s.rupees + amount })),
   addArrows: (amount) => set((s) => ({ arrows: Math.min(s.arrows + amount, 99) })),
   addBombs:  (amount) => set((s) => ({ bombs:  Math.min(s.bombs  + amount, 20) })),
@@ -440,6 +461,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
   useFountain: () => set((s) => ({ hearts: s.maxHearts })),
   setArmorLevel: (level) => set({ armorLevel: level }),
 
+  addKill: (pts) => set((s) => {
+    const multiplier = Math.min(s.comboCount + 1, 5);
+    const earned = pts * multiplier;
+    return { score: s.score + earned, comboCount: s.comboCount + 1, comboTimer: 3.5 };
+  }),
+  tickCombo: (delta) => set((s) => {
+    if (s.comboTimer <= 0) return {};
+    const newTimer = s.comboTimer - delta;
+    if (newTimer <= 0) return { comboTimer: 0, comboCount: 0 };
+    return { comboTimer: newTimer };
+  }),
+  setNearLore: (id) => set({ nearLore: id }),
+  markLoreRead: (id) => set((s) => ({ loreRead: [...s.loreRead.filter(x => x !== id), id] })),
+
   resetGame: () => set({
     gameState: 'playing',
     hearts: 3,
@@ -483,6 +518,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     nearShop: false,
     nearFountain: false,
     lastSaveTime: 0,
+    score: 0,
+    comboCount: 0,
+    comboTimer: 0,
+    runStartTime: Date.now(),
+    nearLore: null,
+    loreRead: [],
   }),
 
   triggerSave: () => set({ lastSaveTime: Date.now() }),
@@ -568,6 +609,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       nearFountain: false,
       bossMaxHP: 20,
       lastSaveTime: 0,
+      score: 0,
+      comboCount: 0,
+      comboTimer: 0,
+      runStartTime: Date.now(),
+      nearLore: null,
+      loreRead: [],
     });
     return true;
   },
