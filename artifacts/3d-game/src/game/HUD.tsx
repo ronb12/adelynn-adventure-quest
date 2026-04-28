@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGameStore, SWORD_DEFS } from './store';
 import { WEAPONS, WeaponId } from './controls';
 import { NPC_DATA } from './npcData';
@@ -234,37 +234,163 @@ function BossHPBar() {
 }
 
 // ── Mini-Map ──────────────────────────────────────────────────────
-function MiniMap() {
-  const playerPos    = useGameStore(s => s.playerPosition);
-  const currentArea  = useGameStore(s => s.currentArea);
-  const chestsOpened = useGameStore(s => s.chestsOpened);
-  const shardsCollected = useGameStore(s => s.shardsCollected);
+// ── Lore stone positions (mirrored from World.tsx) ────────────────
+const MAP_LORE_STONES: Record<string, [number, number][]> = {
+  field:  [[15, -5], [-18, -12], [10, -20]],
+  forest: [[-6, -10], [14, -8], [-12, -18]],
+  desert: [[14, -10], [6, 14], [-18, 14]],
+};
 
-  const SIZE = 100;
-  const WORLD = 30; // world is -30 to +30
+// ── Terrain SVG layers per area ────────────────────────────────────
+function TerrainLayer({ area, S }: { area: string; S: number }) {
+  if (area === 'field') return (
+    <svg width={S} height={S} style={{ position: 'absolute', inset: 0 }}>
+      <defs>
+        <radialGradient id="fg-bg" cx="50%" cy="50%" r="70%">
+          <stop offset="0%" stopColor="#1e4a20" />
+          <stop offset="100%" stopColor="#0f2a10" />
+        </radialGradient>
+      </defs>
+      <rect width={S} height={S} fill="url(#fg-bg)" />
+      {/* Grass patches */}
+      <ellipse cx={S*0.3} cy={S*0.25} rx={14} ry={10} fill="#264e28" opacity={0.6}/>
+      <ellipse cx={S*0.75} cy={S*0.4} rx={10} ry={7} fill="#264e28" opacity={0.5}/>
+      <ellipse cx={S*0.55} cy={S*0.7} rx={16} ry={9} fill="#1d3e1f" opacity={0.6}/>
+      <ellipse cx={S*0.2} cy={S*0.65} rx={9} ry={6} fill="#264e28" opacity={0.4}/>
+      {/* Village marker (center-bottom) */}
+      <rect x={S*0.47} y={S*0.75} width={4} height={4} fill="#8a6a3a" opacity={0.9}/>
+      <rect x={S*0.52} y={S*0.73} width={4} height={4} fill="#7a5a2a" opacity={0.9}/>
+      <rect x={S*0.44} y={S*0.72} width={3} height={3} fill="#9a7a4a" opacity={0.8}/>
+      {/* Path from village to north portal */}
+      <line x1={S*0.5} y1={S*0.7} x2={S*0.5} y2={S*0.05} stroke="#2a5a2a" strokeWidth={1.5} strokeDasharray="2,3" opacity={0.5}/>
+      {/* Path to east portal */}
+      <line x1={S*0.5} y1={S*0.7} x2={S*0.95} y2={S*0.5} stroke="#2a5a2a" strokeWidth={1.5} strokeDasharray="2,3" opacity={0.4}/>
+      {/* Grid lines */}
+      <line x1={0} y1={S*0.5} x2={S} y2={S*0.5} stroke="#1a401a" strokeWidth={0.5} opacity={0.4}/>
+      <line x1={S*0.5} y1={0} x2={S*0.5} y2={S} stroke="#1a401a" strokeWidth={0.5} opacity={0.4}/>
+    </svg>
+  );
+  if (area === 'forest') return (
+    <svg width={S} height={S} style={{ position: 'absolute', inset: 0 }}>
+      <defs>
+        <radialGradient id="fo-bg" cx="50%" cy="50%" r="70%">
+          <stop offset="0%" stopColor="#0d2a0e" />
+          <stop offset="100%" stopColor="#060f06" />
+        </radialGradient>
+      </defs>
+      <rect width={S} height={S} fill="url(#fo-bg)" />
+      {/* Dense tree canopy clusters */}
+      <circle cx={S*0.2} cy={S*0.2} r={12} fill="#0f3010" opacity={0.8}/>
+      <circle cx={S*0.75} cy={S*0.25} r={10} fill="#0e2d0f" opacity={0.8}/>
+      <circle cx={S*0.15} cy={S*0.7} r={14} fill="#0f3010" opacity={0.75}/>
+      <circle cx={S*0.8} cy={S*0.72} r={11} fill="#0d2a0d" opacity={0.8}/>
+      <circle cx={S*0.5} cy={S*0.35} r={9} fill="#142e14" opacity={0.7}/>
+      <circle cx={S*0.4} cy={S*0.75} r={8} fill="#0f2e0f" opacity={0.75}/>
+      {/* Spirit tree (distinct color) */}
+      <circle cx={S*0.5} cy={S*0.2} r={6} fill="#1a4020" opacity={0.9}/>
+      <circle cx={S*0.5} cy={S*0.2} r={3} fill="#2a6030" opacity={0.8}/>
+      {/* Clearing in center */}
+      <ellipse cx={S*0.5} cy={S*0.55} rx={10} ry={8} fill="#173517" opacity={0.5}/>
+      {/* Path */}
+      <line x1={S*0.5} y1={S*0.95} x2={S*0.5} y2={S*0.55} stroke="#1a4a1a" strokeWidth={1.5} strokeDasharray="2,3" opacity={0.5}/>
+      {/* Grid */}
+      <line x1={0} y1={S*0.5} x2={S} y2={S*0.5} stroke="#0d1e0d" strokeWidth={0.5} opacity={0.4}/>
+      <line x1={S*0.5} y1={0} x2={S*0.5} y2={S} stroke="#0d1e0d" strokeWidth={0.5} opacity={0.4}/>
+    </svg>
+  );
+  if (area === 'desert') return (
+    <svg width={S} height={S} style={{ position: 'absolute', inset: 0 }}>
+      <defs>
+        <radialGradient id="de-bg" cx="50%" cy="60%" r="70%">
+          <stop offset="0%" stopColor="#4a3010" />
+          <stop offset="100%" stopColor="#1e1408" />
+        </radialGradient>
+      </defs>
+      <rect width={S} height={S} fill="url(#de-bg)" />
+      {/* Rock formations */}
+      <polygon points={`${S*0.15},${S*0.28} ${S*0.25},${S*0.18} ${S*0.32},${S*0.28} ${S*0.22},${S*0.35}`} fill="#3a2810" opacity={0.75}/>
+      <polygon points={`${S*0.65},${S*0.6} ${S*0.78},${S*0.52} ${S*0.85},${S*0.65} ${S*0.72},${S*0.72}`} fill="#362509" opacity={0.8}/>
+      <polygon points={`${S*0.4},${S*0.75} ${S*0.48},${S*0.68} ${S*0.55},${S*0.78} ${S*0.47},${S*0.83}`} fill="#3a2810" opacity={0.7}/>
+      {/* Sandy patches */}
+      <ellipse cx={S*0.55} cy={S*0.4} rx={15} ry={10} fill="#5a4020" opacity={0.35}/>
+      <ellipse cx={S*0.3} cy={S*0.6} rx={10} ry={7} fill="#4a3515" opacity={0.3}/>
+      {/* Temple ruins at top */}
+      <rect x={S*0.44} y={S*0.12} width={12} height={8} fill="#2a1e0a" opacity={0.8}/>
+      <rect x={S*0.46} y={S*0.1} width={3} height={5} fill="#251808" opacity={0.9}/>
+      <rect x={S*0.51} y={S*0.1} width={3} height={5} fill="#251808" opacity={0.9}/>
+      {/* Path */}
+      <line x1={S*0.05} y1={S*0.5} x2={S*0.5} y2={S*0.5} stroke="#3a2808" strokeWidth={1.5} strokeDasharray="2,3" opacity={0.4}/>
+      {/* Grid */}
+      <line x1={0} y1={S*0.5} x2={S} y2={S*0.5} stroke="#2a1e08" strokeWidth={0.5} opacity={0.35}/>
+      <line x1={S*0.5} y1={0} x2={S*0.5} y2={S} stroke="#2a1e08" strokeWidth={0.5} opacity={0.35}/>
+    </svg>
+  );
+  // Boss area
+  return (
+    <svg width={S} height={S} style={{ position: 'absolute', inset: 0 }}>
+      <defs>
+        <radialGradient id="bo-bg" cx="50%" cy="50%" r="60%">
+          <stop offset="0%" stopColor="#2a0050" />
+          <stop offset="100%" stopColor="#080010" />
+        </radialGradient>
+      </defs>
+      <rect width={S} height={S} fill="url(#bo-bg)" />
+      {/* Void cracks */}
+      <line x1={S*0.5} y1={S*0.5} x2={S*0.2} y2={S*0.1} stroke="#6600cc" strokeWidth={1} opacity={0.5}/>
+      <line x1={S*0.5} y1={S*0.5} x2={S*0.8} y2={S*0.2} stroke="#6600cc" strokeWidth={1} opacity={0.4}/>
+      <line x1={S*0.5} y1={S*0.5} x2={S*0.15} y2={S*0.75} stroke="#6600cc" strokeWidth={0.8} opacity={0.4}/>
+      <line x1={S*0.5} y1={S*0.5} x2={S*0.85} y2={S*0.8} stroke="#6600cc" strokeWidth={0.8} opacity={0.4}/>
+      {/* Central void */}
+      <circle cx={S*0.5} cy={S*0.5} r={8} fill="#1a0040" opacity={0.9}/>
+      <circle cx={S*0.5} cy={S*0.5} r={3} fill="#3300aa" opacity={0.6}/>
+    </svg>
+  );
+}
+
+function MiniMap() {
+  const playerPos       = useGameStore(s => s.playerPosition);
+  const currentArea     = useGameStore(s => s.currentArea);
+  const chestsOpened    = useGameStore(s => s.chestsOpened);
+  const shardsCollected = useGameStore(s => s.shardsCollected);
+  const loreRead        = useGameStore(s => s.loreRead);
+
+  const prevPosRef  = useRef({ x: playerPos.x, z: playerPos.z });
+  const [facing, setFacing] = useState(0);
+
+  useEffect(() => {
+    const dx = playerPos.x - prevPosRef.current.x;
+    const dz = playerPos.z - prevPosRef.current.z;
+    if (Math.abs(dx) > 0.08 || Math.abs(dz) > 0.08) {
+      setFacing(Math.atan2(dx, dz) * 180 / Math.PI);
+    }
+    prevPosRef.current = { x: playerPos.x, z: playerPos.z };
+  }, [playerPos]);
+
+  const S = 140;
+  const WORLD = 30;
 
   const toMap = (x: number, z: number) => ({
-    x: (x / WORLD + 1) / 2 * SIZE,
-    y: (z / WORLD + 1) / 2 * SIZE,
+    x: (x / WORLD + 1) / 2 * S,
+    y: (z / WORLD + 1) / 2 * S,
   });
 
   const player = toMap(playerPos.x, playerPos.z);
 
-  // Portal dots per area
-  const portalDots: { x: number; z: number; color: string }[] = [];
+  // Portals
+  const portalDots: { x: number; z: number; color: string; label: string }[] = [];
   if (currentArea === 'field') {
-    portalDots.push({ x: 0, z: -29, color: '#44ff44' });
-    portalDots.push({ x: 29, z: 0, color: '#ff8822' });
-    if (shardsCollected >= 3) portalDots.push({ x: -29, z: 0, color: '#9900ff' });
+    portalDots.push({ x: 0, z: -29, color: '#44ee44', label: 'Forest' });
+    portalDots.push({ x: 29, z: 0, color: '#ff8822', label: 'Desert' });
+    if (shardsCollected >= 3) portalDots.push({ x: -29, z: 0, color: '#aa44ff', label: 'Boss' });
   } else if (currentArea === 'forest') {
-    portalDots.push({ x: 0, z: 29, color: '#88aaff' });
+    portalDots.push({ x: 0, z: 29, color: '#88aaff', label: 'Field' });
   } else if (currentArea === 'desert') {
-    portalDots.push({ x: -29, z: 0, color: '#88aaff' });
+    portalDots.push({ x: -29, z: 0, color: '#88aaff', label: 'Field' });
   } else if (currentArea === 'boss') {
-    portalDots.push({ x: 0, z: 29, color: '#88aaff' });
+    portalDots.push({ x: 0, z: 29, color: '#88aaff', label: 'Field' });
   }
 
-  // Chest dot
+  // Chest
   const chestKey = currentArea === 'boss' ? 'boss-armor' : currentArea;
   const CHEST_XZ: Partial<Record<string, [number, number]>> = {
     field: [0, -22], forest: [0, 0], desert: [0, -24], 'boss-armor': [-8, 8],
@@ -278,70 +404,167 @@ function MiniMap() {
   };
   const fountainXZ = FOUNTAIN_XZ[currentArea];
 
+  // Lore stones for current area
+  const loreStones = MAP_LORE_STONES[currentArea] ?? [];
+  const LORE_IDS: Record<string, string[]> = {
+    field:  ['lore-field-1',  'lore-field-2',  'lore-field-3'],
+    forest: ['lore-forest-1', 'lore-forest-2', 'lore-forest-3'],
+    desert: ['lore-desert-1', 'lore-desert-2', 'lore-desert-3'],
+  };
+  const loreIds = LORE_IDS[currentArea] ?? [];
+
+  // Area border colors
+  const borderColor = currentArea === 'forest' ? '#2a6a2a'
+    : currentArea === 'desert' ? '#8a6a2a'
+    : currentArea === 'boss' ? '#6600cc'
+    : '#2a6a2a';
+  const areaColor = currentArea === 'forest' ? '#44cc44'
+    : currentArea === 'desert' ? '#ffaa44'
+    : currentArea === 'boss' ? '#aa66ff'
+    : '#66dd66';
+
   return (
-    <div className="relative" style={{ width: SIZE, height: SIZE }}>
-      {/* Map background */}
-      <div className="absolute inset-0 rounded-lg border border-gray-600/50 overflow-hidden"
-        style={{ background: 'rgba(0,0,0,0.7)' }}>
-        {/* Area tint */}
-        <div className="absolute inset-0 rounded-lg"
-          style={{
-            background: currentArea === 'forest' ? 'rgba(10,40,10,0.5)'
-              : currentArea === 'desert' ? 'rgba(40,30,10,0.5)'
-              : currentArea === 'boss' ? 'rgba(20,0,40,0.6)'
-              : 'rgba(10,30,10,0.3)',
-          }} />
+    <div style={{ position: 'relative', width: S, height: S + 18 }}>
+      {/* Outer frame / shadow */}
+      <div style={{
+        position: 'absolute', inset: 0, top: 0, width: S, height: S,
+        borderRadius: 10,
+        boxShadow: `0 0 0 1px #000, 0 0 0 2px ${borderColor}55, 0 4px 16px rgba(0,0,0,0.7)`,
+        overflow: 'hidden',
+      }}>
+        {/* Terrain background */}
+        <TerrainLayer area={currentArea} S={S} />
+
+        {/* Vignette overlay */}
+        <div style={{
+          position: 'absolute', inset: 0, borderRadius: 10,
+          background: 'radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.65) 100%)',
+          pointerEvents: 'none',
+        }} />
+
+        {/* SVG markers layer */}
+        <svg width={S} height={S} style={{ position: 'absolute', inset: 0, overflow: 'visible' }}>
+          {/* Grid cross-hair at center */}
+          <line x1={S*0.5} y1={2} x2={S*0.5} y2={S-2} stroke="rgba(255,255,255,0.04)" strokeWidth={1}/>
+          <line x1={2} y1={S*0.5} x2={S-2} y2={S*0.5} stroke="rgba(255,255,255,0.04)" strokeWidth={1}/>
+
+          {/* Portals — diamond shape */}
+          {portalDots.map((p, i) => {
+            const mp = toMap(p.x, p.z);
+            const r = 5;
+            return (
+              <g key={i}>
+                <polygon
+                  points={`${mp.x},${mp.y-r} ${mp.x+r},${mp.y} ${mp.x},${mp.y+r} ${mp.x-r},${mp.y}`}
+                  fill={p.color} opacity={0.9}
+                />
+                <polygon
+                  points={`${mp.x},${mp.y-r} ${mp.x+r},${mp.y} ${mp.x},${mp.y+r} ${mp.x-r},${mp.y}`}
+                  fill="none" stroke={p.color} strokeWidth={1.5} opacity={0.6}
+                  style={{ filter: `drop-shadow(0 0 4px ${p.color})` }}
+                />
+              </g>
+            );
+          })}
+
+          {/* Chest — square with glow */}
+          {chestXZ && (() => {
+            const mp = toMap(chestXZ[0], chestXZ[1]);
+            return (
+              <g>
+                <rect x={mp.x-4} y={mp.y-4} width={8} height={8} rx={1}
+                  fill={chestOpened ? '#555' : '#f0c030'}
+                  stroke={chestOpened ? '#444' : '#c09010'}
+                  strokeWidth={1}
+                  style={chestOpened ? {} : { filter: 'drop-shadow(0 0 4px #f0c030)' }}
+                />
+                {!chestOpened && (
+                  <line x1={mp.x-4} y1={mp.y} x2={mp.x+4} y2={mp.y}
+                    stroke="#c09010" strokeWidth={0.8}/>
+                )}
+              </g>
+            );
+          })()}
+
+          {/* Fairy Fountain — cyan cross + circle */}
+          {fountainXZ && (() => {
+            const mp = toMap(fountainXZ[0], fountainXZ[1]);
+            return (
+              <g style={{ filter: 'drop-shadow(0 0 3px #44ccff)' }}>
+                <circle cx={mp.x} cy={mp.y} r={4.5} fill="#0088bb" stroke="#44ccff" strokeWidth={1.2}/>
+                <line x1={mp.x-4} y1={mp.y} x2={mp.x+4} y2={mp.y} stroke="#88eeff" strokeWidth={1}/>
+                <line x1={mp.x} y1={mp.y-4} x2={mp.x} y2={mp.y+4} stroke="#88eeff" strokeWidth={1}/>
+              </g>
+            );
+          })()}
+
+          {/* Lore stones — purple star ✦ */}
+          {loreStones.map(([wx, wz], i) => {
+            const mp = toMap(wx, wz);
+            const read = loreIds[i] && loreRead.includes(loreIds[i]);
+            const col = read ? '#885588' : '#cc66ff';
+            const r = 3.5;
+            return (
+              <g key={i} style={read ? {} : { filter: 'drop-shadow(0 0 3px #cc66ff)' }}>
+                {/* 4-pointed star */}
+                <polygon
+                  points={`${mp.x},${mp.y-r} ${mp.x+1},${mp.y-1} ${mp.x+r},${mp.y} ${mp.x+1},${mp.y+1} ${mp.x},${mp.y+r} ${mp.x-1},${mp.y+1} ${mp.x-r},${mp.y} ${mp.x-1},${mp.y-1}`}
+                  fill={col} opacity={read ? 0.6 : 0.95}
+                />
+              </g>
+            );
+          })}
+
+          {/* Player — directional arrow */}
+          <g transform={`translate(${player.x}, ${player.y}) rotate(${facing})`}>
+            {/* Glow ring */}
+            <circle cx={0} cy={0} r={7} fill="rgba(233,30,140,0.18)" />
+            {/* Arrow body */}
+            <polygon points="0,-7 5,5 0,2 -5,5"
+              fill="#e91e8c" stroke="white" strokeWidth={1.2}
+              style={{ filter: 'drop-shadow(0 0 5px #e91e8c)' }}
+            />
+          </g>
+
+          {/* Compass — N indicator */}
+          <text x={S/2} y={11} textAnchor="middle"
+            style={{ fontSize: 8, fill: 'rgba(255,255,255,0.55)', fontFamily: 'monospace', fontWeight: 'bold' }}>N</text>
+          <line x1={S/2-4} y1={7} x2={S/2} y2={4} stroke="rgba(255,255,255,0.35)" strokeWidth={0.8}/>
+          <line x1={S/2+4} y1={7} x2={S/2} y2={4} stroke="rgba(255,255,255,0.35)" strokeWidth={0.8}/>
+        </svg>
+
+        {/* Inner border glow */}
+        <div style={{
+          position: 'absolute', inset: 0, borderRadius: 10,
+          boxShadow: `inset 0 0 0 1px ${borderColor}66`,
+          pointerEvents: 'none',
+        }}/>
       </div>
 
-      {/* Portals */}
-      {portalDots.map((p, i) => {
-        const mp = toMap(p.x, p.z);
-        return (
-          <div key={i} className="absolute rounded-sm" style={{
-            left: mp.x - 3, top: mp.y - 3, width: 6, height: 6,
-            background: p.color, boxShadow: `0 0 4px ${p.color}`,
-          }} />
-        );
-      })}
-
-      {/* Chest */}
-      {chestXZ && (
-        <div className="absolute" style={{
-          left: toMap(chestXZ[0], chestXZ[1]).x - 4,
-          top: toMap(chestXZ[0], chestXZ[1]).y - 4,
-          width: 8, height: 8,
-          background: chestOpened ? '#888' : '#f0c030',
-          border: '1px solid #888',
-          borderRadius: 1,
-          boxShadow: chestOpened ? 'none' : '0 0 6px #f0c030',
-        }} />
-      )}
-
-      {/* Fairy Fountain */}
-      {fountainXZ && (
-        <div className="absolute rounded-full" style={{
-          left: toMap(fountainXZ[0], fountainXZ[1]).x - 3,
-          top: toMap(fountainXZ[0], fountainXZ[1]).y - 3,
-          width: 6, height: 6,
-          background: '#44ccff',
-          boxShadow: '0 0 5px #44ccff',
-        }} />
-      )}
-
-      {/* Player dot */}
-      <div className="absolute rounded-full" style={{
-        left: player.x - 4, top: player.y - 4,
-        width: 8, height: 8,
-        background: '#e91e8c',
-        border: '1.5px solid white',
-        boxShadow: '0 0 6px #e91e8c',
-        zIndex: 10,
-      }} />
-
-      {/* Area label */}
-      <div className="absolute bottom-0.5 left-0 right-0 text-center"
-        style={{ fontSize: 8, color: '#aaa', fontFamily: 'monospace' }}>
-        {AREA_NAMES[currentArea] ?? currentArea}
+      {/* Legend bar below map */}
+      <div style={{
+        position: 'absolute', top: S + 3, left: 0, width: S,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+      }}>
+        {/* Chest legend */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <div style={{ width: 6, height: 6, background: chestOpened ? '#666' : '#f0c030', borderRadius: 1 }}/>
+          <span style={{ fontSize: 8, color: '#888', fontFamily: 'monospace' }}>chest</span>
+        </div>
+        {/* Fountain legend */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#44ccff' }}/>
+          <span style={{ fontSize: 8, color: '#888', fontFamily: 'monospace' }}>fairy</span>
+        </div>
+        {/* Lore legend */}
+        {loreStones.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <div style={{ width: 6, height: 6, background: '#cc66ff', clipPath: 'polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)' }}/>
+            <span style={{ fontSize: 8, color: '#888', fontFamily: 'monospace' }}>
+              lore {loreRead.filter(id => loreIds.includes(id)).length}/{loreStones.length}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -587,9 +810,7 @@ export function HUD() {
           </div>
           <ScorePanel />
           {/* Mini-map */}
-          <div className="bg-black/60 rounded-lg p-0.5 border border-gray-700/50 backdrop-blur-sm">
-            <MiniMap />
-          </div>
+          <MiniMap />
         </div>
       </div>
 
