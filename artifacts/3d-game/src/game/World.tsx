@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { Sky } from '@react-three/drei';
-import { useGameStore, AreaId, AreaTransition, SWORD_CHESTS, SWORD_DEFS } from './store';
+import { useGameStore, AreaId, AreaTransition, SWORD_CHESTS, SWORD_DEFS, WEAPON_PICKUPS } from './store';
 import { Village } from './Village';
 import { NPCManager } from './NPCs';
 
@@ -338,6 +338,124 @@ function SwordChestsForArea({ area }: { area: string }) {
   );
 }
 
+// ─── Weapon Altar (pedestal like Zelda ALTTP) ─────────────────────
+function WeaponAltar({ pickupKey, pos, color, label }: {
+  pickupKey: string; pos: [number, number, number]; color: string; label: string;
+}) {
+  const t             = useRef(0);
+  const gemRef        = useRef<THREE.Group>(null!);
+  const beamRef       = useRef<THREE.Mesh>(null!);
+  const chestsOpened  = useGameStore(s => s.chestsOpened);
+  const nearWeapon    = useGameStore(s => s.nearWeaponPickup);
+  const collected     = chestsOpened.includes(pickupKey);
+  const near          = nearWeapon === pickupKey;
+
+  useFrame((_, delta) => {
+    t.current += delta;
+    if (!collected && gemRef.current) {
+      gemRef.current.position.y = 1.85 + Math.sin(t.current * 2.2) * 0.14;
+      gemRef.current.rotation.y = t.current * 1.8;
+    }
+    if (!collected && beamRef.current) {
+      beamRef.current.rotation.y = t.current * 0.6;
+      beamRef.current.material = beamRef.current.material as THREE.MeshStandardMaterial;
+      (beamRef.current.material as THREE.MeshStandardMaterial).opacity =
+        0.18 + Math.sin(t.current * 1.4) * 0.07;
+    }
+  });
+
+  return (
+    <group position={pos}>
+      {/* Stone base — three tiers */}
+      <mesh position={[0, 0.2, 0]} castShadow>
+        <cylinderGeometry args={[0.75, 0.9, 0.4, 12]} />
+        <meshStandardMaterial color={collected ? '#55556a' : '#8899aa'} roughness={0.9} />
+      </mesh>
+      <mesh position={[0, 0.54, 0]} castShadow>
+        <cylinderGeometry args={[0.55, 0.75, 0.28, 12]} />
+        <meshStandardMaterial color={collected ? '#444455' : '#99aabc'} roughness={0.85} />
+      </mesh>
+      <mesh position={[0, 0.82, 0]} castShadow>
+        <cylinderGeometry args={[0.4, 0.55, 0.24, 12]} />
+        <meshStandardMaterial color={collected ? '#33334a' : '#aabcd0'} roughness={0.8} />
+      </mesh>
+      {/* Rune ring on top */}
+      <mesh position={[0, 0.97, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.3, 0.42, 20]} />
+        <meshStandardMaterial
+          color={collected ? '#333' : color}
+          emissive={collected ? '#000' : color}
+          emissiveIntensity={collected ? 0 : 1.2}
+          transparent opacity={0.9} />
+      </mesh>
+
+      {/* Floating weapon gem (only when uncollected) */}
+      {!collected && (
+        <group ref={gemRef} position={[0, 1.85, 0]}>
+          <mesh>
+            <octahedronGeometry args={[0.28, 0]} />
+            <meshStandardMaterial
+              color={color} emissive={color} emissiveIntensity={2.5}
+              metalness={0.3} roughness={0.1} transparent opacity={0.92} />
+          </mesh>
+          {/* Small inner crystal */}
+          <mesh scale={0.45} rotation={[Math.PI / 4, 0, 0]}>
+            <octahedronGeometry args={[0.28, 0]} />
+            <meshStandardMaterial
+              color="#ffffff" emissive="#ffffff" emissiveIntensity={3}
+              transparent opacity={0.6} />
+          </mesh>
+        </group>
+      )}
+
+      {/* Collected — dimmed remnant */}
+      {collected && (
+        <mesh position={[0, 0.97, 0]}>
+          <sphereGeometry args={[0.09, 7, 5]} />
+          <meshStandardMaterial color="#333344" emissive="#111" />
+        </mesh>
+      )}
+
+      {/* Light beam (uncollected only) */}
+      {!collected && (
+        <>
+          <mesh ref={beamRef} position={[0, 4, 0]}>
+            <cylinderGeometry args={[0.05, 0.18, 8, 10]} />
+            <meshStandardMaterial
+              color={color} emissive={color} emissiveIntensity={4}
+              transparent opacity={0.2} depthWrite={false} />
+          </mesh>
+          <pointLight
+            position={[0, 2, 0]} color={color}
+            intensity={near ? 7 : 4.5} distance={near ? 14 : 9} decay={2} />
+        </>
+      )}
+
+      {/* Near-pickup label floating above */}
+      {near && !collected && (
+        <mesh position={[0, 3, 0]}>
+          <sphereGeometry args={[0.12, 8, 6]} />
+          <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={5} />
+        </mesh>
+      )}
+      {collected && (
+        <pointLight position={[0, 1, 0]} color={color} intensity={0.3} distance={4} decay={2} />
+      )}
+    </group>
+  );
+}
+
+function WeaponAltarsForArea({ area }: { area: string }) {
+  const altars = WEAPON_PICKUPS.filter(p => p.area === area);
+  return (
+    <>
+      {altars.map(p => (
+        <WeaponAltar key={p.key} pickupKey={p.key} pos={p.pos} color={p.color} label={p.label} />
+      ))}
+    </>
+  );
+}
+
 // ─── Fairy Fountain ───────────────────────────────────────────────
 function FairyFountain({ pos }: { pos: [number, number, number] }) {
   const t = useRef(0);
@@ -469,6 +587,7 @@ function FieldArea() {
 
       <TreasureChest pos={chestPos} area="field" />
       <SwordChestsForArea area="field" />
+      <WeaponAltarsForArea area="field" />
       <LoreStonesForArea area="field" />
       <Village />
 
@@ -552,6 +671,7 @@ function ForestArea() {
       <TreasureChest pos={[0, 0.5, 0]} area="forest" />
       <LoreStonesForArea area="forest" />
       <SwordChestsForArea area="forest" />
+      <WeaponAltarsForArea area="forest" />
       {/* Fairy Fountain */}
       <FairyFountain pos={[18, 0, -18]} />
       <Boundary />
@@ -629,6 +749,7 @@ function DesertArea() {
       <TreasureChest pos={chestPos} area="desert" />
       <LoreStonesForArea area="desert" />
       <SwordChestsForArea area="desert" />
+      <WeaponAltarsForArea area="desert" />
       {/* Fairy Fountain */}
       <FairyFountain pos={[20, 0, 20]} />
       <Boundary />
@@ -698,6 +819,7 @@ function BossArea() {
       {/* Armor chest */}
       <TreasureChest pos={[-8, 0.5, 8]} area="boss-armor" />
       <SwordChestsForArea area="boss" />
+      <WeaponAltarsForArea area="boss" />
 
       <Boundary />
     </>

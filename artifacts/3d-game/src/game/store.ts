@@ -41,6 +41,42 @@ export const SWORD_CHESTS: { key: string; pos: [number, number, number]; area: A
   { key: 'sword-cosmos',  pos: [0, 0, -15],   area: 'boss',   swordId: 'cosmos'  },
 ];
 
+export interface WeaponPickup {
+  key: string;
+  weaponId: WeaponId;
+  area: AreaId;
+  pos: [number, number, number];
+  label: string;
+  icon: string;
+  color: string;
+  desc: string;
+  starterAmmo?: {
+    arrows?: number; bombs?: number; shurikens?: number;
+    frostCharges?: number; flareCharges?: number;
+    veilCrystals?: number; quakeRunes?: number; moonbowAmmo?: number;
+  };
+}
+
+export const WEAPON_PICKUPS: WeaponPickup[] = [
+  // ── Sunfield Plains ── (easy, beginner tools)
+  { key: 'weapon-bow',       weaponId: 'bow',      area: 'field',  pos: [22, 0, 6],    label: 'Aldenmere Bow',  icon: '🏹', color: '#88aaff', desc: 'Fire arrows to strike distant foes.',         starterAmmo: { arrows: 20 } },
+  { key: 'weapon-boomerang', weaponId: 'boomerang', area: 'field',  pos: [-22, 0, -5],  label: 'Shadowrang',     icon: '🌒', color: '#ffaa44', desc: 'Returning arc weapon. Unlimited uses.' },
+  // ── Whisper Woods ── (magical tools)
+  { key: 'weapon-wand',      weaponId: 'wand',     area: 'forest', pos: [20, 0, 5],    label: 'Wand of Sparks', icon: '🪄', color: '#ff88dd', desc: 'Fires magic orbs. Unlimited uses.' },
+  { key: 'weapon-frost',     weaponId: 'frost',    area: 'forest', pos: [-8, 0, 20],   label: 'Frost Scepter',  icon: '❄️', color: '#44ccff', desc: 'Ice bolt that slows enemies.',                starterAmmo: { frostCharges: 10 } },
+  { key: 'weapon-moonbow',   weaponId: 'moonbow',  area: 'forest', pos: [4, 0, -22],   label: 'Moonbow',        icon: '🌙', color: '#8844cc', desc: 'Moon-crescent fan-shot. Powerful ranged.',    starterAmmo: { moonbowAmmo: 15 } },
+  // ── Ashrock Summit ── (explosive tools)
+  { key: 'weapon-bomb',      weaponId: 'bomb',     area: 'desert', pos: [-20, 0, -16], label: 'Ember Vial',     icon: '🧪', color: '#ff4422', desc: 'Throwable explosive. Area damage.',           starterAmmo: { bombs: 8 } },
+  { key: 'weapon-shuriken',  weaponId: 'shuriken', area: 'desert', pos: [20, 0, -14],  label: 'Void Stars',     icon: '⭐', color: '#00ffcc', desc: 'Spread-throw spinning stars.',                starterAmmo: { shurikens: 25 } },
+  { key: 'weapon-flare',     weaponId: 'flare',    area: 'desert', pos: [-8, 0, -22],  label: "Solara's Flare", icon: '☀️', color: '#ff8800', desc: 'Area fire burst. Hits all nearby.',           starterAmmo: { flareCharges: 5 } },
+  // ── Malgrath's Lair ── (ultimate weapons)
+  { key: 'weapon-shadow',    weaponId: 'shadow',   area: 'boss',   pos: [-18, 0, -8],  label: 'Shadow Veil',    icon: '🌑', color: '#aa00ff', desc: 'Vanish from sight for 2.5 seconds.' },
+  { key: 'weapon-veil',      weaponId: 'veil',     area: 'boss',   pos: [18, 0, -8],   label: "Glacira's Veil", icon: '💠', color: '#00aaff', desc: 'Instantly freeze all nearby enemies.',        starterAmmo: { veilCrystals: 3 } },
+  { key: 'weapon-quake',     weaponId: 'quake',    area: 'boss',   pos: [14, 0, 14],   label: 'Cragus Strike',  icon: '🪨', color: '#aa8844', desc: 'Ground slam stuns all on-screen foes.',       starterAmmo: { quakeRunes: 3 } },
+  { key: 'weapon-aura',      weaponId: 'aura',     area: 'boss',   pos: [-14, 0, 14],  label: 'Aura Ring',      icon: '💫', color: '#ffff44', desc: 'Orbiting crystal shield for 4 seconds.' },
+  { key: 'weapon-chain',     weaponId: 'chain',    area: 'boss',   pos: [0, 0, 14],    label: 'Chain Anchor',   icon: '⛓️', color: '#8888aa', desc: 'Grapple and stun with a chain throw.' },
+];
+
 export interface AreaTransition {
   area: AreaId;
   spawnPos: THREE.Vector3;
@@ -86,6 +122,8 @@ interface GameStore {
   pendingTransition: AreaTransition | null;
   pendingWeaponFire: WeaponId | null;
   nearChest: boolean;
+  nearWeaponPickup: string | null;
+  unlockedWeapons: WeaponId[];
   shardsCollected: number;
   chestsOpened: string[];
   nearNPC: string | null;
@@ -139,6 +177,8 @@ interface GameStore {
   clearPendingWeaponFire: () => void;
   triggerAreaTransition: (t: AreaTransition) => void;
   setNearChest: (v: boolean) => void;
+  setNearWeaponPickup: (id: string | null) => void;
+  unlockWeaponPickup: (weaponId: WeaponId, pickupKey: string) => void;
   openChest: (area: string) => void;
   setNearNPC: (id: string | null) => void;
   startDialogue: (npcId: string) => void;
@@ -204,6 +244,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   pendingTransition: null,
   pendingWeaponFire: null,
   nearChest: false,
+  nearWeaponPickup: null,
+  unlockedWeapons: ['sword'],
   shardsCollected: 0,
   chestsOpened: [],
   nearNPC: null,
@@ -321,9 +363,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setSelectedWeapon: (w) => set({ selectedWeapon: w }),
 
   cycleWeapon: (dir) => set((s) => {
-    const idx = WEAPONS.indexOf(s.selectedWeapon);
-    const next = (idx + dir + WEAPONS.length) % WEAPONS.length;
-    return { selectedWeapon: WEAPONS[next] };
+    const avail = s.unlockedWeapons;
+    if (avail.length <= 1) return {};
+    const idx = avail.indexOf(s.selectedWeapon);
+    const safeIdx = idx >= 0 ? idx : 0;
+    const next = (safeIdx + dir + avail.length) % avail.length;
+    return { selectedWeapon: avail[next] };
   }),
 
   cycleSword: (dir) => set((s) => {
@@ -344,6 +389,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
   clearPendingWeaponFire: () => set({ pendingWeaponFire: null }),
   triggerAreaTransition: (t) => set({ currentArea: t.area, pendingTransition: t }),
   setNearChest: (v) => set({ nearChest: v }),
+  setNearWeaponPickup: (id) => set({ nearWeaponPickup: id }),
+
+  unlockWeaponPickup: (weaponId, pickupKey) => set((s) => {
+    if (s.chestsOpened.includes(pickupKey)) return {};
+    const pickup = WEAPON_PICKUPS.find(p => p.key === pickupKey);
+    const ammo = pickup?.starterAmmo ?? {};
+    const alreadyHave = s.unlockedWeapons.includes(weaponId);
+    return {
+      chestsOpened: [...s.chestsOpened, pickupKey],
+      unlockedWeapons: alreadyHave ? s.unlockedWeapons : [...s.unlockedWeapons, weaponId],
+      selectedWeapon: weaponId,
+      arrows:       ammo.arrows       ? Math.min(s.arrows       + ammo.arrows,       99) : s.arrows,
+      bombs:        ammo.bombs        ? Math.min(s.bombs        + ammo.bombs,        20) : s.bombs,
+      shurikens:    ammo.shurikens    ? Math.min(s.shurikens    + ammo.shurikens,    60) : s.shurikens,
+      frostCharges: ammo.frostCharges ? Math.min(s.frostCharges + ammo.frostCharges, 20) : s.frostCharges,
+      flareCharges: ammo.flareCharges ? Math.min(s.flareCharges + ammo.flareCharges, 10) : s.flareCharges,
+      veilCrystals: ammo.veilCrystals ? Math.min(s.veilCrystals + ammo.veilCrystals, 10) : s.veilCrystals,
+      quakeRunes:   ammo.quakeRunes   ? Math.min(s.quakeRunes   + ammo.quakeRunes,    8) : s.quakeRunes,
+      moonbowAmmo:  ammo.moonbowAmmo  ? Math.min(s.moonbowAmmo  + ammo.moonbowAmmo,  60) : s.moonbowAmmo,
+      itemFanfare: pickup ? { name: pickup.label, icon: pickup.icon, desc: pickup.desc } : null,
+    };
+  }),
 
   openChest: (area) => set((s) => {
     if (s.chestsOpened.includes(area)) return {};
@@ -515,6 +582,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     pendingTransition: null,
     pendingWeaponFire: null,
     nearChest: false,
+    nearWeaponPickup: null,
+    unlockedWeapons: ['sword'],
     shardsCollected: 0,
     chestsOpened: [],
     nearNPC: null,
@@ -559,6 +628,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       moonbowAmmo: s.moonbowAmmo,
       activeSword: s.activeSword,
       unlockedSwords: s.unlockedSwords,
+      unlockedWeapons: s.unlockedWeapons,
       selectedWeapon: s.selectedWeapon,
       currentArea: s.currentArea,
       chestsOpened: s.chestsOpened,
@@ -597,7 +667,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       hurtCooldownEnd: 0,
       activeSword: (data.activeSword ?? 'crystal') as SwordId,
       unlockedSwords: (data.unlockedSwords ?? ['crystal']) as SwordId[],
+      unlockedWeapons: ((data.unlockedWeapons ?? ['sword']) as WeaponId[]),
       selectedWeapon: (data.selectedWeapon ?? 'sword') as WeaponId,
+      nearWeaponPickup: null,
       currentArea: area,
       chestsOpened: data.chestsOpened ?? [],
       shardsCollected: data.shardsCollected ?? 0,

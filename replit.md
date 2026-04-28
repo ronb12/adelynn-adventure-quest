@@ -6,7 +6,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 
 ## Artifacts
 
-- **3d-game** (`artifacts/3d-game`) — "Adelynn's Adventure Quest: The Shattered Crown", a Zelda-style top-down 3D action-adventure built with React Three Fiber, drei, and zustand. Features: three-area world (field/forest/desert), multiple enemy types with AI behaviors, score/combo/timer system, lore stones, sprint/stamina system, weapon variety, shop, NPCs, and a global leaderboard backed by PostgreSQL via the API server.
+- **3d-game** (`artifacts/3d-game`) — "Adelynn's Adventure Quest: The Shattered Crown", a Zelda-style top-down 3D action-adventure built with React Three Fiber, drei, and zustand. Features: three-area world (field/forest/desert), multiple enemy types with AI behaviors, score/combo/timer system, lore stones, sprint/stamina system, **weapon discovery system** (13 hidden weapon altars across all areas — player starts with sword only and must explore to unlock each weapon, ALTTP-style), shop, NPCs, and a global leaderboard backed by PostgreSQL via the API server. Weapon placement: Field→Bow+Boomerang, Forest→Wand+Frost+Moonbow, Desert→Bomb+Shuriken+Flare, Boss→Shadow+Veil+Quake+Aura+Chain.
 - **api-server** (`artifacts/api-server`) — Express 5 REST API. Provides `/api/leaderboard` (GET top 20, POST new score). The 3d-game Vite dev server proxies `/api` to this server on port 8080. DB schema at `lib/db/src/schema/leaderboard.ts`.
 
 ## Stack

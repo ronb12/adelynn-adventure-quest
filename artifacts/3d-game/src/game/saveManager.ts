@@ -18,9 +18,10 @@ export interface SaveData {
   veilCrystals?: number;
   quakeRunes?: number;
   moonbowAmmo?: number;
-  // Swords
+  // Swords & weapons
   activeSword: string;
   unlockedSwords: string[];
+  unlockedWeapons?: string[];
   selectedWeapon: string;
   // Progress
   currentArea: string;

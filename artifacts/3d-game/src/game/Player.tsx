@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { Controls } from './controls';
-import { useGameStore, SWORD_DEFS, SWORD_CHESTS, SwordId } from './store';
+import { useGameStore, SWORD_DEFS, SWORD_CHESTS, WEAPON_PICKUPS, SwordId } from './store';
 import { sfxSword, sfxArrow, sfxBomb, sfxBoomerang } from './AudioManager';
 import { mobileInput } from './mobileControls';
 
@@ -32,6 +32,14 @@ const ALL_CHESTS: { key: string; pos: THREE.Vector3; area: string }[] = [
   { key: 'boss-armor',  pos: new THREE.Vector3(-8, 0, 8),    area: 'boss'   },
   ...SWORD_CHESTS.map(c => ({ key: c.key, pos: new THREE.Vector3(...c.pos), area: c.area })),
 ];
+
+// Weapon altar pickup positions
+const ALL_WEAPON_ALTARS = WEAPON_PICKUPS.map(p => ({
+  key: p.key,
+  weaponId: p.weaponId,
+  pos: new THREE.Vector3(...p.pos),
+  area: p.area,
+}));
 
 // ── Colour palette — Adelynn ─────────────────────────────────────
 const C = {
@@ -668,6 +676,18 @@ export function Player() {
     }
     store.setNearChest(nearChestId !== null);
 
+    // Weapon altar proximity check
+    let nearAltarId: string | null = null;
+    for (const a of ALL_WEAPON_ALTARS) {
+      if (a.area !== store.currentArea) continue;
+      if (chestsOpened.includes(a.key)) continue;
+      if (pos.current.distanceTo(a.pos) < 2.5) {
+        nearAltarId = a.key;
+        break;
+      }
+    }
+    store.setNearWeaponPickup(nearAltarId);
+
     // E key rising-edge interaction
     const interactJustPressed = interact && !prevInteract.current;
     prevInteract.current = interact;
@@ -678,6 +698,9 @@ export function Player() {
         store.advanceDialogue();
       } else if (nearChestId !== null) {
         store.openChest(nearChestId);
+      } else if (nearAltarId !== null) {
+        const altar = ALL_WEAPON_ALTARS.find(a => a.key === nearAltarId);
+        if (altar) store.unlockWeaponPickup(altar.weaponId, altar.key);
       } else if (store.nearShop) {
         store.openShop();
       } else if (store.nearFountain) {

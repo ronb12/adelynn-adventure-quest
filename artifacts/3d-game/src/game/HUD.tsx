@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useGameStore, SWORD_DEFS } from './store';
-import { WEAPONS, WeaponId } from './controls';
+import { useGameStore, SWORD_DEFS, WEAPON_PICKUPS } from './store';
+import { WeaponId } from './controls';
 import { NPC_DATA } from './npcData';
 import { playerStamina } from './Player';
 
@@ -162,20 +162,21 @@ function CooldownPip({ endTime, duration, color }: { endTime: number; duration: 
 
 // ── Weapon Bar ────────────────────────────────────────────────────
 function WeaponBar() {
-  const selected       = useGameStore(s => s.selectedWeapon);
-  const arrows         = useGameStore(s => s.arrows);
-  const bombs          = useGameStore(s => s.bombs);
-  const shurikens      = useGameStore(s => s.shurikens);
-  const frostCharges   = useGameStore(s => s.frostCharges);
-  const flareCharges   = useGameStore(s => s.flareCharges);
-  const veilCrystals   = useGameStore(s => s.veilCrystals);
-  const quakeRunes     = useGameStore(s => s.quakeRunes);
-  const moonbowAmmo    = useGameStore(s => s.moonbowAmmo);
-  const auraEndTime    = useGameStore(s => s.auraEndTime);
-  const shadowEndTime  = useGameStore(s => s.shadowEndTime);
-  const chainEnd       = useGameStore(s => s.chainCooldownEnd);
-  const activeSword    = useGameStore(s => s.activeSword);
-  const unlockedSwords = useGameStore(s => s.unlockedSwords);
+  const selected        = useGameStore(s => s.selectedWeapon);
+  const arrows          = useGameStore(s => s.arrows);
+  const bombs           = useGameStore(s => s.bombs);
+  const shurikens       = useGameStore(s => s.shurikens);
+  const frostCharges    = useGameStore(s => s.frostCharges);
+  const flareCharges    = useGameStore(s => s.flareCharges);
+  const veilCrystals    = useGameStore(s => s.veilCrystals);
+  const quakeRunes      = useGameStore(s => s.quakeRunes);
+  const moonbowAmmo     = useGameStore(s => s.moonbowAmmo);
+  const auraEndTime     = useGameStore(s => s.auraEndTime);
+  const shadowEndTime   = useGameStore(s => s.shadowEndTime);
+  const chainEnd        = useGameStore(s => s.chainCooldownEnd);
+  const activeSword     = useGameStore(s => s.activeSword);
+  const unlockedSwords  = useGameStore(s => s.unlockedSwords);
+  const unlockedWeapons = useGameStore(s => s.unlockedWeapons);
 
   const ammo: Partial<Record<WeaponId, number>> = {
     bow: arrows, moonbow: moonbowAmmo,
@@ -183,6 +184,23 @@ function WeaponBar() {
     frost: frostCharges, flare: flareCharges,
     veil: veilCrystals, quake: quakeRunes,
   };
+
+  // Only show weapons the player has found
+  const avail = unlockedWeapons.length > 0 ? unlockedWeapons : ['sword' as WeaponId];
+  const selIdx = avail.indexOf(selected);
+  const safeIdx = selIdx >= 0 ? selIdx : 0;
+  // Show up to 7 in a sliding window
+  const half = 3;
+  const shown: WeaponId[] = avail.length <= 7
+    ? avail
+    : (() => {
+        const out: WeaponId[] = [];
+        for (let i = safeIdx - half; i <= safeIdx + half; i++) {
+          out.push(avail[((i % avail.length) + avail.length) % avail.length]);
+        }
+        return out;
+      })();
+
   return (
     <div className="flex flex-col gap-1">
       {/* Active sword info (Z to cycle) */}
@@ -196,47 +214,62 @@ function WeaponBar() {
           <span className="text-purple-400 text-xs ml-auto">{unlockedSwords.indexOf(activeSword)+1}/{unlockedSwords.length}</span>
         </div>
       )}
-      {/* Sliding window: show 7 weapons centered on selected */}
+      {/* Weapon row — only unlocked weapons */}
       <div className="flex gap-1 items-end">
-        {(() => {
-          const selIdx = WEAPONS.indexOf(selected);
-          const half = 3;
-          const shown: typeof WEAPONS[number][] = [];
-          for (let i = selIdx - half; i <= selIdx + half; i++) {
-            const wi = ((i % WEAPONS.length) + WEAPONS.length) % WEAPONS.length;
-            shown.push(WEAPONS[wi]);
-          }
-          return shown.map(w => {
-            const active = w === selected;
-            const isCooldown = w === 'aura' || w === 'shadow' || w === 'chain';
-            const cooldownEnd = w === 'aura' ? auraEndTime : w === 'shadow' ? shadowEndTime : chainEnd;
-            const cdDuration = w === 'aura' ? 4000 : w === 'shadow' ? 2500 : 4000;
-            return (
-              <div key={w}
-                className={`flex flex-col items-center px-1.5 py-0.5 rounded-lg border-2 transition-all min-w-[36px]
-                  ${active ? 'bg-amber-400/90 border-amber-600 scale-110 shadow-lg' : 'bg-black/50 border-gray-600 opacity-70'}`}>
-                <span className="text-sm leading-none">{WEAPON_ICONS[w]}</span>
-                <span className={`text-xs font-bold leading-tight ${active ? 'text-amber-900' : 'text-gray-300'}`}>
-                  {WEAPON_LABELS[w]}
+        {shown.map(w => {
+          const active = w === selected;
+          const isCooldown = w === 'aura' || w === 'shadow' || w === 'chain';
+          const cooldownEnd = w === 'aura' ? auraEndTime : w === 'shadow' ? shadowEndTime : chainEnd;
+          const cdDuration  = w === 'aura' ? 4000 : w === 'shadow' ? 2500 : 4000;
+          return (
+            <div key={w}
+              className={`flex flex-col items-center px-1.5 py-0.5 rounded-lg border-2 transition-all min-w-[36px]
+                ${active ? 'bg-amber-400/90 border-amber-600 scale-110 shadow-lg' : 'bg-black/50 border-gray-600 opacity-70'}`}>
+              <span className="text-sm leading-none">{WEAPON_ICONS[w]}</span>
+              <span className={`text-xs font-bold leading-tight ${active ? 'text-amber-900' : 'text-gray-300'}`}>
+                {WEAPON_LABELS[w]}
+              </span>
+              {ammo[w] !== undefined && (
+                <span className={`text-xs font-mono leading-tight ${active ? 'text-amber-800' : 'text-gray-400'}`}>
+                  ×{ammo[w]}
                 </span>
-                {ammo[w] !== undefined && (
-                  <span className={`text-xs font-mono leading-tight ${active ? 'text-amber-800' : 'text-gray-400'}`}>
-                    ×{ammo[w]}
-                  </span>
-                )}
-                {(w === 'wand' || w === 'boomerang') && (
-                  <span className={`text-xs leading-tight ${active ? 'text-amber-800' : 'text-gray-500'}`}>∞</span>
-                )}
-                {isCooldown && active && (
-                  <CooldownPip endTime={cooldownEnd} duration={cdDuration} color="#cc44ff" />
-                )}
-              </div>
-            );
-          });
-        })()}
+              )}
+              {(w === 'wand' || w === 'boomerang') && (
+                <span className={`text-xs leading-tight ${active ? 'text-amber-800' : 'text-gray-500'}`}>∞</span>
+              )}
+              {isCooldown && active && (
+                <CooldownPip endTime={cooldownEnd} duration={cdDuration} color="#cc44ff" />
+              )}
+            </div>
+          );
+        })}
       </div>
       <div className="text-center text-gray-600 text-xs mt-0.5">
-        [{WEAPONS.indexOf(selected)+1}/{WEAPONS.length}] Q/Shift to cycle
+        [{safeIdx + 1}/{avail.length}] Q/Shift to cycle
+      </div>
+    </div>
+  );
+}
+
+// ── Weapon Altar Claim Prompt ─────────────────────────────────────
+function WeaponAltarPrompt() {
+  const nearKey = useGameStore(s => s.nearWeaponPickup);
+  if (!nearKey) return null;
+  const pickup = WEAPON_PICKUPS.find(p => p.key === nearKey);
+  if (!pickup) return null;
+  return (
+    <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-50 pointer-events-none
+      flex flex-col items-center gap-1 animate-bounce-slow">
+      <div className="bg-black/85 border-2 rounded-xl px-5 py-3 shadow-2xl text-center
+        flex flex-col items-center gap-1"
+        style={{ borderColor: pickup.color }}>
+        <span className="text-2xl">{pickup.icon}</span>
+        <span className="font-bold text-white text-base leading-tight">{pickup.label}</span>
+        <span className="text-gray-300 text-xs max-w-[180px] leading-snug">{pickup.desc}</span>
+        <div className="mt-1 px-3 py-0.5 rounded-lg text-xs font-bold"
+          style={{ background: pickup.color + '33', color: pickup.color, border: `1px solid ${pickup.color}` }}>
+          [E] Claim this weapon
+        </div>
       </div>
     </div>
   );
@@ -817,6 +850,9 @@ export function HUD() {
 
       {/* Lore popup */}
       <LorePopup />
+
+      {/* Weapon altar claim prompt */}
+      <WeaponAltarPrompt />
 
       {/* Top row */}
       <div className="flex justify-between items-start gap-2">
