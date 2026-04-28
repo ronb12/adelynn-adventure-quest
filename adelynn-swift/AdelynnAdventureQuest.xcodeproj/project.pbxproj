@@ -1,0 +1,303 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		BB1000002000000000000BBBB /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000001000000000000BBBB /* AppDelegate.swift */; };
+		BB1010002000000000000BBBB /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1010001000000000000BBBB /* GameViewController.swift */; };
+		BB1020002000000000000BBBB /* GameTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1020001000000000000BBBB /* GameTypes.swift */; };
+		BB1030002000000000000BBBB /* GameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1030001000000000000BBBB /* GameStore.swift */; };
+		BB1040002000000000000BBBB /* SaveManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1040001000000000000BBBB /* SaveManager.swift */; };
+		BB1050002000000000000BBBB /* WorldConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1050001000000000000BBBB /* WorldConfig.swift */; };
+		BB1060002000000000000BBBB /* WeaponNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1060001000000000000BBBB /* WeaponNode.swift */; };
+		BB1070002000000000000BBBB /* EnemyNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1070001000000000000BBBB /* EnemyNode.swift */; };
+		BB1080002000000000000BBBB /* GuardianNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1080001000000000000BBBB /* GuardianNode.swift */; };
+		BB1090002000000000000BBBB /* BossNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1090001000000000000BBBB /* BossNode.swift */; };
+		BB1100002000000000000BBBB /* PlayerNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1100001000000000000BBBB /* PlayerNode.swift */; };
+		BB1110002000000000000BBBB /* HUDNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1110001000000000000BBBB /* HUDNode.swift */; };
+		BB1120002000000000000BBBB /* ControlsNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1120001000000000000BBBB /* ControlsNode.swift */; };
+		BB1130002000000000000BBBB /* TitleScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1130001000000000000BBBB /* TitleScene.swift */; };
+		BB1140002000000000000BBBB /* WorldScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1140001000000000000BBBB /* WorldScene.swift */; };
+		BB1150002000000000000BBBB /* GameOverScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1150001000000000000BBBB /* GameOverScene.swift */; };
+		BB1160002000000000000BBBB /* VictoryScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1160001000000000000BBBB /* VictoryScene.swift */; };
+		AA000017000000000000AAAA /* SpriteKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA000016000000000000AAAA /* SpriteKit.framework */; };
+		AA000019000000000000AAAA /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA000018000000000000AAAA /* UIKit.framework */; };
+		AA000022000000000000AAAA /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA000021000000000000AAAA /* LaunchScreen.storyboard */; };
+/* End PBXBuildFile section */
+/* Begin PBXFileReference section */
+		AA000015000000000000AAAA /* AdelynnAdventureQuest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AdelynnAdventureQuest.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA000016000000000000AAAA /* SpriteKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SpriteKit.framework; path = System/Library/Frameworks/SpriteKit.framework; sourceTree = SDKROOT; };
+		AA000018000000000000AAAA /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		AA000020000000000000AAAA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		AA000021000000000000AAAA /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		BB1000001000000000000BBBB /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		BB1010001000000000000BBBB /* GameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewController.swift; sourceTree = "<group>"; };
+		BB1020001000000000000BBBB /* GameTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameTypes.swift; sourceTree = "<group>"; };
+		BB1030001000000000000BBBB /* GameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStore.swift; sourceTree = "<group>"; };
+		BB1040001000000000000BBBB /* SaveManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveManager.swift; sourceTree = "<group>"; };
+		BB1050001000000000000BBBB /* WorldConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldConfig.swift; sourceTree = "<group>"; };
+		BB1060001000000000000BBBB /* WeaponNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeaponNode.swift; sourceTree = "<group>"; };
+		BB1070001000000000000BBBB /* EnemyNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnemyNode.swift; sourceTree = "<group>"; };
+		BB1080001000000000000BBBB /* GuardianNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuardianNode.swift; sourceTree = "<group>"; };
+		BB1090001000000000000BBBB /* BossNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BossNode.swift; sourceTree = "<group>"; };
+		BB1100001000000000000BBBB /* PlayerNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerNode.swift; sourceTree = "<group>"; };
+		BB1110001000000000000BBBB /* HUDNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HUDNode.swift; sourceTree = "<group>"; };
+		BB1120001000000000000BBBB /* ControlsNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlsNode.swift; sourceTree = "<group>"; };
+		BB1130001000000000000BBBB /* TitleScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TitleScene.swift; sourceTree = "<group>"; };
+		BB1140001000000000000BBBB /* WorldScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldScene.swift; sourceTree = "<group>"; };
+		BB1150001000000000000BBBB /* GameOverScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameOverScene.swift; sourceTree = "<group>"; };
+		BB1160001000000000000BBBB /* VictoryScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VictoryScene.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+/* Begin PBXFrameworksBuildPhase section */
+		AA000008000000000000AAAA = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA000017000000000000AAAA /* SpriteKit.framework in Frameworks */,
+				AA000019000000000000AAAA /* UIKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+/* Begin PBXGroup section */
+		AA000003000000000000AAAA = {
+			isa = PBXGroup;
+			children = (
+				AA000004000000000000AAAA /* Sources */,
+				AA000020000000000000AAAA /* Info.plist */,
+				AA000021000000000000AAAA /* LaunchScreen.storyboard */,
+				AA000005000000000000AAAA /* Products */,
+			);
+			name = AdelynnAdventureQuest;
+			sourceTree = "<group>";
+		};
+		AA000004000000000000AAAA = {
+			isa = PBXGroup;
+			children = (
+				BB1000001000000000000BBBB /* AppDelegate.swift */,
+				BB1010001000000000000BBBB /* GameViewController.swift */,
+				BB1020001000000000000BBBB /* GameTypes.swift */,
+				BB1030001000000000000BBBB /* GameStore.swift */,
+				BB1040001000000000000BBBB /* SaveManager.swift */,
+				BB1050001000000000000BBBB /* WorldConfig.swift */,
+				BB1060001000000000000BBBB /* WeaponNode.swift */,
+				BB1070001000000000000BBBB /* EnemyNode.swift */,
+				BB1080001000000000000BBBB /* GuardianNode.swift */,
+				BB1090001000000000000BBBB /* BossNode.swift */,
+				BB1100001000000000000BBBB /* PlayerNode.swift */,
+				BB1110001000000000000BBBB /* HUDNode.swift */,
+				BB1120001000000000000BBBB /* ControlsNode.swift */,
+				BB1130001000000000000BBBB /* TitleScene.swift */,
+				BB1140001000000000000BBBB /* WorldScene.swift */,
+				BB1150001000000000000BBBB /* GameOverScene.swift */,
+				BB1160001000000000000BBBB /* VictoryScene.swift */,
+			);
+			name = Sources;
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		AA000005000000000000AAAA = {
+			isa = PBXGroup;
+			children = (
+				AA000015000000000000AAAA /* AdelynnAdventureQuest.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+/* Begin PBXNativeTarget section */
+		AA000002000000000000AAAA = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA000010000000000000AAAA;
+			buildPhases = (
+				AA000006000000000000AAAA /* Sources */,
+				AA000008000000000000AAAA /* Frameworks */,
+				AA000007000000000000AAAA /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AdelynnAdventureQuest;
+			productName = AdelynnAdventureQuest;
+			productReference = AA000015000000000000AAAA;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+/* Begin PBXProject section */
+		AA000001000000000000AAAA = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				TargetAttributes = {
+					AA000002000000000000AAAA = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = AA000009000000000000AAAA;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = AA000003000000000000AAAA;
+			productRefGroup = AA000005000000000000AAAA;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AA000002000000000000AAAA,
+			);
+		};
+/* End PBXProject section */
+/* Begin PBXResourcesBuildPhase section */
+		AA000007000000000000AAAA = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA000022000000000000AAAA /* LaunchScreen.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+/* Begin PBXSourcesBuildPhase section */
+		AA000006000000000000AAAA = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BB1000002000000000000BBBB /* AppDelegate.swift in Sources */,
+				BB1010002000000000000BBBB /* GameViewController.swift in Sources */,
+				BB1020002000000000000BBBB /* GameTypes.swift in Sources */,
+				BB1030002000000000000BBBB /* GameStore.swift in Sources */,
+				BB1040002000000000000BBBB /* SaveManager.swift in Sources */,
+				BB1050002000000000000BBBB /* WorldConfig.swift in Sources */,
+				BB1060002000000000000BBBB /* WeaponNode.swift in Sources */,
+				BB1070002000000000000BBBB /* EnemyNode.swift in Sources */,
+				BB1080002000000000000BBBB /* GuardianNode.swift in Sources */,
+				BB1090002000000000000BBBB /* BossNode.swift in Sources */,
+				BB1100002000000000000BBBB /* PlayerNode.swift in Sources */,
+				BB1110002000000000000BBBB /* HUDNode.swift in Sources */,
+				BB1120002000000000000BBBB /* ControlsNode.swift in Sources */,
+				BB1130002000000000000BBBB /* TitleScene.swift in Sources */,
+				BB1140002000000000000BBBB /* WorldScene.swift in Sources */,
+				BB1150002000000000000BBBB /* GameOverScene.swift in Sources */,
+				BB1160002000000000000BBBB /* VictoryScene.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+/* Begin XCBuildConfiguration section */
+		AA000011000000000000AAAA = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("DEBUG=1", "$(inherited)");
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		AA000012000000000000AAAA = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		AA000013000000000000AAAA = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.adelynn.adventurequest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AA000014000000000000AAAA = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks");
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.adelynn.adventurequest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+/* Begin XCConfigurationList section */
+		AA000009000000000000AAAA = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA000011000000000000AAAA /* Debug */,
+				AA000012000000000000AAAA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA000010000000000000AAAA = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA000013000000000000AAAA /* Debug */,
+				AA000014000000000000AAAA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = AA000001000000000000AAAA;
+}

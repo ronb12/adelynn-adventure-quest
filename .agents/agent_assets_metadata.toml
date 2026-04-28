@@ -1,8 +1,13 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "Hl2Qgr52dvsjXDIlZk_bC"
 uri = "file://artifacts/3d-game/public/title-bg.png"
 type = "image"
 title = "dark fantasy title background"
+
+[[outputs]]
+id = "3QdkcFlxl9Q8Sj6hpSsM9"
+uri = "file://AdelynnAdventureQuest-iOS.zip"
+type = "unspecified"
+title = "AdelynnAdventureQuest iOS Xcode Project"
