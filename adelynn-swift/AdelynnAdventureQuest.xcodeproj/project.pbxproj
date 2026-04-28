@@ -8,21 +8,21 @@
 /* Begin PBXBuildFile section */
 		BB1000002000000000000BBBB /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1000001000000000000BBBB /* AppDelegate.swift */; };
 		BB1010002000000000000BBBB /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1010001000000000000BBBB /* GameViewController.swift */; };
-		BB1020002000000000000BBBB /* GameTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1020001000000000000BBBB /* GameTypes.swift */; };
-		BB1030002000000000000BBBB /* GameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1030001000000000000BBBB /* GameStore.swift */; };
-		BB1040002000000000000BBBB /* SaveManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1040001000000000000BBBB /* SaveManager.swift */; };
-		BB1050002000000000000BBBB /* WorldConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1050001000000000000BBBB /* WorldConfig.swift */; };
-		BB1060002000000000000BBBB /* WeaponNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1060001000000000000BBBB /* WeaponNode.swift */; };
+		BB1020002000000000000BBBB /* TitleScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1020001000000000000BBBB /* TitleScene.swift */; };
+		BB1030002000000000000BBBB /* WorldScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1030001000000000000BBBB /* WorldScene.swift */; };
+		BB1040002000000000000BBBB /* GameOverScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1040001000000000000BBBB /* GameOverScene.swift */; };
+		BB1050002000000000000BBBB /* VictoryScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1050001000000000000BBBB /* VictoryScene.swift */; };
+		BB1060002000000000000BBBB /* PlayerNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1060001000000000000BBBB /* PlayerNode.swift */; };
 		BB1070002000000000000BBBB /* EnemyNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1070001000000000000BBBB /* EnemyNode.swift */; };
 		BB1080002000000000000BBBB /* GuardianNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1080001000000000000BBBB /* GuardianNode.swift */; };
 		BB1090002000000000000BBBB /* BossNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1090001000000000000BBBB /* BossNode.swift */; };
-		BB1100002000000000000BBBB /* PlayerNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1100001000000000000BBBB /* PlayerNode.swift */; };
+		BB1100002000000000000BBBB /* WeaponNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1100001000000000000BBBB /* WeaponNode.swift */; };
 		BB1110002000000000000BBBB /* HUDNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1110001000000000000BBBB /* HUDNode.swift */; };
 		BB1120002000000000000BBBB /* ControlsNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1120001000000000000BBBB /* ControlsNode.swift */; };
-		BB1130002000000000000BBBB /* TitleScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1130001000000000000BBBB /* TitleScene.swift */; };
-		BB1140002000000000000BBBB /* WorldScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1140001000000000000BBBB /* WorldScene.swift */; };
-		BB1150002000000000000BBBB /* GameOverScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1150001000000000000BBBB /* GameOverScene.swift */; };
-		BB1160002000000000000BBBB /* VictoryScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1160001000000000000BBBB /* VictoryScene.swift */; };
+		BB1130002000000000000BBBB /* GameTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1130001000000000000BBBB /* GameTypes.swift */; };
+		BB1140002000000000000BBBB /* GameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1140001000000000000BBBB /* GameStore.swift */; };
+		BB1150002000000000000BBBB /* WorldConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1150001000000000000BBBB /* WorldConfig.swift */; };
+		BB1160002000000000000BBBB /* SaveManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1160001000000000000BBBB /* SaveManager.swift */; };
 		AA000017000000000000AAAA /* SpriteKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA000016000000000000AAAA /* SpriteKit.framework */; };
 		AA000019000000000000AAAA /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AA000018000000000000AAAA /* UIKit.framework */; };
 		AA000022000000000000AAAA /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA000021000000000000AAAA /* LaunchScreen.storyboard */; };
@@ -35,21 +35,21 @@
 		AA000021000000000000AAAA /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		BB1000001000000000000BBBB /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BB1010001000000000000BBBB /* GameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewController.swift; sourceTree = "<group>"; };
-		BB1020001000000000000BBBB /* GameTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameTypes.swift; sourceTree = "<group>"; };
-		BB1030001000000000000BBBB /* GameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStore.swift; sourceTree = "<group>"; };
-		BB1040001000000000000BBBB /* SaveManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveManager.swift; sourceTree = "<group>"; };
-		BB1050001000000000000BBBB /* WorldConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldConfig.swift; sourceTree = "<group>"; };
-		BB1060001000000000000BBBB /* WeaponNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeaponNode.swift; sourceTree = "<group>"; };
+		BB1020001000000000000BBBB /* TitleScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TitleScene.swift; sourceTree = "<group>"; };
+		BB1030001000000000000BBBB /* WorldScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldScene.swift; sourceTree = "<group>"; };
+		BB1040001000000000000BBBB /* GameOverScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameOverScene.swift; sourceTree = "<group>"; };
+		BB1050001000000000000BBBB /* VictoryScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VictoryScene.swift; sourceTree = "<group>"; };
+		BB1060001000000000000BBBB /* PlayerNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerNode.swift; sourceTree = "<group>"; };
 		BB1070001000000000000BBBB /* EnemyNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnemyNode.swift; sourceTree = "<group>"; };
 		BB1080001000000000000BBBB /* GuardianNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuardianNode.swift; sourceTree = "<group>"; };
 		BB1090001000000000000BBBB /* BossNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BossNode.swift; sourceTree = "<group>"; };
-		BB1100001000000000000BBBB /* PlayerNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerNode.swift; sourceTree = "<group>"; };
+		BB1100001000000000000BBBB /* WeaponNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeaponNode.swift; sourceTree = "<group>"; };
 		BB1110001000000000000BBBB /* HUDNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HUDNode.swift; sourceTree = "<group>"; };
 		BB1120001000000000000BBBB /* ControlsNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ControlsNode.swift; sourceTree = "<group>"; };
-		BB1130001000000000000BBBB /* TitleScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TitleScene.swift; sourceTree = "<group>"; };
-		BB1140001000000000000BBBB /* WorldScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldScene.swift; sourceTree = "<group>"; };
-		BB1150001000000000000BBBB /* GameOverScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameOverScene.swift; sourceTree = "<group>"; };
-		BB1160001000000000000BBBB /* VictoryScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VictoryScene.swift; sourceTree = "<group>"; };
+		BB1130001000000000000BBBB /* GameTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameTypes.swift; sourceTree = "<group>"; };
+		BB1140001000000000000BBBB /* GameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStore.swift; sourceTree = "<group>"; };
+		BB1150001000000000000BBBB /* WorldConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldConfig.swift; sourceTree = "<group>"; };
+		BB1160001000000000000BBBB /* SaveManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 /* Begin PBXFrameworksBuildPhase section */
 		AA000008000000000000AAAA = {
@@ -66,7 +66,9 @@
 		AA000003000000000000AAAA = {
 			isa = PBXGroup;
 			children = (
-				AA000004000000000000AAAA /* Sources */,
+				AA000004200000000000AAAA /* Controllers */,
+				AA000004000000000000AAAA /* Views */,
+				AA000004100000000000AAAA /* Models */,
 				AA000020000000000000AAAA /* Info.plist */,
 				AA000021000000000000AAAA /* LaunchScreen.storyboard */,
 				AA000005000000000000AAAA /* Products */,
@@ -74,29 +76,45 @@
 			name = AdelynnAdventureQuest;
 			sourceTree = "<group>";
 		};
-		AA000004000000000000AAAA = {
+		AA000004200000000000AAAA = {
 			isa = PBXGroup;
 			children = (
 				BB1000001000000000000BBBB /* AppDelegate.swift */,
 				BB1010001000000000000BBBB /* GameViewController.swift */,
-				BB1020001000000000000BBBB /* GameTypes.swift */,
-				BB1030001000000000000BBBB /* GameStore.swift */,
-				BB1040001000000000000BBBB /* SaveManager.swift */,
-				BB1050001000000000000BBBB /* WorldConfig.swift */,
-				BB1060001000000000000BBBB /* WeaponNode.swift */,
+			);
+			name = Controllers;
+			path = Sources/Controllers;
+			sourceTree = "<group>";
+		};
+		AA000004000000000000AAAA = {
+			isa = PBXGroup;
+			children = (
+				BB1020001000000000000BBBB /* TitleScene.swift */,
+				BB1030001000000000000BBBB /* WorldScene.swift */,
+				BB1040001000000000000BBBB /* GameOverScene.swift */,
+				BB1050001000000000000BBBB /* VictoryScene.swift */,
+				BB1060001000000000000BBBB /* PlayerNode.swift */,
 				BB1070001000000000000BBBB /* EnemyNode.swift */,
 				BB1080001000000000000BBBB /* GuardianNode.swift */,
 				BB1090001000000000000BBBB /* BossNode.swift */,
-				BB1100001000000000000BBBB /* PlayerNode.swift */,
+				BB1100001000000000000BBBB /* WeaponNode.swift */,
 				BB1110001000000000000BBBB /* HUDNode.swift */,
 				BB1120001000000000000BBBB /* ControlsNode.swift */,
-				BB1130001000000000000BBBB /* TitleScene.swift */,
-				BB1140001000000000000BBBB /* WorldScene.swift */,
-				BB1150001000000000000BBBB /* GameOverScene.swift */,
-				BB1160001000000000000BBBB /* VictoryScene.swift */,
 			);
-			name = Sources;
-			path = Sources;
+			name = Views;
+			path = Sources/Views;
+			sourceTree = "<group>";
+		};
+		AA000004100000000000AAAA = {
+			isa = PBXGroup;
+			children = (
+				BB1130001000000000000BBBB /* GameTypes.swift */,
+				BB1140001000000000000BBBB /* GameStore.swift */,
+				BB1150001000000000000BBBB /* WorldConfig.swift */,
+				BB1160001000000000000BBBB /* SaveManager.swift */,
+			);
+			name = Models;
+			path = Sources/Models;
 			sourceTree = "<group>";
 		};
 		AA000005000000000000AAAA = {
@@ -172,21 +190,21 @@
 			files = (
 				BB1000002000000000000BBBB /* AppDelegate.swift in Sources */,
 				BB1010002000000000000BBBB /* GameViewController.swift in Sources */,
-				BB1020002000000000000BBBB /* GameTypes.swift in Sources */,
-				BB1030002000000000000BBBB /* GameStore.swift in Sources */,
-				BB1040002000000000000BBBB /* SaveManager.swift in Sources */,
-				BB1050002000000000000BBBB /* WorldConfig.swift in Sources */,
-				BB1060002000000000000BBBB /* WeaponNode.swift in Sources */,
+				BB1020002000000000000BBBB /* TitleScene.swift in Sources */,
+				BB1030002000000000000BBBB /* WorldScene.swift in Sources */,
+				BB1040002000000000000BBBB /* GameOverScene.swift in Sources */,
+				BB1050002000000000000BBBB /* VictoryScene.swift in Sources */,
+				BB1060002000000000000BBBB /* PlayerNode.swift in Sources */,
 				BB1070002000000000000BBBB /* EnemyNode.swift in Sources */,
 				BB1080002000000000000BBBB /* GuardianNode.swift in Sources */,
 				BB1090002000000000000BBBB /* BossNode.swift in Sources */,
-				BB1100002000000000000BBBB /* PlayerNode.swift in Sources */,
+				BB1100002000000000000BBBB /* WeaponNode.swift in Sources */,
 				BB1110002000000000000BBBB /* HUDNode.swift in Sources */,
 				BB1120002000000000000BBBB /* ControlsNode.swift in Sources */,
-				BB1130002000000000000BBBB /* TitleScene.swift in Sources */,
-				BB1140002000000000000BBBB /* WorldScene.swift in Sources */,
-				BB1150002000000000000BBBB /* GameOverScene.swift in Sources */,
-				BB1160002000000000000BBBB /* VictoryScene.swift in Sources */,
+				BB1130002000000000000BBBB /* GameTypes.swift in Sources */,
+				BB1140002000000000000BBBB /* GameStore.swift in Sources */,
+				BB1150002000000000000BBBB /* WorldConfig.swift in Sources */,
+				BB1160002000000000000BBBB /* SaveManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -196,7 +214,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ENABLE_MODULES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_TESTABILITY = YES;
