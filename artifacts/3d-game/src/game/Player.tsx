@@ -731,18 +731,17 @@ export function Player() {
       } else {
         swordGroupRef.current.visible = true;
 
-        // Horizontal arc from right-forward to left-forward in player-local space
-        // groupRef is at player world position and faces with player's yaw.
-        // Player faces -Z, so negative Z = in front.
+        // Horizontal arc from right-forward to left-forward in player-local space.
+        // Character face (eyes/nose/mouth) is at +Z local, so +Z = in front.
         const arc = THREE.MathUtils.lerp(0.75, -0.65, t);
         swordGroupRef.current.position.set(
           Math.sin(arc) * 0.85,          // x: right (+) → left (-)
-          1.30,                           // y: hand/shoulder height (body pivot 0.58 + arm 0.72)
-          -Math.cos(arc) * 0.35 - 0.60,  // z: always negative = in front
+          1.30,                           // y: hand/shoulder height
+           Math.cos(arc) * 0.35 + 0.60,  // z: always positive = in front of player
         );
         swordGroupRef.current.rotation.set(
-          -0.45,   // forward tilt so blade angles toward the enemy
-          -arc,    // blade faces along the sweep direction
+           0.45,   // forward tilt so blade angles toward the enemy
+           arc,    // blade faces along the sweep direction
           0,
         );
 
@@ -784,9 +783,9 @@ export function Player() {
         swordGroupRef.current.visible = true;
         // Full rotation during spin — sword extends outward in front
         groupRef.current.rotation.y += (Math.PI * 2 / SPIN_DURATION) * delta;
-        // Keep sword extended forward-right during the spin
-        swordGroupRef.current.position.set(0.6, 1.30, -0.7);
-        swordGroupRef.current.rotation.set(-0.45, 0, 0);
+        // Keep sword extended forward-right during the spin (+Z = in front)
+        swordGroupRef.current.position.set(0.6, 1.30, 0.7);
+        swordGroupRef.current.rotation.set(0.45, 0, 0);
         rightArmRef.current.rotation.x = -1.5;
         rightArmRef.current.rotation.z = 0;
         // Spin hit zone: full circle around player
