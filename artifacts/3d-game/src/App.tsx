@@ -13,6 +13,7 @@ import { Weapons } from './game/Weapons';
 import { AudioSystem, MuteButton } from './game/AudioSystem';
 import { ShopUI } from './game/Shop';
 import { SaveSystem } from './game/SaveSystem';
+import { MobileControls } from './game/MobileControls';
 
 function GameScene() {
   const currentArea  = useGameStore(s => s.currentArea);
@@ -35,7 +36,7 @@ export default function App() {
   const gameState = useGameStore((state) => state.gameState);
 
   return (
-    <div className="w-full h-[100dvh] relative overflow-hidden font-sans bg-black">
+    <div className="w-full h-[100dvh] relative overflow-hidden font-sans bg-black" style={{ touchAction: 'none' }}>
       <KeyboardControls map={keyMap}>
         <Canvas shadows camera={{ position: [0, 15, 15], fov: 45 }}>
           {gameState === 'playing' && <GameScene />}
@@ -47,6 +48,7 @@ export default function App() {
       <MuteButton />
       <HUD />
       <ShopUI />
+      <MobileControls />
 
       {gameState === 'title'    && <div className="absolute inset-0" style={{ zIndex: 9999 }}><TitleScreen /></div>}
       {gameState === 'gameover' && <div className="absolute inset-0" style={{ zIndex: 9999 }}><GameOverScreen /></div>}

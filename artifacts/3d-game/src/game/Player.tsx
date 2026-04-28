@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { Controls } from './controls';
 import { useGameStore, SWORD_DEFS, SWORD_CHESTS, SwordId } from './store';
 import { sfxSword, sfxArrow, sfxBomb, sfxBoomerang } from './AudioManager';
+import { mobileInput } from './mobileControls';
 
 const SPEED = 5;
 
@@ -502,8 +503,25 @@ export function Player() {
       useGameStore.setState({ pendingTransition: null });
     }
 
-    const { forward, back, left, right, attack, interact,
-            nextWeapon, prevWeapon, bow, bomb, boomerang, shield, swordCycle } = getState();
+    const kb = getState();
+    const forward    = kb.forward    || mobileInput.forward;
+    const back       = kb.back       || mobileInput.back;
+    const left       = kb.left       || mobileInput.left;
+    const right      = kb.right      || mobileInput.right;
+    const attack     = kb.attack     || mobileInput.attack;
+    const interact   = kb.interact   || mobileInput.interact;
+    const nextWeapon = kb.nextWeapon || mobileInput.nextWeapon;
+    const prevWeapon = kb.prevWeapon || mobileInput.prevWeapon;
+    const bow        = kb.bow;
+    const bomb       = kb.bomb;
+    const boomerang  = kb.boomerang;
+    const shield     = kb.shield     || mobileInput.shield;
+    const swordCycle = kb.swordCycle || mobileInput.swordCycle;
+    // Clear mobile impulse flags after reading
+    mobileInput.interact   = false;
+    mobileInput.nextWeapon = false;
+    mobileInput.prevWeapon = false;
+    mobileInput.swordCycle = false;
 
     // Shield block
     store.setBlocking(shield);
