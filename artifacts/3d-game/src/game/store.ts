@@ -70,6 +70,7 @@ interface GameStore {
   auraEndTime: number;
   shadowEndTime: number;
   chainCooldownEnd: number;
+  hurtCooldownEnd: number; // iframes after taking damage
 
   playerPosition: THREE.Vector3;
   playerDirection: THREE.Vector3;
@@ -174,8 +175,8 @@ interface GameStore {
 
 export const useGameStore = create<GameStore>((set, get) => ({
   gameState: 'title',
-  hearts: 3,
-  maxHearts: 3,
+  hearts: 5,
+  maxHearts: 5,
   rupees: 0,
   arrows: 10,
   bombs: 5,
@@ -188,6 +189,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   auraEndTime: 0,
   shadowEndTime: 0,
   chainCooldownEnd: 0,
+  hurtCooldownEnd: 0,
   playerPosition: new THREE.Vector3(0, 0, 0),
   playerDirection: new THREE.Vector3(0, 0, -1),
   swordActive: false,
@@ -296,14 +298,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
   activateChain: () => set({ chainCooldownEnd: Date.now() + 4000 }),
 
   damagePlayer: (amount) => set((s) => {
-    // Shadow Veil makes player immune
-    if (s.shadowEndTime > Date.now()) return {};
+    const now = Date.now();
+    // Shadow Veil immunity
+    if (s.shadowEndTime > now) return {};
+    // Invincibility frames — 1.5s after each hit
+    if (s.hurtCooldownEnd > now) return {};
     const reduction = s.armorLevel === 2 ? 0.5 : s.armorLevel === 1 ? 0.75 : 1.0;
     const blockReduction = s.isBlocking ? 0.25 : 1.0;
     const finalAmount = amount * reduction * blockReduction;
     const newHearts = Math.max(0, s.hearts - finalAmount);
-    if (newHearts === 0) return { hearts: 0, gameState: 'gameover' as GameState };
-    return { hearts: newHearts };
+    if (newHearts === 0) return { hearts: 0, gameState: 'gameover' as GameState, hurtCooldownEnd: now + 1500 };
+    return { hearts: newHearts, hurtCooldownEnd: now + 1500 };
   }),
   healPlayer: (amount) => set((s) => ({ hearts: Math.min(s.maxHearts, s.hearts + amount) })),
   fullHeal: () => set((s) => ({ hearts: s.maxHearts })),
@@ -483,8 +488,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   resetGame: () => set({
     gameState: 'playing',
-    hearts: 3,
-    maxHearts: 3,
+    hearts: 5,
+    maxHearts: 5,
     rupees: 0,
     arrows: 10,
     bombs: 5,
@@ -497,6 +502,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     auraEndTime: 0,
     shadowEndTime: 0,
     chainCooldownEnd: 0,
+    hurtCooldownEnd: 0,
     playerPosition: new THREE.Vector3(0, 0, 0),
     playerDirection: new THREE.Vector3(0, 0, -1),
     swordActive: false,
@@ -574,8 +580,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const spawnPos = getAreaSpawn(area);
     set({
       gameState: 'playing',
-      hearts: data.hearts ?? 3,
-      maxHearts: data.maxHearts ?? 3,
+      hearts: data.hearts ?? 5,
+      maxHearts: data.maxHearts ?? 5,
       rupees: data.rupees ?? 0,
       arrows: data.arrows ?? 10,
       bombs: data.bombs ?? 5,
@@ -588,6 +594,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       auraEndTime: 0,
       shadowEndTime: 0,
       chainCooldownEnd: 0,
+      hurtCooldownEnd: 0,
       activeSword: (data.activeSword ?? 'crystal') as SwordId,
       unlockedSwords: (data.unlockedSwords ?? ['crystal']) as SwordId[],
       selectedWeapon: (data.selectedWeapon ?? 'sword') as WeaponId,
