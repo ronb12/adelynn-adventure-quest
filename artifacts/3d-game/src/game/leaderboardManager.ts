@@ -1,5 +1,4 @@
-const LB_KEY = 'adelynn_quest_leaderboard_v1';
-const MAX_ENTRIES = 20;
+const API = '/api/leaderboard';
 
 export interface LeaderboardEntry {
   name: string;
@@ -11,29 +10,28 @@ export interface LeaderboardEntry {
   date: string;
 }
 
-export function getLeaderboard(): LeaderboardEntry[] {
+export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   try {
-    const raw = localStorage.getItem(LB_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as LeaderboardEntry[];
+    const res = await fetch(API);
+    if (!res.ok) throw new Error('fetch failed');
+    return (await res.json()) as LeaderboardEntry[];
   } catch {
     return [];
   }
 }
 
-export function addLeaderboardEntry(entry: LeaderboardEntry): LeaderboardEntry[] {
-  const existing = getLeaderboard();
-  const updated = [...existing, entry]
-    .sort((a, b) => b.score - a.score)
-    .slice(0, MAX_ENTRIES);
+export async function addLeaderboardEntry(entry: Omit<LeaderboardEntry, 'date'>): Promise<LeaderboardEntry[]> {
   try {
-    localStorage.setItem(LB_KEY, JSON.stringify(updated));
-  } catch {}
-  return updated;
-}
-
-export function clearLeaderboard(): void {
-  localStorage.removeItem(LB_KEY);
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry),
+    });
+    if (!res.ok) throw new Error('submit failed');
+    return (await res.json()) as LeaderboardEntry[];
+  } catch {
+    return [];
+  }
 }
 
 export function formatLeaderboardTime(seconds: number): string {

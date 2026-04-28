@@ -25,8 +25,22 @@ const AREA_NAMES: Record<string, string> = {
 };
 
 // ── Leaderboard Table ─────────────────────────────────────────────
-function LeaderboardTable() {
-  const [entries] = useState<LeaderboardEntry[]>(() => getLeaderboard().slice(0, 10));
+function LeaderboardTable({ refresh = 0 }: { refresh?: number }) {
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    getLeaderboard().then(data => { setEntries(data.slice(0, 10)); setLoading(false); });
+  }, [refresh]);
+
+  if (loading) {
+    return (
+      <div className="text-center text-gray-500 py-8 font-serif italic text-sm animate-pulse">
+        Loading global scores…
+      </div>
+    );
+  }
 
   if (entries.length === 0) {
     return (
@@ -38,6 +52,7 @@ function LeaderboardTable() {
 
   return (
     <div className="w-full overflow-auto">
+      <p className="text-xs text-amber-600/70 text-center mb-1 font-serif">🌐 Global Leaderboard</p>
       <table className="w-full text-xs">
         <thead>
           <tr className="text-amber-400/70 border-b border-amber-900/40">
@@ -70,12 +85,16 @@ function LeaderboardTable() {
 function ScoreSubmitForm({
   score, runStartTime, shards, lore, area,
   accentColor = 'amber',
+  onSubmitted,
 }: {
   score: number; runStartTime: number; shards: number; lore: number; area: string;
   accentColor?: 'amber' | 'red';
+  onSubmitted?: () => void;
 }) {
   const [name, setName] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
@@ -84,15 +103,20 @@ function ScoreSubmitForm({
     ? Math.max(1, Math.floor((Date.now() - runStartTime) / 1000))
     : 0;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const trimmed = name.trim().slice(0, 20);
-    if (!trimmed) return;
-    addLeaderboardEntry({
-      name: trimmed, score, timeSeconds,
-      shards, loreRead: lore, area,
-      date: new Date().toLocaleDateString(),
-    });
-    setSubmitted(true);
+    if (!trimmed || submitting) return;
+    setSubmitting(true);
+    setError('');
+    try {
+      await addLeaderboardEntry({ name: trimmed, score, timeSeconds, shards, loreRead: lore, area });
+      setSubmitted(true);
+      onSubmitted?.();
+    } catch {
+      setError('Could not save score — try again');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const border = accentColor === 'red' ? 'border-red-700/60' : 'border-amber-700/60';
@@ -104,14 +128,15 @@ function ScoreSubmitForm({
   if (submitted) {
     return (
       <div className={`w-full rounded-xl px-4 py-3 ${bg} border ${border} text-center`}>
-        <span className="text-green-400 font-bold text-sm">✓ Score saved to leaderboard!</span>
+        <span className="text-green-400 font-bold text-sm">✓ Score saved to global leaderboard!</span>
       </div>
     );
   }
 
   return (
     <div className={`w-full rounded-xl px-4 py-3 ${bg} border ${border}`}>
-      <p className="text-amber-300/80 text-xs font-serif mb-2 text-center">Save your score to the leaderboard</p>
+      <p className="text-amber-300/80 text-xs font-serif mb-2 text-center">Save your score to the global leaderboard</p>
+      {error && <p className="text-red-400 text-xs mb-1 text-center">{error}</p>}
       <div className="flex gap-2">
         <input
           ref={inputRef}
@@ -125,11 +150,11 @@ function ScoreSubmitForm({
         />
         <Button
           size="sm"
-          disabled={!name.trim()}
+          disabled={!name.trim() || submitting}
           className={`${btn} text-white text-xs font-serif border cursor-pointer disabled:opacity-40`}
           onClick={handleSubmit}
         >
-          Submit
+          {submitting ? '…' : 'Submit'}
         </Button>
       </div>
     </div>
