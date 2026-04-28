@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { KeyboardControls } from '@react-three/drei';
 import { useGameStore } from './game/store';
@@ -6,7 +7,7 @@ import { Player } from './game/Player';
 import { World } from './game/World';
 import { CameraRig } from './game/CameraRig';
 import { HUD } from './game/HUD';
-import { TitleScreen, GameOverScreen, VictoryScreen } from './game/screens';
+import { TitleScreen, GameOverScreen, VictoryScreen, PauseScreen } from './game/screens';
 import { Enemies, BossEnemy } from './game/Enemy';
 import { Pickups } from './game/Pickups';
 import { Weapons } from './game/Weapons';
@@ -33,24 +34,40 @@ function GameScene() {
 }
 
 export default function App() {
-  const gameState = useGameStore((state) => state.gameState);
+  const gameState   = useGameStore(s => s.gameState);
+  const togglePause = useGameStore(s => s.togglePause);
+
+  // Escape key toggles pause
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        togglePause();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [togglePause]);
+
+  const isInGame = gameState === 'playing' || gameState === 'paused';
 
   return (
     <div className="w-full h-[100dvh] relative overflow-hidden font-sans bg-black" style={{ touchAction: 'none' }}>
       <KeyboardControls map={keyMap}>
         <Canvas shadows camera={{ position: [0, 15, 15], fov: 45 }}>
-          {gameState === 'playing' && <GameScene />}
+          {isInGame && <GameScene />}
         </Canvas>
       </KeyboardControls>
 
       <AudioSystem />
       <SaveSystem />
       <MuteButton />
-      <HUD />
-      <ShopUI />
+      {isInGame && <HUD />}
+      {isInGame && <ShopUI />}
       <MobileControls />
 
       {gameState === 'title'    && <div className="absolute inset-0" style={{ zIndex: 9999 }}><TitleScreen /></div>}
+      {gameState === 'paused'   && <div className="absolute inset-0" style={{ zIndex: 9000 }}><PauseScreen /></div>}
       {gameState === 'gameover' && <div className="absolute inset-0" style={{ zIndex: 9999 }}><GameOverScreen /></div>}
       {gameState === 'victory'  && <div className="absolute inset-0" style={{ zIndex: 9999 }}><VictoryScreen /></div>}
     </div>

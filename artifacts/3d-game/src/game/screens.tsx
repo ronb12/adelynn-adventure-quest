@@ -1,7 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from './store';
 import { Button } from '@/components/ui/button';
 import { getSaveMeta, formatSaveTime, AREA_DISPLAY, deleteSave } from './saveManager';
+import {
+  getLeaderboard, addLeaderboardEntry, formatLeaderboardTime,
+  type LeaderboardEntry,
+} from './leaderboardManager';
 
 const STORY = {
   title: "Adelynn's Adventure Quest",
@@ -15,6 +19,215 @@ const STORY = {
 };
 
 const ARMOR_LABELS = ['No Armor', 'Blue Tunic', 'Red Tunic'];
+const AREA_NAMES: Record<string, string> = {
+  field: 'Sunfield Plains', forest: 'Whisper Woods',
+  desert: 'Ashrock Summit', boss: 'Malgrath\'s Lair',
+};
+
+// ── Leaderboard Table ─────────────────────────────────────────────
+function LeaderboardTable() {
+  const [entries] = useState<LeaderboardEntry[]>(() => getLeaderboard().slice(0, 10));
+
+  if (entries.length === 0) {
+    return (
+      <div className="text-center text-gray-500 py-8 font-serif italic text-sm">
+        No scores yet — complete a run to appear here!
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full overflow-auto">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="text-amber-400/70 border-b border-amber-900/40">
+            <th className="text-left py-1 pr-2">#</th>
+            <th className="text-left py-1 pr-2">Name</th>
+            <th className="text-right py-1 pr-2">Score</th>
+            <th className="text-right py-1 pr-2">Time</th>
+            <th className="text-right py-1 pr-2">💎</th>
+            <th className="text-right py-1">📖</th>
+          </tr>
+        </thead>
+        <tbody>
+          {entries.map((e, i) => (
+            <tr key={i} className={`border-b border-white/5 ${i === 0 ? 'text-amber-300' : i < 3 ? 'text-amber-100' : 'text-gray-300'}`}>
+              <td className="py-1 pr-2 font-bold">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</td>
+              <td className="py-1 pr-2 font-serif max-w-[80px] truncate">{e.name}</td>
+              <td className="py-1 pr-2 text-right font-mono font-bold">{e.score.toLocaleString()}</td>
+              <td className="py-1 pr-2 text-right font-mono">{formatLeaderboardTime(e.timeSeconds)}</td>
+              <td className="py-1 pr-2 text-right">{e.shards}/3</td>
+              <td className="py-1 text-right">{e.loreRead}/9</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ── Score Submit Form ─────────────────────────────────────────────
+function ScoreSubmitForm({
+  score, runStartTime, shards, lore, area,
+  accentColor = 'amber',
+}: {
+  score: number; runStartTime: number; shards: number; lore: number; area: string;
+  accentColor?: 'amber' | 'red';
+}) {
+  const [name, setName] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  const timeSeconds = runStartTime > 0
+    ? Math.max(1, Math.floor((Date.now() - runStartTime) / 1000))
+    : 0;
+
+  const handleSubmit = () => {
+    const trimmed = name.trim().slice(0, 20);
+    if (!trimmed) return;
+    addLeaderboardEntry({
+      name: trimmed, score, timeSeconds,
+      shards, loreRead: lore, area,
+      date: new Date().toLocaleDateString(),
+    });
+    setSubmitted(true);
+  };
+
+  const border = accentColor === 'red' ? 'border-red-700/60' : 'border-amber-700/60';
+  const bg     = accentColor === 'red' ? 'bg-red-900/20' : 'bg-amber-900/20';
+  const btn    = accentColor === 'red'
+    ? 'bg-red-700 hover:bg-red-600 border-red-500'
+    : 'bg-amber-700 hover:bg-amber-600 border-amber-500';
+
+  if (submitted) {
+    return (
+      <div className={`w-full rounded-xl px-4 py-3 ${bg} border ${border} text-center`}>
+        <span className="text-green-400 font-bold text-sm">✓ Score saved to leaderboard!</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`w-full rounded-xl px-4 py-3 ${bg} border ${border}`}>
+      <p className="text-amber-300/80 text-xs font-serif mb-2 text-center">Save your score to the leaderboard</p>
+      <div className="flex gap-2">
+        <input
+          ref={inputRef}
+          type="text"
+          maxLength={20}
+          placeholder="Enter your name…"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.stopPropagation(); handleSubmit(); } }}
+          className="flex-1 bg-black/50 border border-gray-600 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-amber-500"
+        />
+        <Button
+          size="sm"
+          disabled={!name.trim()}
+          className={`${btn} text-white text-xs font-serif border cursor-pointer disabled:opacity-40`}
+          onClick={handleSubmit}
+        >
+          Submit
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ── Pause Screen ──────────────────────────────────────────────────
+export function PauseScreen() {
+  const togglePause  = useGameStore(s => s.togglePause);
+  const setGameState = useGameStore(s => s.setGameState);
+  const score        = useGameStore(s => s.score);
+  const shards       = useGameStore(s => s.shardsCollected);
+  const lore         = useGameStore(s => s.loreRead);
+  const currentArea  = useGameStore(s => s.currentArea);
+  const runStartTime = useGameStore(s => s.runStartTime);
+  const elapsed = formatTime(runStartTime);
+
+  const [showLB, setShowLB] = useState(false);
+
+  return (
+    <div
+      className="absolute inset-0 flex flex-col items-center justify-center pointer-events-auto select-none"
+      style={{ backdropFilter: 'blur(5px)', background: 'rgba(4,2,16,0.72)' }}
+    >
+      <div className="bg-[#0d0820] border-2 border-purple-700/60 rounded-2xl px-8 py-7 flex flex-col items-center gap-4 w-full max-w-sm shadow-2xl">
+
+        {/* Header */}
+        <div className="flex items-center gap-2">
+          <span className="text-2xl" style={{ filter: 'drop-shadow(0 0 8px #c084fc)' }}>⏸</span>
+          <h2 className="text-3xl font-bold font-serif tracking-widest text-amber-300">Paused</h2>
+        </div>
+
+        {/* Run stats */}
+        <div className="flex gap-2 w-full justify-center flex-wrap">
+          {[
+            { label: 'Score',  value: score.toLocaleString(), color: 'text-amber-400' },
+            { label: 'Time',   value: elapsed,                color: 'text-white' },
+            { label: 'Shards', value: `${shards}/3`,          color: 'text-blue-300' },
+            { label: 'Lore',   value: `${lore.length}/9`,     color: 'text-purple-300' },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="flex flex-col items-center bg-black/40 rounded-xl px-3 py-2 border border-purple-900/40">
+              <span className={`${color} font-bold text-sm font-mono`}>{value}</span>
+              <span className="text-gray-500 text-xs mt-0.5">{label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Area */}
+        <p className="text-xs text-gray-400 font-serif -mt-1">
+          📍 {AREA_NAMES[currentArea] ?? currentArea}
+        </p>
+
+        {/* Controls cheatsheet */}
+        <div className="w-full bg-black/30 rounded-lg p-3 grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-gray-400 font-mono">
+          <span><span className="text-amber-400">WASD</span> — Move</span>
+          <span><span className="text-amber-400">Space</span> — Attack</span>
+          <span><span className="text-amber-400">Q / Shift</span> — Weapon</span>
+          <span><span className="text-amber-400">E</span> — Interact</span>
+          <span><span className="text-amber-400">B</span> — Bomb</span>
+          <span><span className="text-amber-400">Esc</span> — Pause</span>
+        </div>
+
+        {/* Leaderboard toggle */}
+        {showLB ? (
+          <div className="w-full bg-black/40 rounded-xl p-3 border border-amber-900/40">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-amber-400 text-xs font-bold">🏆 Top Scores</span>
+              <button onClick={() => setShowLB(false)} className="text-gray-500 hover:text-gray-300 text-xs cursor-pointer">✕ Close</button>
+            </div>
+            <LeaderboardTable />
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowLB(true)}
+            className="text-xs text-amber-400/70 hover:text-amber-300 underline cursor-pointer transition-colors"
+          >
+            🏆 View Leaderboard
+          </button>
+        )}
+
+        {/* Action buttons */}
+        <Button
+          onClick={togglePause}
+          className="w-full bg-purple-700 hover:bg-purple-600 text-white font-serif border border-purple-500 cursor-pointer"
+        >
+          ▶ Resume <span className="text-purple-300 text-xs ml-1">(Esc)</span>
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => setGameState('title')}
+          className="w-full border-gray-600 text-gray-300 hover:border-red-600 hover:text-red-400 font-serif cursor-pointer"
+        >
+          ↩ Main Menu
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 // ── Title Screen ─────────────────────────────────────────────────
 export function TitleScreen() {
@@ -24,6 +237,7 @@ export function TitleScreen() {
   const deleteSaveData = useGameStore(state => state.deleteSaveData);
   const [saveMeta, setSaveMeta] = useState(getSaveMeta());
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [tab, setTab] = useState<'main' | 'leaderboard'>('main');
 
   const startNewGame = () => resetGame();
 
@@ -67,6 +281,42 @@ export function TitleScreen() {
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center gap-3 px-4 w-full max-w-lg">
+
+        {/* Tab buttons */}
+        <div className="flex gap-2 mb-1">
+          <button
+            onClick={() => setTab('main')}
+            className={`text-xs px-4 py-1.5 rounded-full font-serif border transition-colors cursor-pointer
+              ${tab === 'main' ? 'bg-amber-700 border-amber-500 text-amber-100' : 'bg-black/40 border-gray-700 text-gray-400 hover:border-amber-700 hover:text-amber-300'}`}
+          >
+            ⚔ Quest
+          </button>
+          <button
+            onClick={() => setTab('leaderboard')}
+            className={`text-xs px-4 py-1.5 rounded-full font-serif border transition-colors cursor-pointer
+              ${tab === 'leaderboard' ? 'bg-amber-700 border-amber-500 text-amber-100' : 'bg-black/40 border-gray-700 text-gray-400 hover:border-amber-700 hover:text-amber-300'}`}
+          >
+            🏆 Scores
+          </button>
+        </div>
+
+        {/* Leaderboard tab */}
+        {tab === 'leaderboard' && (
+          <div className="w-full bg-black/60 border border-amber-900/50 rounded-2xl px-5 py-4">
+            <h3 className="text-amber-400 font-bold font-serif text-center mb-3">🏆 Hall of Heroes</h3>
+            <LeaderboardTable />
+            <Button
+              size="sm"
+              className="w-full mt-4 bg-amber-700 hover:bg-amber-600 text-amber-100 font-serif border border-amber-500 cursor-pointer"
+              onClick={() => setTab('main')}
+            >
+              ↩ Back to Quest
+            </Button>
+          </div>
+        )}
+
+        {/* Main tab content */}
+        {tab === 'main' && <div className="w-full flex flex-col items-center gap-3">
 
         {/* Title */}
         <div className="text-5xl mb-0" style={{ filter: 'drop-shadow(0 0 14px #f0c030)' }}>♛</div>
@@ -150,6 +400,7 @@ export function TitleScreen() {
         <p className="text-xs text-gray-500 font-mono">
           WASD move · Space attack · Q/Shift cycle weapon · E interact · {saveMeta ? 'Enter to continue' : 'Enter/Space to start'}
         </p>
+        </div>}
       </div>
     </div>
   );
@@ -210,6 +461,18 @@ export function GameOverScreen() {
           <span className="text-purple-300 font-bold text-lg">{loreRead.length}/9</span>
           <span className="text-gray-500 text-xs mt-0.5">Lore</span>
         </div>
+      </div>
+
+      {/* Score submit */}
+      <div className="w-full max-w-sm mb-3 px-4">
+        <ScoreSubmitForm
+          score={score}
+          runStartTime={runStartTime}
+          shards={shardsCount}
+          lore={loreRead.length}
+          area="gameover"
+          accentColor="red"
+        />
       </div>
 
       {shardsCount > 0 && (
@@ -294,7 +557,7 @@ export function VictoryScreen() {
       </div>
 
       {/* Run stats */}
-      <div className="flex gap-3 mb-6">
+      <div className="flex gap-3 mb-4">
         <div className="flex flex-col items-center bg-amber-900/25 rounded-xl px-4 py-2 border border-amber-600/40">
           <span className="text-amber-300 font-bold text-lg">{score.toLocaleString()}</span>
           <span className="text-amber-600/80 text-xs mt-0.5">Score</span>
@@ -311,6 +574,18 @@ export function VictoryScreen() {
           <span className="text-purple-300 font-bold text-lg">{loreRead.length}/9</span>
           <span className="text-amber-600/80 text-xs mt-0.5">Lore</span>
         </div>
+      </div>
+
+      {/* Score submit */}
+      <div className="w-full max-w-sm mb-5 px-4">
+        <ScoreSubmitForm
+          score={score}
+          runStartTime={runStartTime}
+          shards={3}
+          lore={loreRead.length}
+          area="victory"
+          accentColor="amber"
+        />
       </div>
 
       <Button

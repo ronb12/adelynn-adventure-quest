@@ -4,7 +4,7 @@ import { WeaponId, WEAPONS } from './controls';
 import { NPC_DATA } from './npcData';
 import { saveGame, loadGame, deleteSave, getAreaSpawn, SaveData } from './saveManager';
 
-export type GameState = 'title' | 'playing' | 'gameover' | 'victory';
+export type GameState = 'title' | 'playing' | 'paused' | 'gameover' | 'victory';
 export type AreaId = 'field' | 'forest' | 'desert' | 'boss';
 
 export type SwordId =
@@ -101,6 +101,7 @@ interface GameStore {
   nearFountain: boolean;
 
   setGameState: (state: GameState) => void;
+  togglePause: () => void;
   addRupees: (amount: number) => void;
   addArrows: (amount: number) => void;
   addBombs:  (amount: number) => void;
@@ -227,6 +228,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     gameState: state,
     runStartTime: state === 'playing' && s.runStartTime === 0 ? Date.now() : s.runStartTime,
   })),
+  togglePause: () => set((s) => {
+    if (s.gameState === 'playing') return { gameState: 'paused' as GameState };
+    if (s.gameState === 'paused')  return { gameState: 'playing' as GameState };
+    return {};
+  }),
   addRupees: (amount) => set((s) => ({ rupees: s.rupees + amount })),
   addArrows: (amount) => set((s) => ({ arrows: Math.min(s.arrows + amount, 99) })),
   addBombs:  (amount) => set((s) => ({ bombs:  Math.min(s.bombs  + amount, 20) })),
