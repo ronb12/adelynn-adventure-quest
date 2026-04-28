@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useGameStore, AreaId, SWORD_DEFS } from './store';
@@ -1444,6 +1444,444 @@ export function BossEnemy() {
       </group>
     </>
   );
+}
+
+// ══════════════════════════════════════════════════════════════════
+// AREA GUARDIAN SYSTEM
+// ══════════════════════════════════════════════════════════════════
+
+interface GuardianCfg {
+  name: string;
+  title: string;
+  maxHP: number;
+  speed: number;
+  speed2: number;
+  boltCount: number;
+  boltCount2: number;
+  boltRate: number;
+  boltRate2: number;
+  boltColor: string;
+  boltSpeed: number;
+  bodyColor: string;
+  accentColor: string;
+  barColor: string;
+}
+
+export const GUARDIAN_CONFIG: Partial<Record<AreaId, GuardianCfg>> = {
+  field: {
+    name: 'Thornback Brute', title: 'Warchief of the Plains',
+    maxHP: 15, speed: 2.5, speed2: 4.2,
+    boltCount: 1, boltCount2: 3, boltRate: 2.5, boltRate2: 1.5,
+    boltColor: '#88ff44', boltSpeed: 7,
+    bodyColor: '#2d8020', accentColor: '#88ff44', barColor: '#66dd22',
+  },
+  forest: {
+    name: 'Gorgomara', title: 'Rootweaver of Whisper Woods',
+    maxHP: 18, speed: 1.8, speed2: 3.2,
+    boltCount: 3, boltCount2: 5, boltRate: 2.0, boltRate2: 1.2,
+    boltColor: '#88dd22', boltSpeed: 6,
+    bodyColor: '#1a4a0a', accentColor: '#66ff22', barColor: '#44bb00',
+  },
+  desert: {
+    name: 'Embric Sentinel', title: 'Undying Guardian of Ashrock',
+    maxHP: 20, speed: 1.4, speed2: 2.8,
+    boltCount: 2, boltCount2: 4, boltRate: 2.0, boltRate2: 1.0,
+    boltColor: '#ff8800', boltSpeed: 7.5,
+    bodyColor: '#aa4400', accentColor: '#ff8800', barColor: '#ff6600',
+  },
+  jungle: {
+    name: 'Canopy Tyrant', title: 'Apex Predator of the Jungle',
+    maxHP: 22, speed: 3.0, speed2: 5.0,
+    boltCount: 1, boltCount2: 3, boltRate: 2.2, boltRate2: 1.2,
+    boltColor: '#66ff22', boltSpeed: 9,
+    bodyColor: '#1a5a0a', accentColor: '#88ff44', barColor: '#55cc00',
+  },
+  ice: {
+    name: 'Frostveil Wraith', title: 'Specter of the Frozen Keep',
+    maxHP: 22, speed: 2.2, speed2: 4.0,
+    boltCount: 4, boltCount2: 6, boltRate: 1.8, boltRate2: 0.9,
+    boltColor: '#aaddff', boltSpeed: 8,
+    bodyColor: '#88ccff', accentColor: '#ffffff', barColor: '#99ddff',
+  },
+  volcano: {
+    name: 'Magma Titan', title: 'Infernal Lord of the Caldera',
+    maxHP: 26, speed: 1.2, speed2: 2.4,
+    boltCount: 4, boltCount2: 6, boltRate: 1.5, boltRate2: 0.8,
+    boltColor: '#ff4400', boltSpeed: 7,
+    bodyColor: '#882200', accentColor: '#ff6600', barColor: '#ff5500',
+  },
+  sky: {
+    name: 'Storm Herald Vayne', title: 'Champion of the Tempest Spire',
+    maxHP: 24, speed: 3.5, speed2: 5.5,
+    boltCount: 2, boltCount2: 4, boltRate: 1.8, boltRate2: 0.9,
+    boltColor: '#88aaff', boltSpeed: 10,
+    bodyColor: '#2244cc', accentColor: '#88aaff', barColor: '#6688ff',
+  },
+  crypt: {
+    name: 'The Bonelord', title: 'Undead Tyrant of Ashenmoor',
+    maxHP: 28, speed: 1.8, speed2: 3.5,
+    boltCount: 5, boltCount2: 8, boltRate: 1.5, boltRate2: 0.7,
+    boltColor: '#ffffaa', boltSpeed: 6.5,
+    bodyColor: '#cccc88', accentColor: '#ffffaa', barColor: '#eeee88',
+  },
+  void: {
+    name: 'Null Predator', title: 'Devourer of the Void Realm',
+    maxHP: 30, speed: 2.8, speed2: 5.0,
+    boltCount: 3, boltCount2: 6, boltRate: 1.3, boltRate2: 0.6,
+    boltColor: '#cc00ff', boltSpeed: 9,
+    bodyColor: '#220033', accentColor: '#cc00ff', barColor: '#aa00ee',
+  },
+  cave: {
+    name: 'Crystal Golem Shard', title: 'Construct of the Deep Caverns',
+    maxHP: 20, speed: 1.5, speed2: 3.0,
+    boltCount: 4, boltCount2: 6, boltRate: 1.8, boltRate2: 0.9,
+    boltColor: '#bb88ff', boltSpeed: 7,
+    bodyColor: '#553388', accentColor: '#aa66ff', barColor: '#9955ff',
+  },
+};
+
+// ── Guardian Visual Meshes ─────────────────────────────────────────
+function GuardianVisual({ area, flash }: { area: AreaId; flash: boolean }) {
+  const cfg = GUARDIAN_CONFIG[area]!;
+  const c = cfg.bodyColor;
+  const a = cfg.accentColor;
+  const ei = flash ? 2.5 : 0.45;
+  const ec = flash ? '#ffffff' : a;
+
+  if (area === 'field') return (
+    <group>
+      <mesh position={[0, 1.2, 0]} castShadow><boxGeometry args={[1.8, 2.2, 1.4]} /><meshStandardMaterial color={flash ? '#fff' : c} emissive={ec} emissiveIntensity={ei} /></mesh>
+      <mesh position={[0, 2.7, 0]}><sphereGeometry args={[0.7, 10, 8]} /><meshStandardMaterial color={flash ? '#fff' : c} emissive={ec} emissiveIntensity={ei} /></mesh>
+      <mesh position={[-0.3, 3.4, 0]} rotation={[0,0,-0.4]}><coneGeometry args={[0.15, 0.9, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={0.8} /></mesh>
+      <mesh position={[0.3, 3.4, 0]} rotation={[0,0,0.4]}><coneGeometry args={[0.15, 0.9, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={0.8} /></mesh>
+      <mesh position={[-1.3, 1.9, 0]} rotation={[0,0,-Math.PI/3]}><coneGeometry args={[0.22, 1.1, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={0.7} /></mesh>
+      <mesh position={[1.3, 1.9, 0]} rotation={[0,0,Math.PI/3]}><coneGeometry args={[0.22, 1.1, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={0.7} /></mesh>
+      <mesh position={[1.3, 0.8, 0.3]} rotation={[0.3,0,0.5]}><cylinderGeometry args={[0.35, 0.52, 1.3, 8]} /><meshStandardMaterial color={flash ? '#fff' : c} emissive={ec} emissiveIntensity={ei} /></mesh>
+      <mesh position={[-0.25, 2.8, 0.6]}><sphereGeometry args={[0.11, 6, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={3} /></mesh>
+      <mesh position={[0.25, 2.8, 0.6]}><sphereGeometry args={[0.11, 6, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={3} /></mesh>
+      <pointLight color={a} intensity={flash ? 4 : 1.5} distance={5} decay={2} />
+    </group>
+  );
+
+  if (area === 'forest') return (
+    <group>
+      <mesh position={[0, 1.4, 0]} castShadow><sphereGeometry args={[1.2, 12, 10]} /><meshStandardMaterial color={flash ? '#fff' : c} emissive={ec} emissiveIntensity={ei} roughness={0.9} /></mesh>
+      {[0,1,2,3,4,5].map(i => <mesh key={i} position={[Math.sin(i*1.05)*0.9, 1.9+(i%2)*0.5, Math.cos(i*1.05)*0.9]} rotation={[Math.sin(i)*0.6,0,Math.cos(i)*0.4]}><coneGeometry args={[0.12, 0.9, 5]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={0.7} /></mesh>)}
+      <mesh position={[0, 2.8, 0]}><sphereGeometry args={[0.65, 10, 8]} /><meshStandardMaterial color={flash ? '#fff' : c} emissive={ec} emissiveIntensity={ei} /></mesh>
+      <mesh position={[-1.5, 1.2, 0]} rotation={[0,0,0.8]}><cylinderGeometry args={[0.25, 0.15, 2.0, 6]} /><meshStandardMaterial color={flash ? '#fff' : c} roughness={0.95} /></mesh>
+      <mesh position={[1.5, 1.2, 0]} rotation={[0,0,-0.8]}><cylinderGeometry args={[0.25, 0.15, 2.0, 6]} /><meshStandardMaterial color={flash ? '#fff' : c} roughness={0.95} /></mesh>
+      <mesh position={[-0.22, 2.9, 0.55]}><sphereGeometry args={[0.1, 6, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={2.5} /></mesh>
+      <mesh position={[0.22, 2.9, 0.55]}><sphereGeometry args={[0.1, 6, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={2.5} /></mesh>
+      <pointLight color={a} intensity={flash ? 4 : 1.2} distance={4.5} decay={2} />
+    </group>
+  );
+
+  if (area === 'desert') return (
+    <group>
+      <mesh position={[0, 1.5, 0]} castShadow><boxGeometry args={[1.6, 2.5, 1.2]} /><meshStandardMaterial color={flash ? '#fff' : c} emissive={ec} emissiveIntensity={ei} roughness={0.95} /></mesh>
+      <mesh position={[-1.1, 2.2, 0]} rotation={[0,0,0.4]}><boxGeometry args={[0.9, 0.4, 0.9]} /><meshStandardMaterial color={flash ? '#fff' : c} roughness={0.9} /></mesh>
+      <mesh position={[1.1, 2.2, 0]} rotation={[0,0,-0.4]}><boxGeometry args={[0.9, 0.4, 0.9]} /><meshStandardMaterial color={flash ? '#fff' : c} roughness={0.9} /></mesh>
+      <mesh position={[0, 1.6, 0.7]}><sphereGeometry args={[0.38, 8, 8]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={2.5} /></mesh>
+      <mesh position={[0, 3.1, 0]}><boxGeometry args={[1.0, 0.9, 0.9]} /><meshStandardMaterial color={flash ? '#fff' : c} roughness={0.9} /></mesh>
+      <mesh position={[0, 3.8, 0]}><coneGeometry args={[0.5, 0.9, 4]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={1.0} /></mesh>
+      <mesh position={[-0.25, 3.15, 0.5]}><sphereGeometry args={[0.13, 6, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={3} /></mesh>
+      <mesh position={[0.25, 3.15, 0.5]}><sphereGeometry args={[0.13, 6, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={3} /></mesh>
+      <pointLight color={a} intensity={flash ? 5 : 2} distance={5} decay={2} />
+    </group>
+  );
+
+  if (area === 'jungle') return (
+    <group>
+      <mesh position={[0, 1.2, 0]} castShadow><boxGeometry args={[1.4, 2.0, 1.0]} /><meshStandardMaterial color={flash ? '#fff' : c} emissive={ec} emissiveIntensity={ei} /></mesh>
+      <mesh position={[-1.8, 1.8, -0.3]} rotation={[0.3,0,0.2]}><boxGeometry args={[1.6, 0.15, 1.0]} /><meshStandardMaterial color={c} emissive={a} emissiveIntensity={0.25} transparent opacity={0.85} /></mesh>
+      <mesh position={[1.8, 1.8, -0.3]} rotation={[0.3,0,-0.2]}><boxGeometry args={[1.6, 0.15, 1.0]} /><meshStandardMaterial color={c} emissive={a} emissiveIntensity={0.25} transparent opacity={0.85} /></mesh>
+      <mesh position={[0, 2.6, 0.2]}><boxGeometry args={[0.9, 0.7, 1.0]} /><meshStandardMaterial color={flash ? '#fff' : c} emissive={ec} emissiveIntensity={ei} /></mesh>
+      <mesh position={[0, 2.1, 0.56]} rotation={[0.3,0,0]}><boxGeometry args={[0.5, 0.2, 0.5]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={1} /></mesh>
+      <mesh position={[-0.45, 0.15, 0.2]} rotation={[0.4,0,0.2]}><coneGeometry args={[0.1, 0.6, 4]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={0.8} /></mesh>
+      <mesh position={[0.45, 0.15, 0.2]} rotation={[0.4,0,-0.2]}><coneGeometry args={[0.1, 0.6, 4]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={0.8} /></mesh>
+      <mesh position={[-0.22, 2.7, 0.62]}><sphereGeometry args={[0.1, 6, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={3} /></mesh>
+      <mesh position={[0.22, 2.7, 0.62]}><sphereGeometry args={[0.1, 6, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={3} /></mesh>
+      <pointLight color={a} intensity={flash ? 4 : 1.5} distance={5} decay={2} />
+    </group>
+  );
+
+  if (area === 'ice') return (
+    <group>
+      <mesh position={[0, 1.8, 0]} castShadow><cylinderGeometry args={[0.7, 1.0, 3.2, 10]} /><meshStandardMaterial color={flash ? '#fff' : c} emissive={ec} emissiveIntensity={ei} transparent opacity={0.82} roughness={0.1} metalness={0.3} /></mesh>
+      {[0,1,2,3,4].map(i => <mesh key={i} position={[Math.sin(i/5*Math.PI*2)*0.55, 3.6, Math.cos(i/5*Math.PI*2)*0.55]} rotation={[0.3, i/5*Math.PI*2, 0]}><coneGeometry args={[0.1, 0.85, 5]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={flash ? 3 : 1.8} transparent opacity={0.9} /></mesh>)}
+      <mesh position={[-1.2, 1.5, 0]} rotation={[0,0,0.9]}><coneGeometry args={[0.15, 1.4, 6]} /><meshStandardMaterial color={c} emissive={a} emissiveIntensity={0.5} transparent opacity={0.85} /></mesh>
+      <mesh position={[1.2, 1.5, 0]} rotation={[0,0,-0.9]}><coneGeometry args={[0.15, 1.4, 6]} /><meshStandardMaterial color={c} emissive={a} emissiveIntensity={0.5} transparent opacity={0.85} /></mesh>
+      <mesh position={[-0.2, 2.7, 0.65]}><sphereGeometry args={[0.12, 6, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={3.5} /></mesh>
+      <mesh position={[0.2, 2.7, 0.65]}><sphereGeometry args={[0.12, 6, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={3.5} /></mesh>
+      <pointLight color={a} intensity={flash ? 6 : 2.5} distance={6} decay={2} />
+    </group>
+  );
+
+  if (area === 'volcano') return (
+    <group>
+      <mesh position={[0, 1.5, 0]} castShadow><boxGeometry args={[2.4, 3.0, 2.0]} /><meshStandardMaterial color={flash ? '#fff' : '#441100'} emissive={flash ? '#ffffff' : '#330000'} emissiveIntensity={flash ? 3 : 0.25} roughness={0.98} /></mesh>
+      <mesh position={[0, 1.5, 1.02]}><planeGeometry args={[1.4, 2.0]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={2.2} /></mesh>
+      <mesh position={[0, 1.5, -1.02]} rotation={[0,Math.PI,0]}><planeGeometry args={[0.8, 1.5]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={2.2} /></mesh>
+      <mesh position={[0, 3.5, 0]}><boxGeometry args={[1.6, 1.2, 1.4]} /><meshStandardMaterial color={flash ? '#fff' : '#441100'} roughness={0.98} /></mesh>
+      <mesh position={[-0.35, 3.6, 0.72]}><sphereGeometry args={[0.2, 8, 8]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={4} /></mesh>
+      <mesh position={[0.35, 3.6, 0.72]}><sphereGeometry args={[0.2, 8, 8]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={4} /></mesh>
+      <mesh position={[-1.8, 1.0, 0.3]} rotation={[0.3,0,0.3]}><boxGeometry args={[0.9, 0.9, 0.9]} /><meshStandardMaterial color={flash ? '#fff' : '#441100'} roughness={0.98} /></mesh>
+      <mesh position={[1.8, 1.0, 0.3]} rotation={[0.3,0,-0.3]}><boxGeometry args={[0.9, 0.9, 0.9]} /><meshStandardMaterial color={flash ? '#fff' : '#441100'} roughness={0.98} /></mesh>
+      <pointLight color="#ff4400" intensity={flash ? 8 : 3} distance={7} decay={2} />
+    </group>
+  );
+
+  if (area === 'sky') return (
+    <group>
+      <mesh position={[0, 1.4, 0]} castShadow><boxGeometry args={[1.0, 2.4, 0.8]} /><meshStandardMaterial color={flash ? '#fff' : c} emissive={ec} emissiveIntensity={ei} metalness={0.7} roughness={0.3} /></mesh>
+      <mesh position={[-2.1, 2.0, 0]} rotation={[0,0.2,-0.15]}><boxGeometry args={[2.1, 0.12, 1.2]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={0.5} transparent opacity={0.8} /></mesh>
+      <mesh position={[2.1, 2.0, 0]} rotation={[0,-0.2,0.15]}><boxGeometry args={[2.1, 0.12, 1.2]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={0.5} transparent opacity={0.8} /></mesh>
+      <mesh position={[0, 3.1, 0]}><boxGeometry args={[0.9, 0.9, 0.85]} /><meshStandardMaterial color={flash ? '#fff' : c} metalness={0.8} roughness={0.2} /></mesh>
+      <mesh position={[0, 3.6, 0]}><coneGeometry args={[0.4, 0.7, 4]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={1.5} /></mesh>
+      <mesh position={[1.2, 0.9, 0.4]} rotation={[0.5,0,-0.3]}><cylinderGeometry args={[0.07, 0.12, 2.5, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={2} /></mesh>
+      <mesh position={[-0.18, 3.1, 0.44]}><sphereGeometry args={[0.1, 6, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={4} /></mesh>
+      <mesh position={[0.18, 3.1, 0.44]}><sphereGeometry args={[0.1, 6, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={4} /></mesh>
+      <pointLight color={a} intensity={flash ? 5 : 2} distance={6} decay={2} />
+    </group>
+  );
+
+  if (area === 'crypt') return (
+    <group>
+      {[-0.5, 0, 0.5].map((z, i) => (
+        <mesh key={i} position={[0, 1.2+i*0.55, z]}><boxGeometry args={[1.7, 0.13, 0.13]} /><meshStandardMaterial color={c} emissive={flash ? '#fff' : a} emissiveIntensity={flash ? 2 : 0.4} /></mesh>
+      ))}
+      <mesh position={[0, 1.5, 0]}><cylinderGeometry args={[0.15, 0.2, 2.5, 6]} /><meshStandardMaterial color={flash ? '#fff' : c} roughness={0.7} /></mesh>
+      <mesh position={[0, 3.0, 0]}><sphereGeometry args={[0.62, 8, 8]} /><meshStandardMaterial color={flash ? '#fff' : c} roughness={0.7} /></mesh>
+      {[0,1,2,3,4].map(i => <mesh key={i} position={[Math.sin(i/5*Math.PI*2)*0.52, 3.5, Math.cos(i/5*Math.PI*2)*0.52]}><coneGeometry args={[0.09, 0.58, 4]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={flash ? 3 : 1.5} /></mesh>)}
+      <mesh position={[-0.2, 3.05, 0.5]}><sphereGeometry args={[0.13, 6, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={4} /></mesh>
+      <mesh position={[0.2, 3.05, 0.5]}><sphereGeometry args={[0.13, 6, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={4} /></mesh>
+      <mesh position={[-1.3, 1.7, 0]} rotation={[0,0,0.6]}><cylinderGeometry args={[0.12, 0.1, 1.5, 6]} /><meshStandardMaterial color={flash ? '#fff' : c} roughness={0.7} /></mesh>
+      <mesh position={[1.3, 1.7, 0]} rotation={[0,0,-0.6]}><cylinderGeometry args={[0.12, 0.1, 1.5, 6]} /><meshStandardMaterial color={flash ? '#fff' : c} roughness={0.7} /></mesh>
+      <pointLight color={a} intensity={flash ? 4 : 1.8} distance={6} decay={2} />
+    </group>
+  );
+
+  if (area === 'void') return (
+    <group>
+      <mesh position={[0, 1.5, 0]} castShadow><octahedronGeometry args={[1.4, 1]} /><meshStandardMaterial color={flash ? '#fff' : c} emissive={flash ? '#ffffff' : '#440066'} emissiveIntensity={flash ? 4 : 0.9} transparent opacity={0.9} roughness={0.2} /></mesh>
+      <mesh position={[0, 2.0, 1.22]}><sphereGeometry args={[0.32, 8, 8]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={flash ? 8 : 4.5} /></mesh>
+      {[0,1,2,3].map(i => <mesh key={i} position={[Math.sin(i/4*Math.PI*2)*1.9, 1.5+Math.sin(i)*0.4, Math.cos(i/4*Math.PI*2)*1.9]}><octahedronGeometry args={[0.22, 0]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={2} transparent opacity={0.85} /></mesh>)}
+      <mesh position={[0, 2.9, 0]}><coneGeometry args={[0.26, 1.3, 6]} /><meshStandardMaterial color="#440066" emissive={a} emissiveIntensity={1.5} /></mesh>
+      <pointLight color={a} intensity={flash ? 7 : 3} distance={7} decay={2} />
+    </group>
+  );
+
+  if (area === 'cave') return (
+    <group>
+      <mesh position={[0, 1.5, 0]} castShadow><dodecahedronGeometry args={[1.3, 0]} /><meshStandardMaterial color={flash ? '#fff' : c} emissive={ec} emissiveIntensity={ei} transparent opacity={0.92} roughness={0.15} metalness={0.4} /></mesh>
+      {[0,1,2,3].map(i => <mesh key={i} position={[Math.sin(i/4*Math.PI*2)*1.25, 2.2, Math.cos(i/4*Math.PI*2)*1.25]} rotation={[(i%2)*0.4, i/4*Math.PI*2, 0.3]}><coneGeometry args={[0.22, 1.45, 5]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={flash ? 3 : 1.5} transparent opacity={0.9} /></mesh>)}
+      <mesh position={[0, 3.1, 0]}><coneGeometry args={[0.32, 1.25, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={flash ? 4 : 2} transparent opacity={0.95} /></mesh>
+      <mesh position={[-0.3, 1.8, 1.06]}><sphereGeometry args={[0.16, 6, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={5} /></mesh>
+      <mesh position={[0.3, 1.8, 1.06]}><sphereGeometry args={[0.16, 6, 6]} /><meshStandardMaterial color={a} emissive={a} emissiveIntensity={5} /></mesh>
+      <pointLight color={a} intensity={flash ? 6 : 2.5} distance={6} decay={2} />
+    </group>
+  );
+
+  return (
+    <mesh position={[0, 1.5, 0]} castShadow>
+      <sphereGeometry args={[1.0, 8, 8]} />
+      <meshStandardMaterial color={c} emissive={a} emissiveIntensity={1} />
+    </mesh>
+  );
+}
+
+// ── Guardian inner logic (runs when area has living guardian) ──────
+const MAX_GUARDIAN_BOLTS = 12;
+
+function GuardianInner({ cfg, area }: { cfg: GuardianCfg; area: AreaId }) {
+  const guardianRef     = useRef<THREE.Group>(null!);
+  const boltGroupRef    = useRef<THREE.Group>(null!);
+  const boltsRef        = useRef<BoltData[]>([]);
+  const gPos            = useRef(new THREE.Vector3(0, 0, -12));
+  const gDir            = useRef(new THREE.Vector3(1, 0, 0));
+  const gInvuln         = useRef(0);
+  const gFlash          = useRef(false);
+  const boltTimer       = useRef(1.8);
+  const changeDirTimer  = useRef(0);
+  const phase           = useRef(1);
+
+  const spawnGuardian = useGameStore(s => s.spawnGuardian);
+
+  useEffect(() => {
+    spawnGuardian(area, cfg.maxHP);
+    gPos.current.set(0, 0, -12);
+    boltTimer.current = 1.8;
+    gInvuln.current = 0;
+    if (boltsRef.current.length === 0) {
+      for (let i = 0; i < MAX_GUARDIAN_BOLTS; i++) {
+        boltsRef.current.push({ pos: new THREE.Vector3(), dir: new THREE.Vector3(1,0,0), life: 0, active: false });
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [area]);
+
+  useFrame((_, delta) => {
+    const store = useGameStore.getState();
+    if (store.gameState !== 'playing') return;
+    if (!guardianRef.current || !boltGroupRef.current) return;
+
+    const hp = store.currentGuardianHP;
+    if (hp <= 0) { guardianRef.current.visible = false; return; }
+    guardianRef.current.visible = true;
+
+    phase.current = hp <= cfg.maxHP / 2 ? 2 : 1;
+    const speed = phase.current === 2 ? cfg.speed2 : cfg.speed;
+    const { playerPosition, swordActive, swordPosition, spinActive, spinPosition } = store;
+
+    // Movement
+    changeDirTimer.current -= delta;
+    if (changeDirTimer.current <= 0) {
+      changeDirTimer.current = 0.5 + Math.random() * 0.8;
+      gDir.current.copy(playerPosition).sub(gPos.current).setY(0).normalize();
+      if (phase.current === 2 && Math.random() < 0.25) {
+        const ang = Math.random() * Math.PI * 2;
+        gPos.current.set(
+          playerPosition.x + Math.cos(ang) * 7,
+          0,
+          playerPosition.z + Math.sin(ang) * 7,
+        );
+      }
+    }
+    gPos.current.addScaledVector(gDir.current, speed * delta);
+    gPos.current.x = THREE.MathUtils.clamp(gPos.current.x, -24, 24);
+    gPos.current.z = THREE.MathUtils.clamp(gPos.current.z, -24, 24);
+    guardianRef.current.position.copy(gPos.current);
+    guardianRef.current.rotation.y = Math.atan2(gDir.current.x, gDir.current.z);
+
+    // Invuln / flash
+    if (gInvuln.current > 0) {
+      gInvuln.current -= delta;
+      gFlash.current = Math.floor(gInvuln.current * 10) % 2 === 0;
+    } else {
+      gFlash.current = false;
+    }
+
+    // Fire bolts
+    const bRate  = phase.current === 2 ? cfg.boltRate2  : cfg.boltRate;
+    const bCount = phase.current === 2 ? cfg.boltCount2 : cfg.boltCount;
+    boltTimer.current -= delta;
+    if (boltTimer.current <= 0) {
+      boltTimer.current = bRate;
+      const baseAng = Math.atan2(
+        playerPosition.x - gPos.current.x,
+        playerPosition.z - gPos.current.z,
+      );
+      for (let i = 0; i < bCount; i++) {
+        const slot = boltsRef.current.find(b => !b.active);
+        if (!slot) continue;
+        const spread = bCount > 1 ? (i - (bCount-1)/2) * 0.35 : 0;
+        slot.pos.copy(gPos.current).setY(2.0);
+        slot.dir.set(Math.sin(baseAng+spread), 0, Math.cos(baseAng+spread));
+        slot.life = 3.0;
+        slot.active = true;
+      }
+    }
+
+    // Update bolt meshes
+    boltsRef.current.forEach((bolt, i) => {
+      const child = boltGroupRef.current.children[i];
+      if (!child) return;
+      if (!bolt.active) { child.visible = false; return; }
+      bolt.pos.addScaledVector(bolt.dir, cfg.boltSpeed * delta);
+      bolt.life -= delta;
+      if (bolt.life <= 0 || Math.abs(bolt.pos.x) > 30 || Math.abs(bolt.pos.z) > 30) {
+        bolt.active = false; child.visible = false; return;
+      }
+      child.visible = true;
+      child.position.copy(bolt.pos);
+      if (bolt.pos.distanceTo(playerPosition) < 1.0) {
+        bolt.active = false; child.visible = false;
+        store.damagePlayer(0.75);
+      }
+    });
+
+    // Weapon hit detection
+    const dmg    = SWORD_DEFS[store.activeSword].damage;
+    const swordD = gPos.current.clone().setY(0).distanceTo(swordPosition.clone().setY(0));
+    if (swordActive && gInvuln.current <= 0 && swordD < 2.0) {
+      store.damageGuardian(dmg); gInvuln.current = 0.5; sfxHit();
+    }
+    const spinR = store.activeSword === 'storm' ? 4.5 : 3.5;
+    if (spinActive && gInvuln.current <= 0 &&
+        gPos.current.clone().setY(0).distanceTo(spinPosition.clone().setY(0)) < spinR) {
+      store.damageGuardian(dmg * 2); gInvuln.current = 0.5; sfxHit();
+    }
+    for (const zone of hitZones.arrows) {
+      if (gInvuln.current <= 0 && gPos.current.clone().setY(0).distanceTo(zone.pos.clone().setY(0)) < zone.radius+0.5) {
+        store.damageGuardian(zone.damage ?? 1.0); gInvuln.current = 0.3; sfxHit(); break;
+      }
+    }
+    for (const zone of hitZones.explosions) {
+      if (gPos.current.distanceTo(zone.pos) < zone.radius+1.0) {
+        store.damageGuardian(5); gInvuln.current = 0.6; sfxDeath(); break;
+      }
+    }
+    for (const zone of hitZones.moonbow) {
+      if (gInvuln.current <= 0 && gPos.current.clone().setY(0).distanceTo(zone.pos.clone().setY(0)) < zone.radius+0.5) {
+        store.damageGuardian(zone.damage ?? 1.2); gInvuln.current = 0.35; sfxHit(); break;
+      }
+    }
+    for (const zone of hitZones.frost) {
+      if (gInvuln.current <= 0 && gPos.current.distanceTo(zone.pos) < zone.radius+0.5) {
+        store.damageGuardian(zone.damage ?? 1.0); gInvuln.current = 0.4; sfxHit(); break;
+      }
+    }
+    if (hitZones.chain && gInvuln.current <= 0 &&
+        gPos.current.clone().setY(0).distanceTo(hitZones.chain.pos.clone().setY(0)) < hitZones.chain.radius+0.5) {
+      store.damageGuardian(hitZones.chain.damage ?? 0.5); gInvuln.current = 0.4; sfxHit();
+    }
+    for (const zone of hitZones.aura) {
+      if (gInvuln.current <= 0 && gPos.current.clone().setY(0).distanceTo(zone.pos.clone().setY(0)) < zone.radius+0.5) {
+        store.damageGuardian(zone.damage ?? 0.25); gInvuln.current = 0.15; sfxHit(); break;
+      }
+    }
+    for (const zone of hitZones.wand) {
+      if (gInvuln.current <= 0 && gPos.current.clone().setY(0).distanceTo(zone.pos.clone().setY(0)) < zone.radius+0.3) {
+        store.damageGuardian(zone.damage ?? 0.5); gInvuln.current = 0.25; sfxHit(); break;
+      }
+    }
+
+    // Melee damage to player
+    if (gPos.current.distanceTo(playerPosition) < 1.9) {
+      store.damagePlayer(0.5);
+    }
+  });
+
+  return (
+    <>
+      <group ref={guardianRef}>
+        <GuardianVisual area={area} flash={gFlash.current} />
+      </group>
+      <group ref={boltGroupRef}>
+        {Array.from({ length: MAX_GUARDIAN_BOLTS }, (_, i) => (
+          <group key={`gb-${i}`} visible={false}>
+            <mesh>
+              <sphereGeometry args={[0.24, 7, 6]} />
+              <meshStandardMaterial color={cfg.boltColor} emissive={cfg.boltColor} emissiveIntensity={2.8} transparent opacity={0.92} />
+            </mesh>
+            <pointLight color={cfg.boltColor} intensity={1.5} distance={2.5} decay={2} />
+          </group>
+        ))}
+      </group>
+    </>
+  );
+}
+
+// ── Public AreaGuardian component ─────────────────────────────────
+export function AreaGuardian() {
+  const currentArea       = useGameStore(s => s.currentArea);
+  const guardianDefeated  = useGameStore(s => s.guardianDefeated);
+
+  const cfg = GUARDIAN_CONFIG[currentArea];
+  if (!cfg || currentArea === 'boss') return null;
+  if (guardianDefeated.includes(currentArea)) return null;
+
+  return <GuardianInner cfg={cfg} area={currentArea} />;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────

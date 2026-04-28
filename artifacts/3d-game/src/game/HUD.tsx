@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useGameStore, SWORD_DEFS, WEAPON_PICKUPS } from './store';
+import { GUARDIAN_CONFIG } from './Enemy';
 import { WeaponId } from './controls';
 import { NPC_DATA } from './npcData';
 import { playerStamina } from './Player';
@@ -318,6 +319,39 @@ function BossHPBar() {
             style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${color}, #ff00ff)` }} />
         </div>
         <div className="text-right text-purple-400 text-xs font-mono mt-0.5">{bossHP}/{bossMax}</div>
+      </div>
+    </div>
+  );
+}
+
+// ── Guardian HP Bar ───────────────────────────────────────────────
+function GuardianHPBar() {
+  const hp          = useGameStore(s => s.currentGuardianHP);
+  const maxHP       = useGameStore(s => s.currentGuardianMaxHP);
+  const currentArea = useGameStore(s => s.currentArea);
+  const defeated    = useGameStore(s => s.guardianDefeated);
+
+  if (currentArea === 'boss') return null;
+  if (hp <= 0 || maxHP <= 0) return null;
+  if (defeated.includes(currentArea)) return null;
+
+  const cfg = GUARDIAN_CONFIG[currentArea];
+  if (!cfg) return null;
+
+  const pct = (hp / maxHP) * 100;
+  const barCol = pct > 60 ? cfg.barColor : pct > 30 ? '#ffaa00' : '#ff3300';
+
+  return (
+    <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-76 max-w-xs px-4 pointer-events-none">
+      <div className="bg-black/80 rounded-xl px-4 py-2 border shadow-2xl" style={{ borderColor: cfg.barColor + '55' }}>
+        <div className="font-bold text-xs text-center mb-1 tracking-wider" style={{ color: cfg.barColor }}>
+          ⚔ {cfg.name} — <span className="opacity-70 font-normal">{cfg.title}</span>
+        </div>
+        <div className="w-full h-3 bg-gray-900 rounded-full overflow-hidden border border-white/10">
+          <div className="h-full rounded-full transition-all duration-200"
+            style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${barCol}, ${cfg.barColor})` }} />
+        </div>
+        <div className="text-right text-xs font-mono mt-0.5 opacity-60" style={{ color: cfg.barColor }}>{hp}/{maxHP}</div>
       </div>
     </div>
   );
@@ -1014,6 +1048,8 @@ export function HUD() {
 
       {/* Boss HP Bar */}
       <BossHPBar />
+      {/* Area Guardian HP Bar */}
+      <GuardianHPBar />
 
       {/* Chest interaction hint */}
       {nearChest && !activeDialogue && !showShop && (

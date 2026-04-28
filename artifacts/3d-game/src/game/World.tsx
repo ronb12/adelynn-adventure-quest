@@ -5,6 +5,7 @@ import { Sky } from '@react-three/drei';
 import { useGameStore, AreaId, AreaTransition, SWORD_CHESTS, SWORD_DEFS, WEAPON_PICKUPS } from './store';
 import { Village } from './Village';
 import { NPCManager } from './NPCs';
+import { AreaGuardian } from './Enemy';
 
 // ─── Lore Stone Definitions ───────────────────────────────────────
 interface LoreStoneDef {
@@ -1650,6 +1651,7 @@ export function World() {
       {currentArea === 'crypt'   && <CryptArea />}
       {currentArea === 'void'    && <VoidArea />}
       {currentArea === 'cave'    && <CaveArea />}
+      <AreaGuardian />
       <NPCManager />
     </>
   );

@@ -140,6 +140,9 @@ interface GameStore {
   nearFountain: boolean;
   areasVisited: AreaId[];
   eliteKills: number;
+  guardianDefeated: AreaId[];
+  currentGuardianHP: number;
+  currentGuardianMaxHP: number;
 
   setGameState: (state: GameState) => void;
   togglePause: () => void;
@@ -210,6 +213,8 @@ interface GameStore {
   setNearLore: (id: string | null) => void;
   markLoreRead: (id: string) => void;
   addEliteKill: () => void;
+  spawnGuardian: (area: AreaId, maxHP: number) => void;
+  damageGuardian: (dmg: number) => void;
   triggerSave: () => void;
   performSave: () => void;
   loadFromSave: () => boolean;
@@ -272,6 +277,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   runStartTime: 0,
   nearLore: null,
   loreRead: [],
+  guardianDefeated: [],
+  currentGuardianHP: 0,
+  currentGuardianMaxHP: 0,
 
   setGameState: (state) => set((s) => ({
     gameState: state,
@@ -568,6 +576,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
     comboTimer: 5.0,
   })),
 
+  spawnGuardian: (area, maxHP) => set((s) => {
+    if (s.guardianDefeated.includes(area)) return {};
+    return { currentGuardianHP: maxHP, currentGuardianMaxHP: maxHP };
+  }),
+
+  damageGuardian: (dmg) => set((s) => {
+    const newHP = Math.max(0, s.currentGuardianHP - dmg);
+    if (newHP <= 0) {
+      return {
+        currentGuardianHP: 0,
+        guardianDefeated: [...s.guardianDefeated, s.currentArea],
+        rupees: s.rupees + 15,
+        hearts: Math.min(s.hearts + 1, s.maxHearts),
+        score: s.score + 2000,
+        comboCount: s.comboCount + 5,
+        comboTimer: 5.0,
+        itemFanfare: { name: 'Area Guardian Defeated!', icon: '👑', desc: '+15 Rupees · +1 Heart' },
+      };
+    }
+    return { currentGuardianHP: newHP };
+  }),
+
   resetGame: () => set({
     gameState: 'playing',
     hearts: 5,
@@ -622,6 +652,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     loreRead: [],
     areasVisited: ['field' as AreaId],
     eliteKills: 0,
+    guardianDefeated: [],
+    currentGuardianHP: 0,
+    currentGuardianMaxHP: 0,
   }),
 
   triggerSave: () => set({ lastSaveTime: Date.now() }),
@@ -655,6 +688,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       bossHP: s.bossHP,
       bossDefeated: s.bossDefeated,
       talkedToNPCs: s.talkedToNPCs,
+      guardianDefeated: s.guardianDefeated,
     };
     saveGame(data);
     set({ lastSaveTime: Date.now() });
@@ -695,6 +729,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       bossHP: data.bossHP ?? 20,
       bossDefeated: data.bossDefeated ?? false,
       talkedToNPCs: data.talkedToNPCs ?? [],
+      guardianDefeated: (data.guardianDefeated ?? []) as AreaId[],
+      currentGuardianHP: 0,
+      currentGuardianMaxHP: 0,
       playerPosition: spawnPos.clone(),
       playerDirection: new THREE.Vector3(0, 0, -1),
       swordActive: false,

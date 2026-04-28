@@ -32,6 +32,7 @@ export interface SaveData {
   bossHP: number;
   bossDefeated: boolean;
   talkedToNPCs: string[];
+  guardianDefeated?: string[];
 }
 
 export function hasSave(): boolean {
