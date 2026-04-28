@@ -198,9 +198,169 @@ function FenceSection({
   );
 }
 
+// ─── Adelynn's House ──────────────────────────────────────────────
+function AdelynnHouse() {
+  const w = 4.2, d = 3.6, h = 2.4;
+  return (
+    <group position={[-7, 0, 10]}>
+      {/* Stone foundation */}
+      <mesh castShadow receiveShadow position={[0, 0.22, 0]}>
+        <boxGeometry args={[w + 0.5, 0.44, d + 0.5]} />
+        <meshStandardMaterial color="#8a8a7a" roughness={0.88} />
+      </mesh>
+      {/* Walls */}
+      <mesh castShadow receiveShadow position={[0, h / 2 + 0.44, 0]}>
+        <boxGeometry args={[w, h, d]} />
+        <meshStandardMaterial color="#f8f2e0" roughness={0.78} />
+      </mesh>
+      {/* Timber frame accents */}
+      {/* Horizontal beam */}
+      <mesh position={[0, h + 0.44, 0]}>
+        <boxGeometry args={[w + 0.12, 0.14, d + 0.12]} />
+        <meshStandardMaterial color="#4e3320" roughness={0.78} />
+      </mesh>
+      {/* Vertical corner beams */}
+      {([-w/2, w/2] as number[]).flatMap(x => ([-d/2, d/2] as number[]).map(z =>
+        <mesh key={`${x}${z}`} castShadow position={[x, h / 2 + 0.44, z]}>
+          <boxGeometry args={[0.13, h, 0.13]} />
+          <meshStandardMaterial color="#4e3320" roughness={0.78} />
+        </mesh>
+      ))}
+      {/* Roof — pink/lavender tile (Adelynn's style) */}
+      <mesh castShadow position={[-w * 0.27, h + 0.44 + 0.65, 0]} rotation={[0, 0, -0.55]}>
+        <boxGeometry args={[w * 0.62, 0.16, d + 0.6]} />
+        <meshStandardMaterial color="#c06080" roughness={0.72} />
+      </mesh>
+      <mesh castShadow position={[w * 0.27, h + 0.44 + 0.65, 0]} rotation={[0, 0, 0.55]}>
+        <boxGeometry args={[w * 0.62, 0.16, d + 0.6]} />
+        <meshStandardMaterial color="#c06080" roughness={0.72} />
+      </mesh>
+      {/* Ridge beam */}
+      <mesh castShadow position={[0, h + 0.44 + 1.1, 0]}>
+        <boxGeometry args={[0.2, 0.2, d + 0.7]} />
+        <meshStandardMaterial color="#3a2010" roughness={0.72} />
+      </mesh>
+      {/* Gables */}
+      {[-1, 1].map(side => (
+        <mesh key={side} position={[0, h + 0.44 + 0.54, side * (d / 2 + 0.08)]}>
+          <boxGeometry args={[w + 0.06, 1.1, 0.14]} />
+          <meshStandardMaterial color="#f8f2e0" roughness={0.78} />
+        </mesh>
+      ))}
+      {/* Chimney */}
+      <mesh castShadow position={[0.8, h + 0.44 + 1.15, -0.6]}>
+        <boxGeometry args={[0.44, 1.3, 0.44]} />
+        <meshStandardMaterial color="#9a9080" roughness={0.88} />
+      </mesh>
+      {/* Smoke puff */}
+      <mesh position={[0.8, h + 0.44 + 2.1, -0.6]}>
+        <sphereGeometry args={[0.28, 8, 7]} />
+        <meshStandardMaterial color="#ddddcc" transparent opacity={0.4} roughness={1} />
+      </mesh>
+
+      {/* Front door — pink */}
+      <mesh position={[0, 0.88 + 0.44, d / 2 + 0.03]}>
+        <boxGeometry args={[0.85, 1.76, 0.08]} />
+        <meshStandardMaterial color="#cc6688" roughness={0.8} />
+      </mesh>
+      <mesh position={[0, 0.88 + 0.44, d / 2 + 0.07]}>
+        <boxGeometry args={[0.95, 1.86, 0.06]} />
+        <meshStandardMaterial color="#4e3320" roughness={0.78} />
+      </mesh>
+      {/* Heart door knocker */}
+      <mesh position={[0.15, 1.1 + 0.44, d / 2 + 0.1]}>
+        <sphereGeometry args={[0.07, 8, 7]} />
+        <meshStandardMaterial color="#e8c020" metalness={0.7} roughness={0.2} />
+      </mesh>
+
+      {/* Windows */}
+      {([-1.1, 1.1] as number[]).map(x => (
+        <group key={x}>
+          <mesh position={[x, h * 0.55 + 0.44, d / 2 + 0.04]}>
+            <boxGeometry args={[0.7, 0.7, 0.07]} />
+            <meshStandardMaterial color="#ffeecc" transparent opacity={0.7} emissive="#ffe8aa" emissiveIntensity={0.5} />
+          </mesh>
+          <mesh position={[x, h * 0.55 + 0.44, d / 2 + 0.07]}>
+            <boxGeometry args={[0.78, 0.78, 0.05]} />
+            <meshStandardMaterial color="#4e3320" roughness={0.78} />
+          </mesh>
+        </group>
+      ))}
+      {/* Side window */}
+      <mesh position={[w / 2 + 0.04, h * 0.55 + 0.44, 0]}>
+        <boxGeometry args={[0.07, 0.65, 0.65]} />
+        <meshStandardMaterial color="#ffeecc" transparent opacity={0.7} emissive="#ffe8aa" emissiveIntensity={0.4} />
+      </mesh>
+
+      {/* Warm interior glow */}
+      <pointLight position={[0, 1.5, 0]} color="#ffdd88" intensity={0.8} distance={6} decay={2} />
+
+      {/* Garden flower patches */}
+      {([
+        [-1.8, 0.02, d/2 + 0.8, '#e91e8c'],
+        [-0.6, 0.02, d/2 + 0.9, '#ff80ab'],
+        [ 0.6, 0.02, d/2 + 0.9, '#f06292'],
+        [ 1.8, 0.02, d/2 + 0.8, '#ffd54f'],
+        [-1.4, 0.02, d/2 + 1.5, '#f48fb1'],
+        [ 1.4, 0.02, d/2 + 1.5, '#ffcc02'],
+      ] as [number,number,number,string][]).map(([x,y,z,col], i) => (
+        <mesh key={i} rotation={[-Math.PI/2, 0, 0]} position={[x, y, z]}>
+          <circleGeometry args={[0.35, 7]} />
+          <meshStandardMaterial color={col} roughness={1} />
+        </mesh>
+      ))}
+      {/* Garden path stones */}
+      {[0.4, 1.0, 1.6, 2.2].map((dz, i) => (
+        <mesh key={i} rotation={[-Math.PI/2, 0, 0]} position={[0, 0.01, d/2 + dz]}>
+          <circleGeometry args={[0.3, 7]} />
+          <meshStandardMaterial color="#c0b8a0" roughness={0.9} />
+        </mesh>
+      ))}
+
+      {/* Small fence around garden */}
+      {([
+        [[-2.8, 0, d/2 + 0.2], [-2.8, 0, d/2 + 2.0]],
+        [[-2.8, 0, d/2 + 2.0], [ 2.8, 0, d/2 + 2.0]],
+        [[ 2.8, 0, d/2 + 2.0], [ 2.8, 0, d/2 + 0.2]],
+      ] as [number,number,number][][]).map(([from, to], i) => (
+        <group key={i}>
+          {/* Rail */}
+          <mesh position={[
+            (from[0]+to[0])/2, 0.55, (from[2]+to[2])/2
+          ]} rotation={[0, Math.atan2(to[0]-from[0], to[2]-from[2]), 0]}>
+            <boxGeometry args={[0.07, 0.07,
+              Math.sqrt((to[0]-from[0])**2+(to[2]-from[2])**2)]} />
+            <meshStandardMaterial color="#a07040" roughness={0.82} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Nameplate sign */}
+      <group position={[-2.6, 0, d/2 + 0.4]} rotation={[0, 0.5, 0]}>
+        <mesh castShadow position={[0, 0.9, 0]}>
+          <cylinderGeometry args={[0.055, 0.065, 1.8, 7]} />
+          <meshStandardMaterial color="#6d4c26" roughness={0.85} />
+        </mesh>
+        <mesh castShadow position={[0, 1.85, 0]}>
+          <boxGeometry args={[1.5, 0.55, 0.12]} />
+          <meshStandardMaterial color="#e8d090" roughness={0.6} />
+        </mesh>
+        {/* Pink stripe decoration on sign */}
+        <mesh position={[0, 1.85, 0.07]}>
+          <boxGeometry args={[1.4, 0.12, 0.04]} />
+          <meshStandardMaterial color="#cc6688" roughness={0.7} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
 export function Village() {
   return (
     <group>
+      {/* ── Adelynn's House ── */}
+      <AdelynnHouse />
+
       {/* ── Three cottages ── */}
       <Cottage pos={[6, 0, 8]}  rot={0}                roofColor="#8b3a2a" wallColor="#f5f0e8" />
       <Cottage pos={[14, 0, 5]} rot={-Math.PI * 0.08}  roofColor="#6d4c26" wallColor="#eee8d8" size={0.9} />

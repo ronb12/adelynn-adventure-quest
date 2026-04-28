@@ -61,6 +61,11 @@ const AREA_CONFIG: Record<AreaId, {
     { count: 4, maxHp: 9, speed: [2.0, 3.2], body: '#220033', accent: '#8800cc', chaseRange: 10, meshType: 'knight', behavior: 'charge' },
     { count: 3, maxHp: 6, speed: [4.0, 5.5], body: '#330044', accent: '#ff00cc', chaseRange: 14, meshType: 'bat' },
   ],
+  cave: [
+    { count: 6, maxHp: 3, speed: [2.8, 4.0], body: '#2a1a4a', accent: '#aa66ff', chaseRange: 14, meshType: 'bat' },
+    { count: 3, maxHp: 4, speed: [1.6, 2.6], body: '#4a3366', accent: '#cc88ff', chaseRange: 10, meshType: 'slime' },
+    { count: 2, maxHp: 5, speed: [1.0, 1.8], body: '#553388', accent: '#8844cc', chaseRange: 8,  meshType: 'wraith', behavior: 'ranged' },
+  ],
 };
 
 // ── Visual meshes ────────────────────────────────────────────────

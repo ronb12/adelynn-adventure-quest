@@ -47,6 +47,7 @@ const AREA_NAMES: Record<string, string> = {
   sky:     'Celestial Skylands',
   crypt:   'Shadowed Crypts',
   void:    'The Fractured Void',
+  cave:    'Crystal Caverns',
 };
 const AREA_SUBTITLES: Record<string, string> = {
   field:   'Where the journey begins',
@@ -59,6 +60,7 @@ const AREA_SUBTITLES: Record<string, string> = {
   sky:     'Beyond the reach of shadows',
   crypt:   'The dead remember everything',
   void:    'Reality ends here',
+  cave:    'Secrets gleam in the dark',
 };
 const SHARD_INFO = [
   { area: 'field',  name: 'Shard of Dawn',  color: '#ffe060' },
@@ -841,7 +843,7 @@ function AreaEntryBanner() {
   const areaColors: Record<string, string> = {
     field: '#ffe090', forest: '#88ff88', desert: '#ff9940', boss: '#ff4444',
     jungle: '#44dd66', ice: '#88eeff', volcano: '#ff5522', sky: '#aabbff',
-    crypt: '#bb88ff', void: '#cc44ff',
+    crypt: '#bb88ff', void: '#cc44ff', cave: '#bb88ff',
   };
   const accent = areaColors[display.area] ?? '#ffffff';
 
@@ -905,6 +907,9 @@ function LorePopup() {
       'lore-void-1': { title: 'Floating Rune Shard', text: "Reality fractures here. The shard you are reading is simultaneously seventeen versions of itself; this is the one that chose to be legible. The others contain warnings. This one chose to be encouraging instead: you are doing very well." },
       'lore-void-2': { title: 'Dimension Crystal', text: "Malgrath drew power from the Void itself — not summoned, but siphoned, like blood from a wound that does not close. The Void noticed. What reaches through the cracks is not Malgrath's magic anymore. It is older. It is curious about you." },
       'lore-void-3': { title: 'Final Warning Stone', text: "The Shattered Crown hangs beyond this threshold, in the place where Malgrath anchored himself to both worlds. Reclaim it. Not because it will fix everything — it will not — but because some things must be taken back even at great cost. You are the cost." },
+      'lore-cave-1': { title: "Adelynn's Childhood Scratching", text: 'Scratched into the cave wall near the entrance, in small uneven letters: "I found this cave when I was 7. It is mine. No one else knows. I hid my best marble behind the big purple crystal." The marble is still there.' },
+      'lore-cave-2': { title: 'Miner\'s Note', text: 'Pinned under a rock: "The crystals grow an inch every fifty years. The ones taller than a man have been here since before the kingdom. The ones taller than the kingdom have been here since before memory. Do not take them. The cave notices."' },
+      'lore-cave-3': { title: 'Crystal Resonance Log', text: '"Day 1: The crystals hum at night. Day 3: The hum has a pattern — it repeats every 40 seconds. Day 7: I figured out the melody. It is the old Sunfield lullaby. Day 8: I did not teach it to the crystals. Someone did, a very long time ago."' },
     };
     const lore = LORE[nearLore];
     if (lore) {

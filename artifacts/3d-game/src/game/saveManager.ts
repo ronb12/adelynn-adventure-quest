@@ -101,6 +101,7 @@ const AREA_SPAWNS: Record<string, THREE.Vector3> = {
   sky:     new THREE.Vector3(0, 0, 5),
   crypt:   new THREE.Vector3(0, 0, 5),
   void:    new THREE.Vector3(0, 0, 5),
+  cave:    new THREE.Vector3(0, 0, 22),
 };
 
 export function getAreaSpawn(area: string): THREE.Vector3 {
@@ -127,4 +128,5 @@ export const AREA_DISPLAY: Record<string, string> = {
   sky:     'Celestial Skylands',
   crypt:   'Shadowed Crypts',
   void:    'The Fractured Void',
+  cave:    'Crystal Caverns',
 };

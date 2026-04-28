@@ -78,6 +78,13 @@ const LORE_STONES: LoreStoneDef[] = [
     text: 'Malgrath drew power from the Void itself — not summoned, but siphoned, like blood from a wound that does not close. The Void noticed. What reaches through the cracks is not Malgrath\'s magic anymore. It is older. It is curious about you.' },
   { id: 'lore-void-3', area: 'void', pos: [2, 0, -18], title: 'Final Warning Stone',
     text: 'The Shattered Crown hangs beyond this threshold, in the place where Malgrath anchored himself to both worlds. Reclaim it. Not because it will fix everything — it will not — but because some things must be taken back even at great cost. You are the cost.' },
+  // ── Crystal Caverns ──
+  { id: 'lore-cave-1', area: 'cave', pos: [-14, 0, 8], title: "Adelynn's Childhood Scratching",
+    text: 'Scratched into the cave wall near the entrance, in small uneven letters: "I found this cave when I was 7. It is mine. No one else knows. I hid my best marble behind the big purple crystal." The marble is still there.' },
+  { id: 'lore-cave-2', area: 'cave', pos: [18, 0, -4], title: "Miner's Note",
+    text: 'Pinned under a rock: "The crystals grow an inch every fifty years. The ones taller than a man have been here since before the kingdom. The ones taller than the kingdom have been here since before memory. Do not take them. The cave notices."' },
+  { id: 'lore-cave-3', area: 'cave', pos: [4, 0, -18], title: 'Crystal Resonance Log',
+    text: '"Day 1: The crystals hum at night. Day 3: The hum has a pattern — it repeats every 40 seconds. Day 7: I figured out the melody. It is the old Sunfield lullaby. Day 8: I did not teach it to the crystals. Someone did, a very long time ago."' },
 ];
 
 // ── Lore Stone: 3D glow tablet (self-animating) ───────────────────
@@ -181,6 +188,8 @@ export const PORTALS: Record<AreaId, PortalDef[]> = {
       destination: { area: 'forest', spawnPos: new THREE.Vector3(0, 0, 26) }, color: '#44ff44' },
     { pos: [29, 0, 0], rot: [0, -Math.PI/2, 0], label: 'Ashrock Summit',
       destination: { area: 'desert', spawnPos: new THREE.Vector3(-26, 0, 0) }, color: '#ff8822' },
+    { pos: [0, 0, 29], rot: [0, Math.PI, 0], label: 'Crystal Caverns',
+      destination: { area: 'cave', spawnPos: new THREE.Vector3(0, 0, -24) }, color: '#9944ff' },
   ],
   forest: [
     { pos: [0, 0, 29], rot: [0, Math.PI, 0], label: 'Sunfield Plains',
@@ -233,6 +242,10 @@ export const PORTALS: Record<AreaId, PortalDef[]> = {
   void: [
     { pos: [0, 0, -29], rot: [0, 0, 0], label: 'Shadowed Crypts',
       destination: { area: 'crypt', spawnPos: new THREE.Vector3(0, 0, 26) }, color: '#9933cc' },
+  ],
+  cave: [
+    { pos: [0, 0, 29], rot: [0, Math.PI, 0], label: 'Return to Sunfield Plains',
+      destination: { area: 'field', spawnPos: new THREE.Vector3(0, 0, 24) }, color: '#88aaff' },
   ],
 };
 
@@ -958,6 +971,106 @@ function IceArea() {
           <meshStandardMaterial color="#eef6ff" roughness={0.1} />
         </mesh>
       ))}
+      {/* ── Ice Kingdom: Glacira's Keep ── */}
+      {/* Outer curtain wall segments (N/S/E/W arcs) */}
+      {([
+        [[ 0,  1.8, -16], [22, 3.5, 1.2], 0],
+        [[ 0,  1.8,  16], [22, 3.5, 1.2], 0],
+        [[-16, 1.8,  0],  [1.2, 3.5, 22], 0],
+        [[ 16, 1.8,  0],  [1.2, 3.5, 22], 0],
+      ] as [number,number,number][][]).map(([p, s], i) => (
+        <mesh key={`wall-${i}`} position={p as [number,number,number]} castShadow receiveShadow>
+          <boxGeometry args={s as [number,number,number]} />
+          <meshStandardMaterial color="#c8e8ff" roughness={0.1} metalness={0.4}
+            transparent opacity={0.85} />
+        </mesh>
+      ))}
+      {/* Corner towers */}
+      {([[-15,-15],[15,-15],[-15,15],[15,15]] as [number,number][]).map(([x,z], i) => (
+        <group key={`tower-${i}`} position={[x, 0, z]}>
+          {/* Tower body */}
+          <mesh castShadow position={[0, 2.5, 0]}>
+            <cylinderGeometry args={[1.8, 2.0, 5.0, 8]} />
+            <meshStandardMaterial color="#aad4f0" roughness={0.12} metalness={0.5}
+              transparent opacity={0.9} />
+          </mesh>
+          {/* Battlements ring */}
+          {[0,1,2,3,4,5,6,7].map(j => (
+            <mesh key={j} castShadow
+              position={[Math.cos(j*Math.PI/4)*1.65, 5.4, Math.sin(j*Math.PI/4)*1.65]}>
+              <boxGeometry args={[0.55, 0.8, 0.55]} />
+              <meshStandardMaterial color="#c0e4ff" roughness={0.1} metalness={0.45}
+                transparent opacity={0.9} />
+            </mesh>
+          ))}
+          {/* Tower top cone (ice spire) */}
+          <mesh castShadow position={[0, 7.0, 0]}>
+            <coneGeometry args={[1.9, 3.5, 8]} />
+            <meshStandardMaterial color="#88ccff" emissive="#44aaff"
+              emissiveIntensity={0.5} transparent opacity={0.85} metalness={0.3} roughness={0.06} />
+          </mesh>
+          <pointLight position={[0, 6, 0]} color="#88ddff" intensity={1} distance={10} decay={2} />
+        </group>
+      ))}
+      {/* Main gate arch (south side) */}
+      <group position={[0, 0, 16]}>
+        <mesh castShadow position={[-3.2, 2.0, 0]}>
+          <boxGeometry args={[1.4, 4.0, 1.4]} />
+          <meshStandardMaterial color="#b0d8f5" roughness={0.12} metalness={0.4} transparent opacity={0.9} />
+        </mesh>
+        <mesh castShadow position={[3.2, 2.0, 0]}>
+          <boxGeometry args={[1.4, 4.0, 1.4]} />
+          <meshStandardMaterial color="#b0d8f5" roughness={0.12} metalness={0.4} transparent opacity={0.9} />
+        </mesh>
+        <mesh castShadow position={[0, 4.5, 0]}>
+          <boxGeometry args={[8, 1.2, 1.4]} />
+          <meshStandardMaterial color="#b0d8f5" roughness={0.12} metalness={0.4} transparent opacity={0.9} />
+        </mesh>
+        {/* Icy portcullis bars */}
+        {[-1.4, -0.46, 0.46, 1.4].map((x, i) => (
+          <mesh key={i} position={[x, 2.0, 0]}>
+            <boxGeometry args={[0.14, 4.0, 0.14]} />
+            <meshStandardMaterial color="#88ccff" emissive="#44aaff"
+              emissiveIntensity={0.4} transparent opacity={0.7} />
+          </mesh>
+        ))}
+      </group>
+      {/* Keep donjon (central tower) */}
+      <group position={[0, 0, -4]}>
+        <mesh castShadow position={[0, 3.5, 0]}>
+          <boxGeometry args={[5, 7, 5]} />
+          <meshStandardMaterial color="#99c8e8" roughness={0.1} metalness={0.45}
+            transparent opacity={0.88} />
+        </mesh>
+        <mesh castShadow position={[0, 8.5, 0]}>
+          <coneGeometry args={[3.2, 5.5, 4]} />
+          <meshStandardMaterial color="#66aadd" emissive="#3388bb"
+            emissiveIntensity={0.4} transparent opacity={0.88} metalness={0.35} roughness={0.06} />
+        </mesh>
+        {/* Keep windows */}
+        {[[-2.51,4.5,0],[2.51,4.5,0],[0,4.5,-2.51],[0,4.5,2.51]].map(([x,y,z], i) => (
+          <mesh key={i} position={[x,y,z]}>
+            <boxGeometry args={[x!==0?0.06:0.8, 1.0, z!==0?0.06:0.8]} />
+            <meshStandardMaterial color="#cceeFF" emissive="#aaddff"
+              emissiveIntensity={1.2} transparent opacity={0.7} />
+          </mesh>
+        ))}
+        <pointLight position={[0, 5, 0]} color="#aaddff" intensity={2} distance={14} decay={2} />
+      </group>
+      {/* Frozen throne / altar in courtyard */}
+      <group position={[0, 0, -2]}>
+        <mesh castShadow position={[0, 0.6, 0]}>
+          <boxGeometry args={[1.8, 1.2, 1.4]} />
+          <meshStandardMaterial color="#99ccee" roughness={0.05} metalness={0.5}
+            transparent opacity={0.85} />
+        </mesh>
+        <mesh castShadow position={[0, 1.9, -0.5]}>
+          <boxGeometry args={[1.8, 1.4, 0.22]} />
+          <meshStandardMaterial color="#aad8ff" roughness={0.05} metalness={0.5}
+            transparent opacity={0.82} />
+        </mesh>
+        <pointLight position={[0, 2.5, 0]} color="#66ccff" intensity={1.8} distance={8} decay={2} />
+      </group>
       <LoreStonesForArea area="ice" />
       <WeaponAltarsForArea area="ice" />
       <FairyFountain pos={[-18, 0, 18]} />
@@ -1272,6 +1385,182 @@ function BossArea() {
   );
 }
 
+// ─── Crystal Caverns (cave) ───────────────────────────────────────
+function CaveArea() {
+  const bigCrystals  = useMemo(() => seededItems(22, -46, 46, 71), []);
+  const stalactites  = useMemo(() => seededItems(18, -46, 46, 72), []);
+  const boulders     = useMemo(() => seededItems(12, -44, 44, 73), []);
+  const smallShards  = useMemo(() => seededItems(28, -46, 46, 74), []);
+  const hiddenChestPositions: [number, number, number][] = [
+    [20, 0.5, -18], [-20, 0.5, -20], [0, 0.5, -26],
+  ];
+
+  return (
+    <>
+      {/* No sky — underground */}
+      <color attach="background" args={['#0a0518']} />
+      <fog attach="fog" args={['#0a0518', 18, 50]} />
+      <ambientLight intensity={0.18} color="#8855ff" />
+      <pointLight position={[0,  4, 0]}   color="#8844ff" intensity={3.5} distance={40} decay={1.5} />
+      <pointLight position={[-18, 3, 0]}  color="#5522cc" intensity={2}   distance={22} decay={2} />
+      <pointLight position={[18,  3, 0]}  color="#aa44ff" intensity={2}   distance={22} decay={2} />
+      <pointLight position={[0,   3, -20]} color="#6633dd" intensity={2.5} distance={24} decay={2} />
+
+      {/* Floor */}
+      <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
+        <planeGeometry args={[62, 62]} />
+        <meshStandardMaterial color="#1a1028" roughness={0.95} />
+      </mesh>
+      {/* Ceiling */}
+      <mesh rotation={[Math.PI/2, 0, 0]} position={[0, 8.5, 0]}>
+        <planeGeometry args={[62, 62]} />
+        <meshStandardMaterial color="#100820" roughness={1} />
+      </mesh>
+      {/* Cave walls (box frame) */}
+      {([
+        [[0, 4.2, -31], [62, 8.5, 0.6]],
+        [[0, 4.2,  31], [62, 8.5, 0.6]],
+        [[-31, 4.2, 0], [0.6, 8.5, 62]],
+        [[ 31, 4.2, 0], [0.6, 8.5, 62]],
+      ] as [number,number,number][][]).map(([p, s], i) => (
+        <mesh key={i} position={p as [number,number,number]}>
+          <boxGeometry args={s as [number,number,number]} />
+          <meshStandardMaterial color="#0e0818" roughness={1} />
+        </mesh>
+      ))}
+
+      {/* Big glowing crystal clusters */}
+      {bigCrystals.map(c => (
+        <group key={c.id} position={[c.x, 0, c.z]} rotation={[0, c.rot, 0]}>
+          {/* Main spike */}
+          <mesh castShadow position={[0, c.scale * 2.2, 0]} rotation={[0.08, 0, 0.15]}>
+            <coneGeometry args={[0.38, c.scale * 4.5, 6]} />
+            <meshStandardMaterial color="#9944ff" emissive="#7722dd"
+              emissiveIntensity={1.2} transparent opacity={0.88} metalness={0.2} roughness={0.05} />
+          </mesh>
+          {/* Side spikes */}
+          <mesh castShadow position={[0.5, c.scale * 1.3, 0.3]} rotation={[0.3, 0, -0.4]}>
+            <coneGeometry args={[0.24, c.scale * 2.8, 5]} />
+            <meshStandardMaterial color="#bb66ff" emissive="#9944cc"
+              emissiveIntensity={0.9} transparent opacity={0.82} metalness={0.2} roughness={0.05} />
+          </mesh>
+          <mesh castShadow position={[-0.4, c.scale * 1.0, -0.2]} rotation={[0.2, 0, 0.3]}>
+            <coneGeometry args={[0.18, c.scale * 2.2, 5]} />
+            <meshStandardMaterial color="#cc88ff" emissive="#aa66ee"
+              emissiveIntensity={0.8} transparent opacity={0.8} metalness={0.2} roughness={0.05} />
+          </mesh>
+          <pointLight position={[0, c.scale * 2, 0]} color="#aa44ff" intensity={1.2} distance={8} decay={2} />
+        </group>
+      ))}
+
+      {/* Stalactites hanging from ceiling */}
+      {stalactites.map(s => (
+        <group key={s.id} position={[s.x, 8.5, s.z]}>
+          <mesh position={[0, -s.scale * 1.5, 0]} rotation={[Math.PI, s.rot, 0]}>
+            <coneGeometry args={[0.22, s.scale * 3.0, 5]} />
+            <meshStandardMaterial color="#2a1848" roughness={0.88} />
+          </mesh>
+          {/* Drip crystal tip */}
+          <mesh position={[0, -s.scale * 2.9, 0]} rotation={[Math.PI, s.rot, 0]}>
+            <coneGeometry args={[0.08, 0.4, 4]} />
+            <meshStandardMaterial color="#9955dd" emissive="#7733bb" emissiveIntensity={0.6}
+              transparent opacity={0.75} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Mossy boulders on floor */}
+      {boulders.map(b => (
+        <mesh key={b.id} position={[b.x, b.scale * 0.5, b.z]}
+          scale={[b.scale, b.scale * 0.75, b.scale]} rotation={[0.2, b.rot, 0.1]} castShadow>
+          <dodecahedronGeometry args={[1, 0]} />
+          <meshStandardMaterial color="#2a1e3a" roughness={0.92} />
+        </mesh>
+      ))}
+
+      {/* Small crystal shards scattered on floor */}
+      {smallShards.map(sh => (
+        <mesh key={sh.id} position={[sh.x, sh.scale * 0.6, sh.z]}
+          rotation={[0.3, sh.rot, 0.2]} castShadow>
+          <coneGeometry args={[0.12, sh.scale * 1.2, 4]} />
+          <meshStandardMaterial color="#cc88ff" emissive="#aa55dd"
+            emissiveIntensity={0.5} transparent opacity={0.85} />
+        </mesh>
+      ))}
+
+      {/* Hidden treasure chests — tucked into crystal clusters */}
+      {hiddenChestPositions.map((pos, i) => (
+        <group key={i} position={pos}>
+          {/* Chest body */}
+          <mesh castShadow position={[0, 0.22, 0]}>
+            <boxGeometry args={[0.8, 0.44, 0.55]} />
+            <meshStandardMaterial color="#4a3510" roughness={0.82} />
+          </mesh>
+          {/* Chest lid */}
+          <mesh castShadow position={[0, 0.52, 0]}>
+            <boxGeometry args={[0.84, 0.22, 0.58]} />
+            <meshStandardMaterial color="#5a4218" roughness={0.75} />
+          </mesh>
+          {/* Gold clasp */}
+          <mesh position={[0, 0.44, 0.3]}>
+            <boxGeometry args={[0.14, 0.1, 0.06]} />
+            <meshStandardMaterial color="#d4a840" metalness={0.7} roughness={0.25} />
+          </mesh>
+          {/* Glow to indicate hidden treasure */}
+          <pointLight position={[0, 0.8, 0]} color="#ffcc44" intensity={1.2} distance={4} decay={2} />
+          {/* Sparkle ring */}
+          <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, 0.05, 0]}>
+            <ringGeometry args={[0.7, 0.85, 12]} />
+            <meshStandardMaterial color="#ffcc00" emissive="#ffaa00"
+              emissiveIntensity={1.5} transparent opacity={0.6} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Cave entrance archway (south wall opening) */}
+      <group position={[0, 0, 26]}>
+        {/* Left pillar */}
+        <mesh castShadow position={[-2.2, 3, 0]}>
+          <boxGeometry args={[1.4, 6.5, 1.2]} />
+          <meshStandardMaterial color="#1a1030" roughness={0.95} />
+        </mesh>
+        {/* Right pillar */}
+        <mesh castShadow position={[2.2, 3, 0]}>
+          <boxGeometry args={[1.4, 6.5, 1.2]} />
+          <meshStandardMaterial color="#1a1030" roughness={0.95} />
+        </mesh>
+        {/* Arch above opening */}
+        <mesh castShadow position={[0, 6.2, 0]}>
+          <boxGeometry args={[6, 1.2, 1.2]} />
+          <meshStandardMaterial color="#1a1030" roughness={0.95} />
+        </mesh>
+        {/* Rune carving on arch */}
+        <mesh position={[0, 6.2, 0.61]}>
+          <boxGeometry args={[4.5, 0.5, 0.06]} />
+          <meshStandardMaterial color="#9944ff" emissive="#7722cc"
+            emissiveIntensity={1.8} transparent opacity={0.9} />
+        </mesh>
+      </group>
+
+      {/* Childhood marble (Adelynn's) — behind big crystal cluster */}
+      <group position={[-9, 0.18, 6]}>
+        <mesh>
+          <sphereGeometry args={[0.12, 10, 8]} />
+          <meshStandardMaterial color="#44ddff" emissive="#22aadd"
+            emissiveIntensity={2} transparent opacity={0.9} metalness={0.4} roughness={0} />
+        </mesh>
+        <pointLight color="#44ccff" intensity={0.8} distance={2.5} decay={2} />
+      </group>
+
+      <TreasureChest pos={[-24, 0.5, -5]} area="cave" />
+      <LoreStonesForArea area="cave" />
+      <WeaponAltarsForArea area="cave" />
+      <FairyFountain pos={[20, 0, 20]} />
+      <Boundary />
+    </>
+  );
+}
+
 // ─── Invisible world boundary ─────────────────────────────────────
 function Boundary() {
   return (
@@ -1360,6 +1649,7 @@ export function World() {
       {currentArea === 'sky'     && <SkyArea />}
       {currentArea === 'crypt'   && <CryptArea />}
       {currentArea === 'void'    && <VoidArea />}
+      {currentArea === 'cave'    && <CaveArea />}
       <NPCManager />
     </>
   );
