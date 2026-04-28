@@ -696,8 +696,9 @@ export function Player() {
     // ── Regular sword swing ───────────────────────────────────────
     if (isSwinging.current && swordGroupRef.current && rightArmRef.current) {
       swingTime.current += delta;
-      const progress = swingTime.current / 0.3;
-      if (progress >= 1) {
+      const t = Math.min(swingTime.current / 0.3, 1);
+
+      if (t >= 1) {
         isSwinging.current = false;
         swordGroupRef.current.visible = false;
         rightArmRef.current.rotation.x = 0;
@@ -705,16 +706,36 @@ export function Player() {
         store.setSwordState(false, pos.current);
       } else {
         swordGroupRef.current.visible = true;
-        rightArmRef.current.rotation.x = -1.2;
-        rightArmRef.current.rotation.z = THREE.MathUtils.lerp(-Math.PI / 2, Math.PI / 2, progress);
+
+        // Horizontal arc from right-forward to left-forward in player-local space
+        // groupRef is at player world position and faces with player's yaw.
+        // Player faces -Z, so negative Z = in front.
+        const arc = THREE.MathUtils.lerp(0.75, -0.65, t);
+        swordGroupRef.current.position.set(
+          Math.sin(arc) * 0.85,          // x: right (+) → left (-)
+          1.30,                           // y: hand/shoulder height (body pivot 0.58 + arm 0.72)
+          -Math.cos(arc) * 0.35 - 0.60,  // z: always negative = in front
+        );
+        swordGroupRef.current.rotation.set(
+          -0.45,   // forward tilt so blade angles toward the enemy
+          -arc,    // blade faces along the sweep direction
+          0,
+        );
+
+        // Right arm reaches toward the sword
+        rightArmRef.current.rotation.x = 0.80;
+        rightArmRef.current.rotation.z = arc * 0.75;
+
         const hitPos = pos.current.clone()
           .addScaledVector(facingDir.current.clone().setY(0).normalize(), 1.4)
           .setY(0.5);
         store.setSwordState(true, hitPos);
       }
+
       if (!isSwinging.current) {
         leftArmRef.current.rotation.x = 0;
         rightArmRef.current.rotation.x = 0;
+        rightArmRef.current.rotation.z = 0;
       }
     } else if (!isSpinning.current) {
       if (!isSwinging.current) {
@@ -737,8 +758,11 @@ export function Player() {
         store.setSpinState(false, pos.current);
       } else {
         swordGroupRef.current.visible = true;
-        // Full rotation during spin
+        // Full rotation during spin — sword extends outward in front
         groupRef.current.rotation.y += (Math.PI * 2 / SPIN_DURATION) * delta;
+        // Keep sword extended forward-right during the spin
+        swordGroupRef.current.position.set(0.6, 1.30, -0.7);
+        swordGroupRef.current.rotation.set(-0.45, 0, 0);
         rightArmRef.current.rotation.x = -1.5;
         rightArmRef.current.rotation.z = 0;
         // Spin hit zone: full circle around player
@@ -766,12 +790,13 @@ export function Player() {
         <HeroArm side={-1} armRef={leftArmRef}>
           {isBlocking && <ShieldRaised />}
         </HeroArm>
-        <HeroArm side={1}  armRef={rightArmRef}>
-          <group ref={swordGroupRef} visible={false}>
-            <SwordMesh swordId={activeSword} />
-          </group>
-        </HeroArm>
+        <HeroArm side={1}  armRef={rightArmRef} />
         <HeroHead />
+      </group>
+
+      {/* Sword lives outside the arm so it swings in FRONT of the player */}
+      <group ref={swordGroupRef} visible={false}>
+        <SwordMesh swordId={activeSword} />
       </group>
     </group>
   );
