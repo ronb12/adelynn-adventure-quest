@@ -718,6 +718,7 @@ function ComboPopup() {
       const t = setTimeout(() => setVisible(false), 900);
       return () => clearTimeout(t);
     }
+    return undefined;
   }, [comboCount]);
 
   if (!visible || comboCount < 3 || comboTimer <= 0) return null;

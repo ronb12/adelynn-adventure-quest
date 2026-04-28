@@ -157,8 +157,8 @@ function KnightEnemy({ palette }: { palette: { body: string; accent: string } })
         <meshStandardMaterial color={cloth} roughness={0.92} />
       </mesh>
       {/* Knee guards (metal discs) */}
-      <mesh castShadow position={[-0.17, 0.55, 0.09]}>
-        <cylinderGeometry args={[0.115, 0.115, 0.07, 12]} rotation={[Math.PI / 2, 0, 0]} />
+      <mesh castShadow position={[-0.17, 0.55, 0.09]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.115, 0.115, 0.07, 12]} />
         <meshStandardMaterial color={bronze} metalness={0.72} roughness={0.28} />
       </mesh>
       <mesh castShadow position={[0.17, 0.55, 0.09]}>
@@ -264,8 +264,8 @@ function KnightEnemy({ palette }: { palette: { body: string; accent: string } })
       </mesh>
 
       {/* ── SHIELD (left arm, round buckler) ── */}
-      <mesh castShadow position={[-0.62, 0.88, 0.22]} rotation={[0, -0.4, 0]}>
-        <cylinderGeometry args={[0.28, 0.28, 0.05, 16]} rotation={[Math.PI / 2, 0, 0]} />
+      <mesh castShadow position={[-0.62, 0.88, 0.22]} rotation={[Math.PI / 2, -0.4, 0]}>
+        <cylinderGeometry args={[0.28, 0.28, 0.05, 16]} />
         <meshStandardMaterial color={armor} metalness={0.65} roughness={0.32} />
       </mesh>
       {/* Shield boss (centre stud) */}
@@ -475,8 +475,8 @@ function EmberScorpionEnemy({ palette }: { palette: { body: string; accent: stri
       {/* Pincers */}
       {([-1, 1] as number[]).map(side => (
         <group key={side} position={[side * 0.5, 0.28, 0.54]} rotation={[0, side * -0.4, 0]}>
-          <mesh castShadow position={[0, 0, 0.18]}>
-            <cylinderGeometry args={[0.055, 0.08, 0.38, 8]} rotation={[Math.PI/2, 0, 0]} />
+          <mesh castShadow position={[0, 0, 0.18]} rotation={[Math.PI/2, 0, 0]}>
+            <cylinderGeometry args={[0.055, 0.08, 0.38, 8]} />
             <meshStandardMaterial color={palette.body} roughness={0.5} metalness={0.3} />
           </mesh>
           <mesh castShadow position={[side * 0.08, 0.06, 0.38]}>
@@ -749,7 +749,6 @@ function ThornspitterEnemy({ palette }: { palette: { body: string; accent: strin
       </mesh>
       {/* Leaf arms */}
       <mesh castShadow position={[-0.52, 0.95, 0]} rotation={[0, 0, 0.5]}>
-        <ellipsoidGeometry />
         <boxGeometry args={[0.06, 0.55, 0.28]} />
         <meshStandardMaterial color={palette.body} roughness={0.8} />
       </mesh>
