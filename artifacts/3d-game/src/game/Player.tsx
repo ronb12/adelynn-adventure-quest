@@ -7,7 +7,14 @@ import { useGameStore, SWORD_DEFS, SWORD_CHESTS, SwordId } from './store';
 import { sfxSword, sfxArrow, sfxBomb, sfxBoomerang } from './AudioManager';
 import { mobileInput } from './mobileControls';
 
-const SPEED = 5;
+const SPEED      = 5;
+const RUN_SPEED  = 9.0;   // sprint speed
+const STAMINA_MAX    = 4.0;  // seconds of full sprint
+const STAMINA_DRAIN  = 1.0;  // per second while running
+const STAMINA_REGEN  = 0.55; // per second while not running
+
+// Exported so HUD can poll without subscribing to the store
+export const playerStamina = { current: STAMINA_MAX, max: STAMINA_MAX, isRunning: false };
 
 // Main shard/armor chests
 const MAIN_CHEST_POSITIONS: Record<string, THREE.Vector3> = {
@@ -487,6 +494,7 @@ export function Player() {
   const prevInteract  = useRef(false);
   const prevSwordCycle = useRef(false);
   const wandCooldown  = useRef(0);
+  const stamina       = useRef(STAMINA_MAX);
 
   // Track armor level without re-renders
   useGameStore.subscribe((s) => { armorLevel.current = s.armorLevel; });
@@ -517,6 +525,7 @@ export function Player() {
     const boomerang  = kb.boomerang;
     const shield     = kb.shield     || mobileInput.shield;
     const swordCycle = kb.swordCycle || mobileInput.swordCycle;
+    const runHeld    = kb.run || mobileInput.run;
     // Clear mobile impulse flags after reading
     mobileInput.interact   = false;
     mobileInput.nextWeapon = false;
@@ -602,7 +611,7 @@ export function Player() {
       groupRef.current.visible = true;
     }
 
-    // Movement
+    // Stamina — drain while actively sprinting, regen otherwise
     velocity.current.set(0, 0, 0);
     if (forward) velocity.current.z -= 1;
     if (back)    velocity.current.z += 1;
@@ -610,9 +619,22 @@ export function Player() {
     if (right)   velocity.current.x += 1;
 
     const moving = velocity.current.lengthSq() > 0;
+    const sprinting = runHeld && moving && stamina.current > 0 && !isSwinging.current && !isSpinning.current;
+
+    if (sprinting) {
+      stamina.current = Math.max(0, stamina.current - STAMINA_DRAIN * delta);
+    } else {
+      stamina.current = Math.min(STAMINA_MAX, stamina.current + STAMINA_REGEN * delta);
+    }
+    // Publish to shared ref so HUD can read it
+    playerStamina.current  = stamina.current;
+    playerStamina.max      = STAMINA_MAX;
+    playerStamina.isRunning = sprinting;
+
     if (moving) {
       velocity.current.normalize();
-      pos.current.addScaledVector(velocity.current, SPEED * delta);
+      const moveSpeed = sprinting ? RUN_SPEED : SPEED;
+      pos.current.addScaledVector(velocity.current, moveSpeed * delta);
       facingDir.current.copy(velocity.current);
       targetYaw.current = Math.atan2(facingDir.current.x, facingDir.current.z);
     }
@@ -666,7 +688,7 @@ export function Player() {
     }
 
     // Walk animation
-    walkTime.current += delta * (moving ? 9 : 4);
+    walkTime.current += delta * (sprinting ? 16 : moving ? 9 : 4);
     const swing = Math.sin(walkTime.current);
     const swingAbs = Math.abs(swing);
 
@@ -674,9 +696,11 @@ export function Player() {
     bodyBobRef.current.position.y = moving ? 0.58 + swingAbs * 0.05 : 0.58;
 
     // Legs swing front-to-back from the hip pivot
-    const legSwing = moving ? swing * 0.85 : 0;
+    const legSwing = moving ? swing * (sprinting ? 1.3 : 0.85) : 0;
     leftLegRef.current.rotation.x  =  legSwing;
     rightLegRef.current.rotation.x = -legSwing;
+    // Lean forward while sprinting
+    bodyBobRef.current.rotation.x = sprinting ? 0.18 : 0;
 
     // Idle: legs smoothly return to neutral
     if (!moving) {

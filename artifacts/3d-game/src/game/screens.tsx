@@ -185,10 +185,12 @@ export function PauseScreen() {
         {/* Controls cheatsheet */}
         <div className="w-full bg-black/30 rounded-lg p-3 grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-gray-400 font-mono">
           <span><span className="text-amber-400">WASD</span> — Move</span>
+          <span><span className="text-amber-400">Shift</span> — Run</span>
           <span><span className="text-amber-400">Space</span> — Attack</span>
-          <span><span className="text-amber-400">Q / Shift</span> — Weapon</span>
           <span><span className="text-amber-400">E</span> — Interact</span>
-          <span><span className="text-amber-400">B</span> — Bomb</span>
+          <span><span className="text-amber-400">Q</span> — Cycle weapon</span>
+          <span><span className="text-amber-400">Z</span> — Cycle sword</span>
+          <span><span className="text-amber-400">F</span> — Shield block</span>
           <span><span className="text-amber-400">Esc</span> — Pause</span>
         </div>
 
@@ -398,7 +400,7 @@ export function TitleScreen() {
         </Button>
 
         <p className="text-xs text-gray-500 font-mono">
-          WASD move · Space attack · Q/Shift cycle weapon · E interact · {saveMeta ? 'Enter to continue' : 'Enter/Space to start'}
+          WASD move · Shift run · Space attack · Q cycle weapon · E interact · {saveMeta ? 'Enter to continue' : 'Enter/Space to start'}
         </p>
         </div>}
       </div>

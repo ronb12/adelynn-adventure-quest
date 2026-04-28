@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useGameStore, SWORD_DEFS } from './store';
 import { WEAPONS, WeaponId } from './controls';
 import { NPC_DATA } from './npcData';
+import { playerStamina } from './Player';
 
 const WEAPON_ICONS: Record<WeaponId, string> = {
   sword:    '⚔',
@@ -67,6 +68,39 @@ function HeartRow() {
           </svg>
         );
       })}
+    </div>
+  );
+}
+
+// ── Stamina Bar (shows when not full) ────────────────────────────
+function StaminaBar() {
+  const [stam, setStam] = useState(playerStamina.current);
+  const [running, setRunning] = useState(false);
+
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setStam(playerStamina.current);
+      setRunning(playerStamina.isRunning);
+    }, 60);
+    return () => clearInterval(iv);
+  }, []);
+
+  const pct = stam / playerStamina.max;
+  if (pct >= 0.999 && !running) return null;
+
+  const color = running
+    ? (pct > 0.4 ? '#22dd88' : pct > 0.15 ? '#ffcc00' : '#ff4400')
+    : '#44cc88';
+
+  return (
+    <div className="flex items-center gap-1.5 mt-1">
+      <span className="text-xs" style={{ color }}>⚡</span>
+      <div className="flex-1 h-2 bg-gray-800/70 rounded-full overflow-hidden w-20 border border-gray-700/50">
+        <div
+          className="h-full rounded-full transition-all duration-100"
+          style={{ width: `${pct * 100}%`, background: color, boxShadow: running ? `0 0 6px ${color}` : 'none' }}
+        />
+      </div>
     </div>
   );
 }
@@ -785,10 +819,11 @@ export function HUD() {
 
       {/* Top row */}
       <div className="flex justify-between items-start gap-2">
-        {/* Left: Hearts + Heart Pieces + Armor */}
+        {/* Left: Hearts + Heart Pieces + Stamina + Armor */}
         <div className="bg-black/55 rounded-xl px-2 py-1.5 backdrop-blur-sm">
           <HeartRow />
           <HeartPieceBar />
+          <StaminaBar />
           {armorLevel > 0 && (
             <div className="text-xs text-blue-300 mt-0.5 font-bold">
               {armorColors[armorLevel]} {armorLevel === 1 ? 'Blue' : 'Red'} Tunic
@@ -921,7 +956,7 @@ export function HUD() {
         <div className="flex flex-col items-center gap-1">
           <WeaponBar />
           <div className="bg-black/55 text-white text-xs font-mono px-3 py-1 rounded-full backdrop-blur-sm">
-            WASD move · Space attack · Hold Space=spin · F shield · Q/Shift cycle weapons · Z cycle sword · E interact
+            WASD move · Shift run · Space attack · Hold Space=spin · F shield · Q cycle weapons · Z cycle sword · E interact
           </div>
         </div>
 
