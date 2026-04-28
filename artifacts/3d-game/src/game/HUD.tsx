@@ -37,7 +37,28 @@ const WEAPON_LABELS: Record<WeaponId, string> = {
   chain:    'Chain',
 };
 const AREA_NAMES: Record<string, string> = {
-  field: 'Sunfield Plains', forest: 'Whisper Woods', desert: 'Ashrock Summit', boss: "Malgrath's Lair",
+  field:   'Sunfield Plains',
+  forest:  'Whisper Woods',
+  desert:  'Ashrock Summit',
+  boss:    "Malgrath's Lair",
+  jungle:  'Verdant Ruins',
+  ice:     'Frostpeak Tundra',
+  volcano: 'Ember Depths',
+  sky:     'Celestial Skylands',
+  crypt:   'Shadowed Crypts',
+  void:    'The Fractured Void',
+};
+const AREA_SUBTITLES: Record<string, string> = {
+  field:   'Where the journey begins',
+  forest:  'The whispers grow louder',
+  desert:  'Fire and stone endure',
+  boss:    "Face your destiny",
+  jungle:  'Ancient roots run deep',
+  ice:     'The cold does not forgive',
+  volcano: 'Heat and fury await',
+  sky:     'Beyond the reach of shadows',
+  crypt:   'The dead remember everything',
+  void:    'Reality ends here',
 };
 const SHARD_INFO = [
   { area: 'field',  name: 'Shard of Dawn',  color: '#ffe060' },
@@ -704,6 +725,7 @@ function ScorePanel() {
   const comboCount   = useGameStore(s => s.comboCount);
   const comboTimer   = useGameStore(s => s.comboTimer);
   const runStartTime = useGameStore(s => s.runStartTime);
+  const eliteKills   = useGameStore(s => s.eliteKills);
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
@@ -733,6 +755,12 @@ function ScorePanel() {
           <span className="text-purple-200 font-bold text-xs">×{multiplier} COMBO</span>
         </div>
       )}
+      {eliteKills > 0 && (
+        <div className="bg-yellow-900/70 rounded-lg px-2 py-0.5 border border-yellow-400/50 backdrop-blur-sm flex items-center gap-1">
+          <span className="text-yellow-300 text-xs">★</span>
+          <span className="text-yellow-200 font-bold text-xs">{eliteKills} elite{eliteKills > 1 ? 's' : ''}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -756,17 +784,84 @@ function ComboPopup() {
 
   if (!visible || comboCount < 3 || comboTimer <= 0) return null;
   const mult = Math.min(comboCount, 5);
+  const isFire = comboCount >= 5;
   const colors = ['', '', '', '#ffcc00', '#ff8800', '#ff4400'];
+  const color = colors[mult] ?? '#ff4400';
   return (
     <div className="absolute top-28 left-1/2 -translate-x-1/2 pointer-events-none"
       style={{ zIndex: 8000, animation: 'comboIn 0.9s ease-out forwards' }}>
-      <div className="flex flex-col items-center" style={{ color: colors[mult] ?? '#ff4400' }}>
-        <span className="font-bold text-3xl drop-shadow-lg" style={{ textShadow: `0 0 20px ${colors[mult]}` }}>
-          ×{mult} COMBO!
+      {isFire && (
+        <div className="absolute inset-0 pointer-events-none overflow-visible">
+          {[...Array(8)].map((_, i) => (
+            <span key={i} className="absolute text-2xl select-none"
+              style={{
+                left: `${10 + i * 11}%`, top: '-20px',
+                animation: `firePop ${0.6 + (i % 3) * 0.2}s ${i * 0.07}s ease-out forwards`,
+                fontSize: `${14 + (i % 3) * 6}px`,
+              }}>🔥</span>
+          ))}
+        </div>
+      )}
+      <div className="flex flex-col items-center" style={{ color }}>
+        <span className="font-bold text-3xl drop-shadow-lg" style={{
+          textShadow: `0 0 20px ${color}${isFire ? ', 0 0 40px #ff4400, 0 0 60px #ff8800' : ''}`,
+        }}>
+          {isFire ? '🔥 ' : ''}×{mult} COMBO!{isFire ? ' 🔥' : ''}
         </span>
         <span className="text-sm font-bold opacity-80">{comboCount} kills</span>
+        {isFire && <span className="text-xs font-bold" style={{ color: '#ffaa00' }}>ON FIRE!</span>}
       </div>
-      <style>{`@keyframes comboIn{0%{opacity:0;transform:translateX(-50%) scale(0.5)}30%{opacity:1;transform:translateX(-50%) scale(1.2)}70%{opacity:1;transform:translateX(-50%) scale(1)}100%{opacity:0;transform:translateX(-50%) scale(0.95) translateY(-20px)}}`}</style>
+      <style>{`
+        @keyframes comboIn{0%{opacity:0;transform:translateX(-50%) scale(0.5)}30%{opacity:1;transform:translateX(-50%) scale(1.2)}70%{opacity:1;transform:translateX(-50%) scale(1)}100%{opacity:0;transform:translateX(-50%) scale(0.95) translateY(-20px)}}
+        @keyframes firePop{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-40px) scale(0.5)}}
+      `}</style>
+    </div>
+  );
+}
+
+// ── Area Entry Banner ──────────────────────────────────────────────
+function AreaEntryBanner() {
+  const currentArea = useGameStore(s => s.currentArea);
+  const [display, setDisplay] = useState<{ area: string; key: number } | null>(null);
+  const seenRef = useRef<string>('');
+
+  useEffect(() => {
+    if (currentArea && currentArea !== seenRef.current) {
+      seenRef.current = currentArea;
+      setDisplay({ area: currentArea, key: Date.now() });
+      const t = setTimeout(() => setDisplay(null), 3600);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [currentArea]);
+
+  if (!display) return null;
+  const name = AREA_NAMES[display.area] ?? display.area;
+  const sub  = AREA_SUBTITLES[display.area] ?? '';
+  const areaColors: Record<string, string> = {
+    field: '#ffe090', forest: '#88ff88', desert: '#ff9940', boss: '#ff4444',
+    jungle: '#44dd66', ice: '#88eeff', volcano: '#ff5522', sky: '#aabbff',
+    crypt: '#bb88ff', void: '#cc44ff',
+  };
+  const accent = areaColors[display.area] ?? '#ffffff';
+
+  return (
+    <div key={display.key} className="absolute left-1/2 pointer-events-none select-none"
+      style={{ top: '22%', zIndex: 9000, transform: 'translateX(-50%)',
+        animation: 'areaIn 3.6s ease-out forwards' }}>
+      <div className="flex flex-col items-center gap-1 px-8 py-4 rounded-2xl"
+        style={{ background: 'rgba(0,0,0,0.72)', border: `1px solid ${accent}44`,
+          boxShadow: `0 0 40px ${accent}33` }}>
+        <div className="text-xs font-bold tracking-[0.3em] uppercase opacity-60" style={{ color: accent }}>
+          entering
+        </div>
+        <div className="font-bold text-2xl tracking-wide" style={{ color: accent,
+          textShadow: `0 0 16px ${accent}` }}>
+          {name}
+        </div>
+        {sub && <div className="text-sm italic opacity-70 text-gray-200">{sub}</div>}
+      </div>
+      <style>{`@keyframes areaIn{0%{opacity:0;transform:translateX(-50%) scale(0.85)}12%{opacity:1;transform:translateX(-50%) scale(1.02)}25%{opacity:1;transform:translateX(-50%) scale(1)}80%{opacity:1;transform:translateX(-50%)}100%{opacity:0;transform:translateX(-50%) translateY(-10px)}}`}</style>
     </div>
   );
 }
@@ -792,6 +887,24 @@ function LorePopup() {
       'lore-desert-1': { title: 'Temple Fragment', text: 'Part of the great Embris Temple, built above the Spirit Forge where Embris first taught metalworking. The smelting chamber is buried under the summit. Embris melted iron with a song no smith has replicated since.' },
       'lore-desert-2': { title: "Stone Sentinel's Last Order", text: 'Etched at the base of the first frozen soldier: "HOLD. THE. PASS." Captain Dren\'s final command before Malgrath\'s spell swept through the garrison. They obeyed. Perfectly. Forever.' },
       'lore-desert-3': { title: "Glacira's Spring", text: "The cracked basin before you once held the purest water in Aldenmere — Glacira's gift to the desert people. The old maps call it \"The Mercy Pool.\" The people here named their daughters after her for three generations." },
+      'lore-jungle-1': { title: "Thornwick's Lost Sanctuary", text: "Before the jungle swallowed these ruins, they were called Thornwick's Sanctuary — a place where all living things could speak with one another. That voice has been silent for one hundred years. The vines that grow here are not natural." },
+      'lore-jungle-2': { title: 'Overgrown Altar', text: "This altar was carved by the first druids to honor the Spirit of the Wild. See the reliefs of wolf and bird flanking the center flame? The druids believed every creature was a letter in a message from the world. None survived long enough to read it." },
+      'lore-jungle-3': { title: "Explorer's Last Entry", text: 'Journal page, soaked but legible: "Day 12 — The ruins are far older than any map records. Day 14 — Something in the canopy watches every step. Day 15 — The vines moved last night. They were not moved by wind."' },
+      'lore-ice-1': { title: "Glacira's Northern Gate", text: "This marker once stood at the entrance to Glacira's Domain — the northernmost Spirit outpost in all Aldenmere. Glacira herself carved it from a single block of eternal ice that, according to the texts, never melted even in summer. It has a crack now." },
+      'lore-ice-2': { title: 'Frozen Warning Sign', text: "The ice here breathes. Not metaphorically — you can hear it at night, a slow rhythmic exhale from somewhere deep below. The garrison that camped here three years ago left their tents standing. They did not leave themselves." },
+      'lore-ice-3': { title: 'Ancient Ice Tablet', text: 'Carved in old Aldenmerian: "The Frost Wyrm slumbers in the seventh glacier. Do not wake it. Do not feed it. Do not stand on the ice above it and shout your name, no matter how much you think it is a good idea. It is not."' },
+      'lore-volcano-1': { title: 'Scorched Plaque', text: "These depths were once a forge city — Embris built the first of his seven flame-gates here. The forges ran without break for four centuries. When Malgrath poisoned the fire spirits, they didn't stop working. They changed what they were making." },
+      'lore-volcano-2': { title: "Embris' Second Inscription", text: '"Fire is not destruction — fire is the fastest form of change. I have forged forty crowns. They were all imperfect. The Shattered Crown was perfect. I will not forge its equal again." — Embris the Smith, final apprentice notes.' },
+      'lore-volcano-3': { title: 'Lava-Sealed Tablet', text: "The fire spirits were not created — they were summoned. There is a difference. Created things can be unmade. Summoned things were always here; you merely asked them to be visible. Malgrath asked them to be angry." },
+      'lore-sky-1': { title: "Solara's Obelisk", text: "The Skylands were raised by Solara herself during the Second War of Shadows — islands of light where her faithful could retreat beyond reach of darkness. \"The sky is my floor,\" she wrote. \"Everything above it is home.\"" },
+      'lore-sky-2': { title: 'Storm Knight Seal', text: 'The Storm Knights patrol these heights. Or patrolled — this seal is their oath-stone, now cracked through. "We hold the sky as others hold the earth. We do not fall. We do not retreat. We do not compromise with storms." They compromised.' },
+      'lore-sky-3': { title: 'Starmap Fragment', text: "Seven stars mark seven gates. Three above, three below, one between. The three above are the Spirit Sanctuaries. You have walked their floors. The one between is here. The three below — look carefully at the direction every portal faces." },
+      'lore-crypt-1': { title: 'Tomb Inscription', text: "Here lie the warriors of the First Siege of Malgrath's Tower — all four thousand of them. The crypt was meant to hold three hundred. The architect made adjustments. The stone ran out. They are stacked." },
+      'lore-crypt-2': { title: 'Bone Marker', text: "The dead do not sleep where Malgrath's shadow falls. This crypt was sealed for two centuries before Malgrath. It was re-opened from the inside six months ago. The seal shows marks from both directions. The inner marks are newer." },
+      'lore-crypt-3': { title: 'Ancient Threshold Seal', text: '"Break not this seal. The Void lies beyond, and what waits in the Void does not sleep, does not tire, and does not forgive trespass. If you are reading this, you have already broken the seal. We are sorry."' },
+      'lore-void-1': { title: 'Floating Rune Shard', text: "Reality fractures here. The shard you are reading is simultaneously seventeen versions of itself; this is the one that chose to be legible. The others contain warnings. This one chose to be encouraging instead: you are doing very well." },
+      'lore-void-2': { title: 'Dimension Crystal', text: "Malgrath drew power from the Void itself — not summoned, but siphoned, like blood from a wound that does not close. The Void noticed. What reaches through the cracks is not Malgrath's magic anymore. It is older. It is curious about you." },
+      'lore-void-3': { title: 'Final Warning Stone', text: "The Shattered Crown hangs beyond this threshold, in the place where Malgrath anchored himself to both worlds. Reclaim it. Not because it will fix everything — it will not — but because some things must be taken back even at great cost. You are the cost." },
     };
     const lore = LORE[nearLore];
     if (lore) {
@@ -847,6 +960,9 @@ export function HUD() {
 
       {/* Combo burst */}
       <ComboPopup />
+
+      {/* Area entry banner */}
+      <AreaEntryBanner />
 
       {/* Lore popup */}
       <LorePopup />

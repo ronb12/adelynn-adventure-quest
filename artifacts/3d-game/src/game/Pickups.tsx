@@ -23,6 +23,36 @@ const HEART_PIECE_POSITIONS: Record<AreaId, { id: string; pos: [number, number, 
   boss: [
     { id: 'hp-boss-1', pos: [14, 0.6, -12] },
   ],
+  jungle: [
+    { id: 'hp-jungle-1', pos: [ 18,  0.6,  16] },
+    { id: 'hp-jungle-2', pos: [-17,  0.6, -14] },
+    { id: 'hp-jungle-3', pos: [  6,  0.6,  22] },
+  ],
+  ice: [
+    { id: 'hp-ice-1', pos: [ 20,  0.6,  18] },
+    { id: 'hp-ice-2', pos: [-16,  0.6, -20] },
+    { id: 'hp-ice-3', pos: [  8,  0.6, -20] },
+  ],
+  volcano: [
+    { id: 'hp-volcano-1', pos: [ 22,  0.6,  14] },
+    { id: 'hp-volcano-2', pos: [-18,  0.6, -16] },
+    { id: 'hp-volcano-3', pos: [  4,  0.6,  20] },
+  ],
+  sky: [
+    { id: 'hp-sky-1', pos: [ 18,  0.6,  18] },
+    { id: 'hp-sky-2', pos: [-20,  0.6, -16] },
+    { id: 'hp-sky-3', pos: [  6,  0.6, -22] },
+  ],
+  crypt: [
+    { id: 'hp-crypt-1', pos: [ 16,  0.6,  20] },
+    { id: 'hp-crypt-2', pos: [-18,  0.6, -18] },
+    { id: 'hp-crypt-3', pos: [ -8,  0.6,  22] },
+  ],
+  void: [
+    { id: 'hp-void-1', pos: [ 14,  0.6,  18] },
+    { id: 'hp-void-2', pos: [-18,  0.6, -14] },
+    { id: 'hp-void-3', pos: [  4,  0.6, -20] },
+  ],
 };
 
 const RUPEE_POSITIONS: { pos: [number, number, number] }[] = [

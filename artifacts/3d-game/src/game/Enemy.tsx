@@ -31,6 +31,36 @@ const AREA_CONFIG: Record<AreaId, {
   boss: [
     { count: 5, maxHp: 4, speed: [2.2, 3.0], body: '#1a0030', accent: '#7c4dff', chaseRange: 14, meshType: 'wraith', behavior: 'ranged' },
   ],
+  jungle: [
+    { count: 5, maxHp: 5, speed: [2.2, 3.2], body: '#2a6e1a', accent: '#66ee44', chaseRange: 11, meshType: 'briarwolf', behavior: 'charge' },
+    { count: 3, maxHp: 4, speed: [1.2, 2.0], body: '#1a4a0a', accent: '#44cc22', chaseRange: 15, meshType: 'thornspitter', behavior: 'ranged' },
+    { count: 2, maxHp: 6, speed: [0.7, 1.2], body: '#3a5a1a', accent: '#88dd44', chaseRange: 7,  meshType: 'knight' },
+  ],
+  ice: [
+    { count: 5, maxHp: 5, speed: [1.5, 2.4], body: '#88ccff', accent: '#ffffff', chaseRange: 10, meshType: 'slime' },
+    { count: 3, maxHp: 4, speed: [2.2, 3.2], body: '#5588cc', accent: '#aaddff', chaseRange: 14, meshType: 'bat', behavior: 'ranged' },
+    { count: 2, maxHp: 7, speed: [0.7, 1.3], body: '#336699', accent: '#99ccff', chaseRange: 7,  meshType: 'knight' },
+  ],
+  volcano: [
+    { count: 5, maxHp: 5, speed: [2.8, 3.8], body: '#cc2200', accent: '#ff6600', chaseRange: 13, meshType: 'goblin', behavior: 'charge' },
+    { count: 3, maxHp: 5, speed: [1.4, 2.4], body: '#aa3300', accent: '#ff8800', chaseRange: 13, meshType: 'scorpion', behavior: 'ranged' },
+    { count: 2, maxHp: 8, speed: [0.8, 1.4], body: '#882200', accent: '#ff4400', chaseRange: 7,  meshType: 'knight' },
+  ],
+  sky: [
+    { count: 5, maxHp: 5, speed: [3.2, 4.4], body: '#2244cc', accent: '#88bbff', chaseRange: 13, meshType: 'bat', behavior: 'charge' },
+    { count: 3, maxHp: 5, speed: [1.8, 2.8], body: '#1133aa', accent: '#5599ff', chaseRange: 15, meshType: 'thornspitter', behavior: 'ranged' },
+    { count: 2, maxHp: 8, speed: [1.0, 1.8], body: '#0022aa', accent: '#3366ff', chaseRange: 7,  meshType: 'knight' },
+  ],
+  crypt: [
+    { count: 5, maxHp: 6, speed: [2.0, 3.2], body: '#c8c888', accent: '#ffff99', chaseRange: 12, meshType: 'goblin', behavior: 'charge' },
+    { count: 4, maxHp: 6, speed: [2.4, 3.6], body: '#553311', accent: '#aa6622', chaseRange: 15, meshType: 'wraith', behavior: 'ranged' },
+    { count: 2, maxHp: 10, speed: [0.7, 1.3], body: '#888866', accent: '#ccccaa', chaseRange: 6,  meshType: 'knight' },
+  ],
+  void: [
+    { count: 6, maxHp: 8, speed: [3.0, 4.5], body: '#110022', accent: '#cc00ff', chaseRange: 16, meshType: 'wraith', behavior: 'ranged' },
+    { count: 4, maxHp: 9, speed: [2.0, 3.2], body: '#220033', accent: '#8800cc', chaseRange: 10, meshType: 'knight', behavior: 'charge' },
+    { count: 3, maxHp: 6, speed: [4.0, 5.5], body: '#330044', accent: '#ff00cc', chaseRange: 14, meshType: 'bat' },
+  ],
 };
 
 // ── Visual meshes ────────────────────────────────────────────────
@@ -808,6 +838,7 @@ interface EnemyData {
   chaseRange: number;
   baseColor: THREE.Color;
   dead: boolean;
+  isElite: boolean;
   // New behavior fields
   behavior: EnemyBehavior;
   chargeTimer: number;       // cooldown between charges (when > 0, cooling down)
@@ -850,7 +881,7 @@ export function Enemies() {
   const { enemies, meshDefs } = useMemo(() => {
     const configs = AREA_CONFIG[currentArea] ?? [];
     const enemies: EnemyData[] = [];
-    const meshDefs: { meshType: EnemyMeshType; palette: { body: string; accent: string } }[] = [];
+    const meshDefs: { meshType: EnemyMeshType; palette: { body: string; accent: string }; isElite: boolean }[] = [];
     let idCounter = 0;
     configs.forEach((cfg) => {
       for (let i = 0; i < cfg.count; i++) {
@@ -862,27 +893,30 @@ export function Enemies() {
           briarwolf: '#66ff44', scorpion: '#ffcc00', wraith: '#aa00ff',
           goblin: '#88ff44', thornspitter: '#88dd00',
         };
+        const elite = seeded(n, 10) < 0.10;
+        const hp = elite ? cfg.maxHp * 2 : cfg.maxHp;
         enemies.push({
           id: n,
           pos: new THREE.Vector3(Math.cos(angle)*r, 0, Math.sin(angle)*r),
           dir: new THREE.Vector3(seeded(n,3)-0.5, 0, seeded(n,4)-0.5).normalize(),
-          hp: cfg.maxHp, maxHp: cfg.maxHp,
-          speed: cfg.speed[0] + seeded(n,5)*(cfg.speed[1]-cfg.speed[0]),
+          hp, maxHp: hp,
+          speed: (cfg.speed[0] + seeded(n,5)*(cfg.speed[1]-cfg.speed[0])) * (elite ? 1.25 : 1),
           changeDirTimer: seeded(n,6)*2,
           isHit: false, hitTimer: 0, invulnTimer: 0, stunTimer: 0, slowTimer: 0,
           wobble: seeded(n,7)*Math.PI*2,
-          chaseRange: cfg.chaseRange,
+          chaseRange: cfg.chaseRange * (elite ? 1.4 : 1),
           baseColor: new THREE.Color(cfg.body),
           dead: false,
+          isElite: elite,
           behavior: cfg.behavior ?? 'chase',
           chargeTimer: seeded(n,8)*2,
           isCharging: false,
           chargeSpeed: 6.5,
           chargeWindup: 0,
           rangedTimer: 2 + seeded(n,9)*3,
-          projColor: projColorMap[cfg.meshType],
+          projColor: elite ? '#ffcc00' : projColorMap[cfg.meshType],
         });
-        meshDefs.push({ meshType: cfg.meshType, palette: { body: cfg.body, accent: cfg.accent } });
+        meshDefs.push({ meshType: cfg.meshType, palette: { body: cfg.body, accent: cfg.accent }, isElite: elite });
       }
     });
     return { enemies, meshDefs };
@@ -1172,6 +1206,16 @@ export function Enemies() {
             {def.meshType === 'wraith'       && <VoidWraithEnemy    palette={def.palette} />}
             {def.meshType === 'goblin'       && <GoblinEnemy        palette={def.palette} />}
             {def.meshType === 'thornspitter' && <ThornspitterEnemy  palette={def.palette} />}
+            {def.isElite && (
+              <>
+                <mesh scale={[1.6, 1.6, 1.6]}>
+                  <sphereGeometry args={[0.9, 8, 6]} />
+                  <meshStandardMaterial color="#ffcc00" emissive="#ffdd00" emissiveIntensity={2.5}
+                    transparent opacity={0.18} wireframe />
+                </mesh>
+                <pointLight color="#ffcc00" intensity={2.5} distance={4} decay={2} />
+              </>
+            )}
           </group>
         ))}
       </group>
@@ -1408,8 +1452,11 @@ function applyHit(enemy: EnemyData, damage: number, sourcePos: THREE.Vector3) {
   if (enemy.hp <= 0) {
     enemy.dead = true;
     sfxDeath();
-    // Award score based on enemy difficulty
     useGameStore.getState().addKill(Math.ceil(enemy.maxHp * 50));
+    if (enemy.isElite) {
+      useGameStore.getState().addEliteKill();
+      useGameStore.getState().healPlayer(0.5);
+    }
   } else {
     sfxHit();
   }

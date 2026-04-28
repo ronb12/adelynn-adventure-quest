@@ -36,6 +36,48 @@ const LORE_STONES: LoreStoneDef[] = [
     text: 'Etched at the base of the first frozen soldier: "HOLD. THE. PASS." Captain Dren\'s final command before Malgrath\'s spell swept through the garrison. They obeyed. Perfectly. Forever.' },
   { id: 'lore-desert-3', area: 'desert', pos: [-18, 0, 14], title: "Glacira's Spring",
     text: 'The cracked basin before you once held the purest water in Aldenmere — Glacira\'s gift to the desert people. The old maps call it "The Mercy Pool." The people here named their daughters after her for three generations.' },
+  // ── Verdant Ruins ──
+  { id: 'lore-jungle-1', area: 'jungle', pos: [14, 0, -8], title: "Thornwick's Lost Sanctuary",
+    text: 'Before the jungle swallowed these ruins, they were called Thornwick\'s Sanctuary — a place where all living things could speak with one another. That voice has been silent for one hundred years. The vines that grow here are not natural.' },
+  { id: 'lore-jungle-2', area: 'jungle', pos: [-12, 0, 10], title: 'Overgrown Altar',
+    text: 'This altar was carved by the first druids to honor the Spirit of the Wild. See the reliefs of wolf and bird flanking the center flame? The druids believed every creature was a letter in a message from the world. None survived long enough to read it.' },
+  { id: 'lore-jungle-3', area: 'jungle', pos: [5, 0, 18], title: "Explorer's Last Entry",
+    text: 'Journal page, soaked but legible: "Day 12 — The ruins are far older than any map records. Day 14 — Something in the canopy watches every step. Day 15 — The vines moved last night. They were not moved by wind."' },
+  // ── Frostpeak Tundra ──
+  { id: 'lore-ice-1', area: 'ice', pos: [-15, 0, -10], title: "Glacira's Northern Gate",
+    text: 'This marker once stood at the entrance to Glacira\'s Domain — the northernmost Spirit outpost in all Aldenmere. Glacira herself carved it from a single block of eternal ice that, according to the texts, never melted even in summer. It has a crack now.' },
+  { id: 'lore-ice-2', area: 'ice', pos: [16, 0, 5], title: 'Frozen Warning Sign',
+    text: 'The ice here breathes. Not metaphorically — you can hear it at night, a slow rhythmic exhale from somewhere deep below. The garrison that camped here three years ago left their tents standing. They did not leave themselves.' },
+  { id: 'lore-ice-3', area: 'ice', pos: [0, 0, -18], title: 'Ancient Ice Tablet',
+    text: 'Carved in old Aldenmerian: "The Frost Wyrm slumbers in the seventh glacier. Do not wake it. Do not feed it. Do not stand on the ice above it and shout your name, no matter how much you think it is a good idea. It is not."' },
+  // ── Ember Depths ──
+  { id: 'lore-volcano-1', area: 'volcano', pos: [-14, 0, -12], title: 'Scorched Plaque',
+    text: 'These depths were once a forge city — Embris built the first of his seven flame-gates here. The forges ran without break for four centuries. When Malgrath poisoned the fire spirits, they didn\'t stop working. They changed what they were making.' },
+  { id: 'lore-volcano-2', area: 'volcano', pos: [18, 0, 8], title: "Embris' Second Inscription",
+    text: '"Fire is not destruction — fire is the fastest form of change. I have forged forty crowns. They were all imperfect. The Shattered Crown was perfect. I will not forge its equal again." — Embris the Smith, final apprentice notes.' },
+  { id: 'lore-volcano-3', area: 'volcano', pos: [4, 0, -20], title: 'Lava-Sealed Tablet',
+    text: 'The fire spirits were not created — they were summoned. There is a difference. Created things can be unmade. Summoned things were always here; you merely asked them to be visible. Malgrath asked them to be angry.' },
+  // ── Celestial Skylands ──
+  { id: 'lore-sky-1', area: 'sky', pos: [12, 0, -10], title: "Solara's Obelisk",
+    text: 'The Skylands were raised by Solara herself during the Second War of Shadows — islands of light where her faithful could retreat beyond reach of darkness. "The sky is my floor," she wrote. "Everything above it is home."' },
+  { id: 'lore-sky-2', area: 'sky', pos: [-16, 0, 6], title: 'Storm Knight Seal',
+    text: 'The Storm Knights patrol these heights. Or patrolled — this seal is their oath-stone, now cracked through. "We hold the sky as others hold the earth. We do not fall. We do not retreat. We do not compromise with storms." They compromised.' },
+  { id: 'lore-sky-3', area: 'sky', pos: [5, 0, 20], title: 'Starmap Fragment',
+    text: 'Seven stars mark seven gates. Three above, three below, one between. The three above are the Spirit Sanctuaries. You have walked their floors. The one between is here. The three below — look carefully at the direction every portal faces.' },
+  // ── Shadowed Crypts ──
+  { id: 'lore-crypt-1', area: 'crypt', pos: [-10, 0, -14], title: 'Tomb Inscription',
+    text: 'Here lie the warriors of the First Siege of Malgrath\'s Tower — all four thousand of them. The crypt was meant to hold three hundred. The architect made adjustments. The stone ran out. They are stacked.' },
+  { id: 'lore-crypt-2', area: 'crypt', pos: [14, 0, 8], title: 'Bone Marker',
+    text: 'The dead do not sleep where Malgrath\'s shadow falls. This crypt was sealed for two centuries before Malgrath. It was re-opened from the inside six months ago. The seal shows marks from both directions. The inner marks are newer.' },
+  { id: 'lore-crypt-3', area: 'crypt', pos: [0, 0, 20], title: 'Ancient Threshold Seal',
+    text: '"Break not this seal. The Void lies beyond, and what waits in the Void does not sleep, does not tire, and does not forgive trespass. If you are reading this, you have already broken the seal. We are sorry."' },
+  // ── The Fractured Void ──
+  { id: 'lore-void-1', area: 'void', pos: [-12, 0, -8], title: 'Floating Rune Shard',
+    text: 'Reality fractures here. The shard you are reading is simultaneously seventeen versions of itself; this is the one that chose to be legible. The others contain warnings. This one chose to be encouraging instead: you are doing very well.' },
+  { id: 'lore-void-2', area: 'void', pos: [16, 0, 4], title: 'Dimension Crystal',
+    text: 'Malgrath drew power from the Void itself — not summoned, but siphoned, like blood from a wound that does not close. The Void noticed. What reaches through the cracks is not Malgrath\'s magic anymore. It is older. It is curious about you.' },
+  { id: 'lore-void-3', area: 'void', pos: [2, 0, -18], title: 'Final Warning Stone',
+    text: 'The Shattered Crown hangs beyond this threshold, in the place where Malgrath anchored himself to both worlds. Reclaim it. Not because it will fix everything — it will not — but because some things must be taken back even at great cost. You are the cost.' },
 ];
 
 // ── Lore Stone: 3D glow tablet (self-animating) ───────────────────
@@ -143,14 +185,54 @@ export const PORTALS: Record<AreaId, PortalDef[]> = {
   forest: [
     { pos: [0, 0, 29], rot: [0, Math.PI, 0], label: 'Sunfield Plains',
       destination: { area: 'field', spawnPos: new THREE.Vector3(0, 0, -24) }, color: '#88aaff' },
+    { pos: [29, 0, 0], rot: [0, -Math.PI/2, 0], label: 'Verdant Ruins',
+      destination: { area: 'jungle', spawnPos: new THREE.Vector3(-26, 0, 0) }, color: '#22ee44' },
   ],
   desert: [
     { pos: [-29, 0, 0], rot: [0, Math.PI/2, 0], label: 'Sunfield Plains',
       destination: { area: 'field', spawnPos: new THREE.Vector3(26, 0, 0) }, color: '#88aaff' },
+    { pos: [0, 0, 29], rot: [0, Math.PI, 0], label: 'Frostpeak Tundra',
+      destination: { area: 'ice', spawnPos: new THREE.Vector3(0, 0, -26) }, color: '#88ddff' },
   ],
   boss: [
     { pos: [0, 0, 29], rot: [0, Math.PI, 0], label: 'Return to Sunfield Plains',
       destination: { area: 'field', spawnPos: new THREE.Vector3(0, 0, 20) }, color: '#88aaff' },
+  ],
+  jungle: [
+    { pos: [-29, 0, 0], rot: [0, Math.PI/2, 0], label: 'Whisper Woods',
+      destination: { area: 'forest', spawnPos: new THREE.Vector3(26, 0, 0) }, color: '#44ff44' },
+    { pos: [29, 0, 0], rot: [0, -Math.PI/2, 0], label: 'Celestial Skylands',
+      destination: { area: 'sky', spawnPos: new THREE.Vector3(-26, 0, 0) }, color: '#88aaff' },
+  ],
+  ice: [
+    { pos: [0, 0, -29], rot: [0, 0, 0], label: 'Ashrock Summit',
+      destination: { area: 'desert', spawnPos: new THREE.Vector3(0, 0, 26) }, color: '#ff8822' },
+    { pos: [0, 0, 29], rot: [0, Math.PI, 0], label: 'Ember Depths',
+      destination: { area: 'volcano', spawnPos: new THREE.Vector3(0, 0, -26) }, color: '#ff4400' },
+  ],
+  volcano: [
+    { pos: [0, 0, -29], rot: [0, 0, 0], label: 'Frostpeak Tundra',
+      destination: { area: 'ice', spawnPos: new THREE.Vector3(0, 0, 26) }, color: '#88ddff' },
+    { pos: [29, 0, 0], rot: [0, -Math.PI/2, 0], label: 'Shadowed Crypts',
+      destination: { area: 'crypt', spawnPos: new THREE.Vector3(-26, 0, 0) }, color: '#9933cc' },
+  ],
+  sky: [
+    { pos: [-29, 0, 0], rot: [0, Math.PI/2, 0], label: 'Verdant Ruins',
+      destination: { area: 'jungle', spawnPos: new THREE.Vector3(26, 0, 0) }, color: '#22ee44' },
+    { pos: [0, 0, 29], rot: [0, Math.PI, 0], label: 'Shadowed Crypts',
+      destination: { area: 'crypt', spawnPos: new THREE.Vector3(0, 0, -26) }, color: '#9933cc' },
+  ],
+  crypt: [
+    { pos: [0, 0, -29], rot: [0, 0, 0], label: 'Celestial Skylands',
+      destination: { area: 'sky', spawnPos: new THREE.Vector3(0, 0, 26) }, color: '#88aaff' },
+    { pos: [-29, 0, 0], rot: [0, Math.PI/2, 0], label: 'Ember Depths',
+      destination: { area: 'volcano', spawnPos: new THREE.Vector3(26, 0, 0) }, color: '#ff4400' },
+    { pos: [0, 0, 29], rot: [0, Math.PI, 0], label: 'The Fractured Void',
+      destination: { area: 'void', spawnPos: new THREE.Vector3(0, 0, -26) }, color: '#cc00ff' },
+  ],
+  void: [
+    { pos: [0, 0, -29], rot: [0, 0, 0], label: 'Shadowed Crypts',
+      destination: { area: 'crypt', spawnPos: new THREE.Vector3(0, 0, 26) }, color: '#9933cc' },
   ],
 };
 
@@ -160,6 +242,13 @@ const BOSS_PORTAL_DEF: PortalDef = {
   label: "Malgrath's Lair",
   destination: { area: 'boss', spawnPos: new THREE.Vector3(0, 0, 22) },
   color: '#9900ff',
+};
+// ── Boss portal in void (alternate entry, also requires 3 shards) ──
+const VOID_BOSS_PORTAL_DEF: PortalDef = {
+  pos: [29, 0, 0], rot: [0, -Math.PI/2, 0],
+  label: "Enter Malgrath's Lair",
+  destination: { area: 'boss', spawnPos: new THREE.Vector3(0, 0, 22) },
+  color: '#ff00cc',
 };
 
 function seededItems(count: number, rangeLo: number, rangeHi: number, seed: number) {
@@ -757,6 +846,363 @@ function DesertArea() {
   );
 }
 
+// ─── Verdant Ruins (jungle) ───────────────────────────────────────
+function JungleArea() {
+  const trees  = useMemo(() => seededItems(30, -50, 50, 11), []);
+  const ruins  = useMemo(() => seededItems(12, -45, 45, 12), []);
+  const vines  = useMemo(() => seededItems(20, -50, 50, 13), []);
+  return (
+    <>
+      <color attach="background" args={['#0d1f0d']} />
+      <fog attach="fog" args={['#0d1f0d', 18, 48]} />
+      <ambientLight intensity={0.35} color="#44bb44" />
+      <directionalLight position={[10, 30, 5]} intensity={0.7} color="#88ff88" castShadow
+        shadow-camera-left={-35} shadow-camera-right={35}
+        shadow-camera-top={35} shadow-camera-bottom={-35}
+        shadow-mapSize-width={2048} shadow-mapSize-height={2048} />
+      <pointLight position={[0, 8, 0]} color="#22cc44" intensity={2} distance={40} decay={1.5} />
+
+      <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
+        <planeGeometry args={[62, 62]} />
+        <meshStandardMaterial color="#1a3a0f" roughness={1} />
+      </mesh>
+
+      {trees.map(t => (
+        <group key={t.id} position={[t.x, 0, t.z]} scale={t.scale * 1.2} rotation={[0, t.rot, 0]}>
+          <mesh position={[0, 2, 0]} castShadow>
+            <cylinderGeometry args={[0.28, 0.4, 4, 7]} />
+            <meshStandardMaterial color="#3a2a10" roughness={0.9} />
+          </mesh>
+          <mesh position={[0, 5, 0]} castShadow>
+            <sphereGeometry args={[2.0, 9, 8]} />
+            <meshStandardMaterial color="#1a5a1a" roughness={0.8} />
+          </mesh>
+          <mesh position={[0.8, 3.5, 0.5]} castShadow>
+            <sphereGeometry args={[1.2, 7, 7]} />
+            <meshStandardMaterial color="#245c1e" roughness={0.85} />
+          </mesh>
+        </group>
+      ))}
+      {ruins.map(r => (
+        <group key={r.id} position={[r.x, 0, r.z]} rotation={[0, r.rot, 0]}>
+          <mesh castShadow position={[0, r.scale * 1.5, 0]}>
+            <boxGeometry args={[1.0, r.scale * 3, 1.0]} />
+            <meshStandardMaterial color="#4a5a3a" roughness={0.95} />
+          </mesh>
+          <mesh castShadow position={[0, r.scale * 3.2, 0]}>
+            <boxGeometry args={[1.3, 0.4, 1.3]} />
+            <meshStandardMaterial color="#3a4a2a" roughness={0.95} />
+          </mesh>
+        </group>
+      ))}
+      {vines.map(v => (
+        <mesh key={v.id} position={[v.x, 1.5, v.z]} castShadow rotation={[0.2, v.rot, 0]}>
+          <cylinderGeometry args={[0.06, 0.04, 3 + v.scale, 5]} />
+          <meshStandardMaterial color="#2a5a20" roughness={1} />
+        </mesh>
+      ))}
+      <LoreStonesForArea area="jungle" />
+      <WeaponAltarsForArea area="jungle" />
+      <FairyFountain pos={[18, 0, -18]} />
+      <Boundary />
+    </>
+  );
+}
+
+// ─── Frostpeak Tundra (ice) ───────────────────────────────────────
+function IceArea() {
+  const crystals = useMemo(() => seededItems(18, -48, 48, 21), []);
+  const rocks    = useMemo(() => seededItems(14, -45, 45, 22), []);
+  const drifts   = useMemo(() => seededItems(20, -50, 50, 23), []);
+  return (
+    <>
+      <Sky sunPosition={[100, 5, 50]} turbidity={8} rayleigh={0.3} />
+      <fog attach="fog" args={['#aaccee', 22, 55]} />
+      <ambientLight intensity={0.7} color="#cce8ff" />
+      <directionalLight position={[15, 30, -10]} intensity={0.9} color="#ddeeff" castShadow
+        shadow-camera-left={-35} shadow-camera-right={35}
+        shadow-camera-top={35} shadow-camera-bottom={-35}
+        shadow-mapSize-width={2048} shadow-mapSize-height={2048} />
+
+      <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
+        <planeGeometry args={[62, 62]} />
+        <meshStandardMaterial color="#ddeeff" roughness={0.2} metalness={0.1} />
+      </mesh>
+
+      {crystals.map(c => (
+        <group key={c.id} position={[c.x, 0, c.z]} rotation={[0, c.rot, 0]}>
+          <mesh castShadow position={[0, c.scale * 1.5, 0]} rotation={[0.1, 0, 0.2]}>
+            <coneGeometry args={[0.35, c.scale * 3, 5]} />
+            <meshStandardMaterial color="#88ccff" emissive="#44aaff"
+              emissiveIntensity={0.4} transparent opacity={0.85} metalness={0.3} roughness={0.1} />
+          </mesh>
+          <mesh castShadow position={[0.4, c.scale * 0.9, 0.2]} rotation={[0.2, 0, -0.3]}>
+            <coneGeometry args={[0.22, c.scale * 1.8, 5]} />
+            <meshStandardMaterial color="#aaddff" emissive="#66bbff"
+              emissiveIntensity={0.3} transparent opacity={0.8} metalness={0.3} roughness={0.1} />
+          </mesh>
+          <pointLight position={[0, c.scale * 1.5, 0]} color="#88ccff" intensity={0.6} distance={5} decay={2} />
+        </group>
+      ))}
+      {rocks.map(r => (
+        <mesh key={r.id} position={[r.x, r.scale * 0.5, r.z]} scale={[r.scale, r.scale * 0.6, r.scale]}
+          rotation={[0.2, r.rot, 0]} castShadow>
+          <dodecahedronGeometry args={[1, 0]} />
+          <meshStandardMaterial color="#99aabb" roughness={0.7} metalness={0.1} />
+        </mesh>
+      ))}
+      {drifts.map(d => (
+        <mesh key={d.id} rotation={[-Math.PI/2, 0, d.rot]} position={[d.x, -0.05, d.z]}
+          scale={[d.scale * 2, d.scale * 0.9, 1]}>
+          <circleGeometry args={[1, 10]} />
+          <meshStandardMaterial color="#eef6ff" roughness={0.1} />
+        </mesh>
+      ))}
+      <LoreStonesForArea area="ice" />
+      <WeaponAltarsForArea area="ice" />
+      <FairyFountain pos={[-18, 0, 18]} />
+      <Boundary />
+    </>
+  );
+}
+
+// ─── Ember Depths (volcano) ───────────────────────────────────────
+function VolcanoArea() {
+  const rocks    = useMemo(() => seededItems(16, -46, 46, 31), []);
+  const pillars  = useMemo(() => seededItems(10, -44, 44, 32), []);
+  const magma    = useMemo(() => seededItems(8, -42, 42, 33), []);
+  return (
+    <>
+      <color attach="background" args={['#1a0800']} />
+      <fog attach="fog" args={['#1a0800', 18, 45]} />
+      <ambientLight intensity={0.25} color="#ff4400" />
+      <directionalLight position={[0, 20, 0]} intensity={0.6} color="#ff6600" />
+      <pointLight position={[0, 1, 0]}  color="#ff3300" intensity={4} distance={35} decay={1.5} />
+      <pointLight position={[-20, 2, 0]}  color="#ff5500" intensity={2} distance={20} decay={2} />
+      <pointLight position={[20, 2, 0]}  color="#ff5500" intensity={2} distance={20} decay={2} />
+
+      <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
+        <planeGeometry args={[62, 62]} />
+        <meshStandardMaterial color="#2a0a00" roughness={0.95} />
+      </mesh>
+      {magma.map(m => (
+        <mesh key={m.id} rotation={[-Math.PI/2, 0, m.rot]} position={[m.x, -0.07, m.z]}
+          scale={[m.scale * 2.5, m.scale * 1.2, 1]}>
+          <circleGeometry args={[1, 12]} />
+          <meshStandardMaterial color="#ff4400" emissive="#ff2200" emissiveIntensity={1.5}
+            transparent opacity={0.85} />
+        </mesh>
+      ))}
+      {rocks.map(r => (
+        <mesh key={r.id} position={[r.x, r.scale * 0.6, r.z]} scale={r.scale}
+          rotation={[0.4, r.rot, 0.2]} castShadow>
+          <dodecahedronGeometry args={[1, 0]} />
+          <meshStandardMaterial color="#3a1800" roughness={0.95} />
+        </mesh>
+      ))}
+      {pillars.map(p => (
+        <group key={p.id} position={[p.x, 0, p.z]} rotation={[0, p.rot, 0]}>
+          <mesh position={[0, p.scale * 3, 0]} castShadow>
+            <cylinderGeometry args={[0.7, 1.0, p.scale * 6, 7]} />
+            <meshStandardMaterial color="#330a00" roughness={0.9} />
+          </mesh>
+          <pointLight position={[0, p.scale * 6.5, 0]} color="#ff4400"
+            intensity={1.5} distance={8} decay={2} />
+        </group>
+      ))}
+      <LoreStonesForArea area="volcano" />
+      <WeaponAltarsForArea area="volcano" />
+      <FairyFountain pos={[18, 0, 18]} />
+      <Boundary />
+    </>
+  );
+}
+
+// ─── Celestial Skylands (sky) ─────────────────────────────────────
+function SkyArea() {
+  const platforms = useMemo(() => seededItems(12, -46, 46, 41), []);
+  const pillars   = useMemo(() => seededItems(8, -44, 44, 42), []);
+  const stars     = useMemo(() => seededItems(25, -50, 50, 43), []);
+  return (
+    <>
+      <color attach="background" args={['#040818']} />
+      <fog attach="fog" args={['#040818', 25, 60]} />
+      <ambientLight intensity={0.3} color="#4466ff" />
+      <directionalLight position={[0, 30, 0]} intensity={0.5} color="#8899ff" />
+      <pointLight position={[0, 8, 0]} color="#4466ff" intensity={3} distance={50} decay={1.5} />
+      <pointLight position={[-20, 5, -15]} color="#2244cc" intensity={2} distance={25} decay={2} />
+      <pointLight position={[20, 5, 15]}  color="#2244cc" intensity={2} distance={25} decay={2} />
+
+      <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
+        <planeGeometry args={[62, 62]} />
+        <meshStandardMaterial color="#0a0a28" roughness={0.5} metalness={0.3} />
+      </mesh>
+      {/* Cloud platforms */}
+      {platforms.map(p => (
+        <group key={p.id} position={[p.x, 0, p.z]}>
+          <mesh castShadow rotation={[-Math.PI/2, 0, p.rot]}
+            scale={[p.scale * 2.5, p.scale * 1.5, 1]}>
+            <circleGeometry args={[1, 10]} />
+            <meshStandardMaterial color="#aabbff" emissive="#4455cc"
+              emissiveIntensity={0.3} transparent opacity={0.75} />
+          </mesh>
+        </group>
+      ))}
+      {pillars.map(p => (
+        <group key={p.id} position={[p.x, 0, p.z]} rotation={[0, p.rot, 0]}>
+          <mesh position={[0, p.scale * 4, 0]} castShadow>
+            <cylinderGeometry args={[0.5, 0.7, p.scale * 8, 6]} />
+            <meshStandardMaterial color="#1a1a55" roughness={0.6} metalness={0.4} />
+          </mesh>
+          <mesh position={[0, p.scale * 8.3, 0]}>
+            <sphereGeometry args={[0.6, 10, 8]} />
+            <meshStandardMaterial color="#5566ff" emissive="#4455ff" emissiveIntensity={1.5}
+              transparent opacity={0.9} />
+          </mesh>
+          <pointLight position={[0, p.scale * 8.5, 0]} color="#4466ff"
+            intensity={1.5} distance={10} decay={2} />
+        </group>
+      ))}
+      {stars.map(s => (
+        <mesh key={s.id} position={[s.x, 0.05 + s.scale * 0.3, s.z]}>
+          <octahedronGeometry args={[s.scale * 0.25, 0]} />
+          <meshStandardMaterial color="#ffffff" emissive="#aabbff"
+            emissiveIntensity={3} transparent opacity={0.8} />
+        </mesh>
+      ))}
+      <LoreStonesForArea area="sky" />
+      <WeaponAltarsForArea area="sky" />
+      <FairyFountain pos={[-18, 0, 18]} />
+      <Boundary />
+    </>
+  );
+}
+
+// ─── Shadowed Crypts (crypt) ──────────────────────────────────────
+function CryptArea() {
+  const columns = useMemo(() => seededItems(14, -46, 46, 51), []);
+  const tombs   = useMemo(() => seededItems(10, -44, 44, 52), []);
+  const bones   = useMemo(() => seededItems(20, -50, 50, 53), []);
+  return (
+    <>
+      <color attach="background" args={['#080810']} />
+      <fog attach="fog" args={['#080810', 16, 42]} />
+      <ambientLight intensity={0.12} color="#3322aa" />
+      <directionalLight position={[0, 20, 0]} intensity={0.2} color="#5544cc" />
+      <pointLight position={[0, 1, 0]} color="#442288" intensity={3} distance={40} decay={1.5} />
+      <pointLight position={[-18, 3, -18]} color="#330066" intensity={2} distance={20} decay={2} />
+      <pointLight position={[18, 3, 18]}  color="#330066" intensity={2} distance={20} decay={2} />
+
+      <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
+        <planeGeometry args={[62, 62]} />
+        <meshStandardMaterial color="#0c0c18" roughness={0.9} metalness={0.05} />
+      </mesh>
+      {columns.map((c, i) => (
+        <group key={i} position={[c.x, 0, c.z]} rotation={[0, c.rot, 0]}>
+          <mesh position={[0, c.scale * 3, 0]} castShadow>
+            <cylinderGeometry args={[0.5, 0.65, c.scale * 6, 8]} />
+            <meshStandardMaterial color="#1a1a2a" roughness={0.9} />
+          </mesh>
+          <mesh position={[0, c.scale * 6.3, 0]} castShadow>
+            <boxGeometry args={[1.4, 0.5, 1.4]} />
+            <meshStandardMaterial color="#141420" roughness={0.9} />
+          </mesh>
+        </group>
+      ))}
+      {tombs.map(t => (
+        <group key={t.id} position={[t.x, 0, t.z]} rotation={[0, t.rot, 0]}>
+          <mesh castShadow position={[0, 0.5, 0]}>
+            <boxGeometry args={[2.0, 1.0, 1.0]} />
+            <meshStandardMaterial color="#1a1a2e" roughness={0.9} />
+          </mesh>
+          <mesh castShadow position={[0, 1.15, 0]}>
+            <boxGeometry args={[2.2, 0.3, 1.2]} />
+            <meshStandardMaterial color="#242438" roughness={0.9} />
+          </mesh>
+          <mesh position={[0, 0.52, 0.52]} castShadow>
+            <boxGeometry args={[0.5, 0.5, 0.06]} />
+            <meshStandardMaterial color="#442288" emissive="#3311aa" emissiveIntensity={0.8}
+              transparent opacity={0.7} />
+          </mesh>
+          <pointLight position={[0, 0.8, 0]} color="#442288" intensity={0.8} distance={4} decay={2} />
+        </group>
+      ))}
+      {bones.map(b => (
+        <mesh key={b.id} position={[b.x, 0.08, b.z]} rotation={[0, b.rot, 0]} scale={b.scale * 0.5}>
+          <capsuleGeometry args={[0.08, 0.4, 4, 8]} />
+          <meshStandardMaterial color="#ccccaa" roughness={0.9} />
+        </mesh>
+      ))}
+      <LoreStonesForArea area="crypt" />
+      <WeaponAltarsForArea area="crypt" />
+      <FairyFountain pos={[18, 0, -18]} />
+      <Boundary />
+    </>
+  );
+}
+
+// ─── The Fractured Void (void) ────────────────────────────────────
+function VoidArea() {
+  const shards   = useMemo(() => seededItems(20, -48, 48, 61), []);
+  const pillars  = useMemo(() => seededItems(8,  -44, 44, 62), []);
+  const rifts    = useMemo(() => seededItems(12, -46, 46, 63), []);
+  return (
+    <>
+      <color attach="background" args={['#020008']} />
+      <fog attach="fog" args={['#020008', 14, 38]} />
+      <ambientLight intensity={0.1} color="#cc00ff" />
+      <directionalLight position={[0, 20, 0]} intensity={0.2} color="#aa00ff" />
+      <pointLight position={[0, 1, 0]} color="#8800cc" intensity={4} distance={45} decay={1.5} />
+      <pointLight position={[-22, 3, 0]} color="#cc00ff" intensity={2.5} distance={22} decay={2} />
+      <pointLight position={[22, 3, 0]}  color="#ff00cc" intensity={2.5} distance={22} decay={2} />
+      <pointLight position={[0, 3, -22]} color="#6600ff" intensity={2} distance={20} decay={2} />
+
+      <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
+        <planeGeometry args={[62, 62]} />
+        <meshStandardMaterial color="#060010" roughness={0.5} metalness={0.5} />
+      </mesh>
+      {/* Void cracks in floor */}
+      {rifts.map(r => (
+        <mesh key={r.id} rotation={[-Math.PI/2, 0, r.rot]} position={[r.x, -0.07, r.z]}>
+          <planeGeometry args={[r.scale * 0.5, r.scale * 4]} />
+          <meshStandardMaterial color="#cc00ff" emissive="#8800ff" emissiveIntensity={2.5}
+            transparent opacity={0.7} />
+        </mesh>
+      ))}
+      {shards.map(s => (
+        <group key={s.id} position={[s.x, 0, s.z]} rotation={[0, s.rot, 0]}>
+          <mesh castShadow position={[0, s.scale * 1.8, 0]} rotation={[0.3, 0, 0.4]}>
+            <octahedronGeometry args={[s.scale * 0.8, 0]} />
+            <meshStandardMaterial color="#220033" emissive="#cc00ff" emissiveIntensity={1.5}
+              transparent opacity={0.7} metalness={0.8} roughness={0.1} />
+          </mesh>
+          <pointLight position={[0, s.scale * 1.8, 0]} color="#cc00ff"
+            intensity={0.8} distance={5} decay={2} />
+        </group>
+      ))}
+      {pillars.map(p => (
+        <group key={p.id} position={[p.x, 0, p.z]} rotation={[0, p.rot, 0]}>
+          <mesh castShadow position={[0, p.scale * 4, 0]}>
+            <cylinderGeometry args={[0.4, 0.6, p.scale * 8, 6]} />
+            <meshStandardMaterial color="#110022" roughness={0.7} metalness={0.5} />
+          </mesh>
+          <mesh position={[0, p.scale * 8.5, 0]}>
+            <sphereGeometry args={[0.7, 10, 8]} />
+            <meshStandardMaterial color="#220044" emissive="#cc00ff" emissiveIntensity={3}
+              transparent opacity={0.85} />
+          </mesh>
+          <pointLight position={[0, p.scale * 8.8, 0]} color="#cc00ff"
+            intensity={2} distance={12} decay={2} />
+        </group>
+      ))}
+      <LoreStonesForArea area="void" />
+      <WeaponAltarsForArea area="void" />
+      <FairyFountain pos={[-18, 0, -18]} />
+      <Boundary />
+    </>
+  );
+}
+
 // ─── Boss Lair area ───────────────────────────────────────────────
 function BossArea() {
   const columns = useMemo(() => {
@@ -864,6 +1310,9 @@ export function World() {
   if (currentArea === 'field' && shardsCollected >= 3) {
     allPortals.push(BOSS_PORTAL_DEF);
   }
+  if (currentArea === 'void' && shardsCollected >= 3) {
+    allPortals.push(VOID_BOSS_PORTAL_DEF);
+  }
 
   useFrame((_, delta) => {
     const { playerPosition, gameState } = useGameStore.getState();
@@ -901,10 +1350,16 @@ export function World() {
         <Portal key={i} def={def} portalTime={portalTimeRef.current} />
       ))}
 
-      {currentArea === 'field'  && <FieldArea />}
-      {currentArea === 'forest' && <ForestArea />}
-      {currentArea === 'desert' && <DesertArea />}
-      {currentArea === 'boss'   && <BossArea />}
+      {currentArea === 'field'   && <FieldArea />}
+      {currentArea === 'forest'  && <ForestArea />}
+      {currentArea === 'desert'  && <DesertArea />}
+      {currentArea === 'boss'    && <BossArea />}
+      {currentArea === 'jungle'  && <JungleArea />}
+      {currentArea === 'ice'     && <IceArea />}
+      {currentArea === 'volcano' && <VolcanoArea />}
+      {currentArea === 'sky'     && <SkyArea />}
+      {currentArea === 'crypt'   && <CryptArea />}
+      {currentArea === 'void'    && <VoidArea />}
       <NPCManager />
     </>
   );

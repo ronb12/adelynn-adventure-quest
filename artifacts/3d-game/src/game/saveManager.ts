@@ -91,10 +91,16 @@ export function deleteSave(): void {
 }
 
 const AREA_SPAWNS: Record<string, THREE.Vector3> = {
-  field:  new THREE.Vector3(0, 0, 5),
-  forest: new THREE.Vector3(0, 0, 5),
-  desert: new THREE.Vector3(0, 0, 5),
-  boss:   new THREE.Vector3(0, 0, 8),
+  field:   new THREE.Vector3(0, 0, 5),
+  forest:  new THREE.Vector3(0, 0, 5),
+  desert:  new THREE.Vector3(0, 0, 5),
+  boss:    new THREE.Vector3(0, 0, 8),
+  jungle:  new THREE.Vector3(0, 0, 5),
+  ice:     new THREE.Vector3(0, 0, 5),
+  volcano: new THREE.Vector3(0, 0, 5),
+  sky:     new THREE.Vector3(0, 0, 5),
+  crypt:   new THREE.Vector3(0, 0, 5),
+  void:    new THREE.Vector3(0, 0, 5),
 };
 
 export function getAreaSpawn(area: string): THREE.Vector3 {
@@ -111,8 +117,14 @@ export function formatSaveTime(timestamp: number): string {
 }
 
 export const AREA_DISPLAY: Record<string, string> = {
-  field:  'Sunfield Plains',
-  forest: 'Whisper Woods',
-  desert: 'Ashrock Summit',
-  boss:   "Malgrath's Lair",
+  field:   'Sunfield Plains',
+  forest:  'Whisper Woods',
+  desert:  'Ashrock Summit',
+  boss:    "Malgrath's Lair",
+  jungle:  'Verdant Ruins',
+  ice:     'Frostpeak Tundra',
+  volcano: 'Ember Depths',
+  sky:     'Celestial Skylands',
+  crypt:   'Shadowed Crypts',
+  void:    'The Fractured Void',
 };

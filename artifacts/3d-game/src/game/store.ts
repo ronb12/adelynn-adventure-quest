@@ -5,7 +5,7 @@ import { NPC_DATA } from './npcData';
 import { saveGame, loadGame, deleteSave, getAreaSpawn, SaveData } from './saveManager';
 
 export type GameState = 'title' | 'playing' | 'paused' | 'gameover' | 'victory';
-export type AreaId = 'field' | 'forest' | 'desert' | 'boss';
+export type AreaId = 'field' | 'forest' | 'desert' | 'boss' | 'jungle' | 'ice' | 'volcano' | 'sky' | 'crypt' | 'void';
 
 export type SwordId =
   | 'crystal' | 'flame' | 'thunder' | 'frost' | 'shadow'
@@ -138,6 +138,8 @@ interface GameStore {
   showShop: boolean;
   nearShop: boolean;
   nearFountain: boolean;
+  areasVisited: AreaId[];
+  eliteKills: number;
 
   setGameState: (state: GameState) => void;
   togglePause: () => void;
@@ -207,6 +209,7 @@ interface GameStore {
   loreRead: string[];
   setNearLore: (id: string | null) => void;
   markLoreRead: (id: string) => void;
+  addEliteKill: () => void;
   triggerSave: () => void;
   performSave: () => void;
   loadFromSave: () => boolean;
@@ -260,6 +263,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   showShop: false,
   nearShop: false,
   nearFountain: false,
+  areasVisited: ['field' as AreaId],
+  eliteKills: 0,
   lastSaveTime: 0,
   score: 0,
   comboCount: 0,
@@ -387,7 +392,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   fireWeapon: (w) => set({ pendingWeaponFire: w }),
   clearPendingWeaponFire: () => set({ pendingWeaponFire: null }),
-  triggerAreaTransition: (t) => set({ currentArea: t.area, pendingTransition: t }),
+  triggerAreaTransition: (t) => set((s) => ({
+    currentArea: t.area,
+    pendingTransition: t,
+    areasVisited: s.areasVisited.includes(t.area) ? s.areasVisited : [...s.areasVisited, t.area],
+  })),
   setNearChest: (v) => set({ nearChest: v }),
   setNearWeaponPickup: (id) => set({ nearWeaponPickup: id }),
 
@@ -552,6 +561,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   }),
   setNearLore: (id) => set({ nearLore: id }),
   markLoreRead: (id) => set((s) => ({ loreRead: [...s.loreRead.filter(x => x !== id), id] })),
+  addEliteKill: () => set((s) => ({
+    eliteKills: s.eliteKills + 1,
+    score: s.score + 500,
+    comboCount: s.comboCount + 3,
+    comboTimer: 5.0,
+  })),
 
   resetGame: () => set({
     gameState: 'playing',
@@ -605,6 +620,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     runStartTime: Date.now(),
     nearLore: null,
     loreRead: [],
+    areasVisited: ['field' as AreaId],
+    eliteKills: 0,
   }),
 
   triggerSave: () => set({ lastSaveTime: Date.now() }),
@@ -700,6 +717,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       runStartTime: Date.now(),
       nearLore: null,
       loreRead: [],
+      areasVisited: [area],
+      eliteKills: 0,
     });
     return true;
   },
