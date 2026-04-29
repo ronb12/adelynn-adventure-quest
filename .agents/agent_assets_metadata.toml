@@ -6,6 +6,12 @@ uri = "file://artifacts/3d-game/public/title-bg.png"
 type = "image"
 title = "dark fantasy title background"
 
+[[generated]]
+id = "s75ecEytSp6NgVR0xU_Xc"
+uri = "file://artifacts/mobile-game/assets/images/icon.png"
+type = "image"
+title = "quest mobile game icon"
+
 [[outputs]]
 id = "3QdkcFlxl9Q8Sj6hpSsM9"
 uri = "file://AdelynnAdventureQuest-iOS.zip"

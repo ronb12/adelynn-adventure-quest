@@ -1,0 +1,30 @@
+const colors = {
+  light: {
+    text: "#e8e0d4",
+    tint: "#8b5cf6",
+    background: "#0a0a0f",
+    foreground: "#e8e0d4",
+    card: "#1a1a2e",
+    cardForeground: "#e8e0d4",
+    primary: "#8b5cf6",
+    primaryForeground: "#ffffff",
+    secondary: "#2d2b3d",
+    secondaryForeground: "#c4b8e0",
+    muted: "#1e1c2e",
+    mutedForeground: "#7a7090",
+    accent: "#f59e0b",
+    accentForeground: "#0a0a0f",
+    destructive: "#ef4444",
+    destructiveForeground: "#ffffff",
+    border: "#2d2b3d",
+    input: "#2d2b3d",
+    heart: "#e74c3c",
+    rupee: "#f59e0b",
+    shard: "#60d8ff",
+    comboGold: "#ffd700",
+    hudBg: "rgba(0,0,0,0.55)",
+  },
+  radius: 10,
+};
+
+export default colors;
