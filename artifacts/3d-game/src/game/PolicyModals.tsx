@@ -2,8 +2,7 @@ import { useState } from 'react';
 
 const GAME_NAME = "Adelynn's Adventure Quest";
 const LAST_UPDATED = "April 29, 2026";
-const CONTACT_EMAIL = "support@adelynnsquest.com";
-const DEVELOPER_EMAIL = "ronellbradley@bradleyvs.com";
+const CONTACT_EMAIL = "ronellbradley@bradleyvs.com";
 
 function ModalShell({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
@@ -108,7 +107,7 @@ export function TermsOfServiceModal({ onClose }: { onClose: () => void }) {
       </Section>
 
       <Section title="9. Contact">
-        <p>For questions about these Terms, contact us at <span className="text-amber-400">{CONTACT_EMAIL}</span> or reach the developer directly at <span className="text-amber-400">{DEVELOPER_EMAIL}</span>.</p>
+        <p>For questions about these Terms, contact us at <span className="text-amber-400">{CONTACT_EMAIL}</span>.</p>
       </Section>
     </ModalShell>
   );
@@ -170,7 +169,7 @@ export function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
 
       <Section title="6. Your Rights">
         <p>Depending on your location, you may have rights to access, correct, or delete data we hold
-        about you. To exercise these rights, contact us at <span className="text-amber-400">{CONTACT_EMAIL}</span> or <span className="text-amber-400">{DEVELOPER_EMAIL}</span>.</p>
+        about you. To exercise these rights, contact us at <span className="text-amber-400">{CONTACT_EMAIL}</span>.</p>
       </Section>
 
       <Section title="7. Security">
@@ -184,7 +183,7 @@ export function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
       </Section>
 
       <Section title="9. Contact">
-        <p>For privacy-related questions, contact us at <span className="text-amber-400">{CONTACT_EMAIL}</span> or reach the developer directly at <span className="text-amber-400">{DEVELOPER_EMAIL}</span>.</p>
+        <p>For privacy-related questions, contact us at <span className="text-amber-400">{CONTACT_EMAIL}</span>.</p>
       </Section>
     </ModalShell>
   );
