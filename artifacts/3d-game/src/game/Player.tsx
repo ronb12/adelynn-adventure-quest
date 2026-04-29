@@ -4,11 +4,13 @@ import { useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { Controls } from './controls';
 import { useGameStore, SWORD_DEFS, SWORD_CHESTS, WEAPON_PICKUPS, SwordId, SleepPhase } from './store';
-import { sfxSword, sfxArrow, sfxBomb, sfxBoomerang } from './AudioManager';
+import { sfxSword, sfxArrow, sfxBomb, sfxBoomerang, sfxJump } from './AudioManager';
 import { mobileInput } from './mobileControls';
 
 const SPEED      = 5;
 const RUN_SPEED  = 9.0;   // sprint speed
+const GRAVITY    = 22;
+const JUMP_FORCE = 9.2;
 const STAMINA_MAX    = 4.0;  // seconds of full sprint
 const STAMINA_DRAIN  = 1.0;  // per second while running
 const STAMINA_REGEN  = 0.55; // per second while not running
@@ -530,6 +532,10 @@ export function Player() {
   const prevBoom      = useRef(false);
   const prevInteract  = useRef(false);
   const prevSwordCycle = useRef(false);
+  const prevJump      = useRef(false);
+  const velY          = useRef(0);
+  const fairyGroupRef = useRef<THREE.Group>(null!);
+  const fairyAngle    = useRef(0);
   const wandCooldown  = useRef(0);
   const stamina       = useRef(STAMINA_MAX);
   const sleepTimer    = useRef(0);
@@ -565,6 +571,7 @@ export function Player() {
     const shield     = kb.shield     || mobileInput.shield;
     const swordCycle = kb.swordCycle || mobileInput.swordCycle;
     const runHeld    = kb.run || mobileInput.run;
+    const jump       = kb.jump || mobileInput.jump;
     // Clear mobile impulse flags after reading
     mobileInput.interact   = false;
     mobileInput.nextWeapon = false;
@@ -661,6 +668,19 @@ export function Player() {
 
     // Shield block
     store.setBlocking(shield);
+
+    // ── Jump + gravity ─────────────────────────────────────────────
+    const isGrounded = pos.current.y <= 0.002;
+    if (jump && !prevJump.current && isGrounded) {
+      velY.current = JUMP_FORCE;
+      sfxJump();
+    }
+    prevJump.current = jump;
+    if (!isGrounded || velY.current > 0) {
+      velY.current -= GRAVITY * delta;
+      pos.current.y = Math.max(0, pos.current.y + velY.current * delta);
+    }
+    if (pos.current.y <= 0) velY.current = Math.max(0, velY.current);
 
     // Weapon cycling (Q/Shift = cycle sub-weapon, Z = cycle sword)
     if (nextWeapon && !prevNext.current) store.cycleWeapon(1);
@@ -781,6 +801,16 @@ export function Player() {
 
     store.setPlayerPosition(pos.current.clone());
     store.setPlayerDirection(facingDir.current.clone());
+
+    // Fairy companion orbit
+    if (fairyGroupRef.current) {
+      fairyAngle.current += delta * 2.2;
+      const fr = 1.1;
+      const fx = Math.cos(fairyAngle.current) * fr;
+      const fz = Math.sin(fairyAngle.current) * fr;
+      const fy = 1.35 + Math.sin(fairyAngle.current * 1.7) * 0.22;
+      fairyGroupRef.current.position.set(fx, fy, fz);
+    }
 
     // Multi-chest proximity check (shard/armor + sword upgrade chests)
     const chestsOpened = store.chestsOpened;
@@ -966,6 +996,22 @@ export function Player() {
       {/* Sword lives outside the arm so it swings in FRONT of the player */}
       <group ref={swordGroupRef} visible={false}>
         <SwordMesh swordId={activeSword} />
+      </group>
+
+      {/* Fairy companion — orbits around the player */}
+      <group ref={fairyGroupRef}>
+        <mesh>
+          <sphereGeometry args={[0.07, 8, 6]} />
+          <meshStandardMaterial color="#ccffdd" emissive="#66ffaa" emissiveIntensity={5}
+            transparent opacity={0.92} />
+        </mesh>
+        {/* Glow halo */}
+        <mesh>
+          <sphereGeometry args={[0.13, 8, 6]} />
+          <meshStandardMaterial color="#aaffcc" emissive="#44ffaa" emissiveIntensity={2}
+            transparent opacity={0.22} />
+        </mesh>
+        <pointLight color="#66ffaa" intensity={2.2} distance={2.8} decay={2} />
       </group>
     </group>
   );

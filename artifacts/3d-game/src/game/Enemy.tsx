@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useGameStore, AreaId, SWORD_DEFS } from './store';
 import { hitZones } from './hitZones';
-import { sfxHit, sfxDeath } from './AudioManager';
+import { sfxHit, sfxDeath, sfxStatusEffect } from './AudioManager';
 
 // ── Area config ──────────────────────────────────────────────────
 type EnemyMeshType = 'slime' | 'bat' | 'knight' | 'briarwolf' | 'scorpion' | 'wraith' | 'goblin' | 'thornspitter';
@@ -844,6 +844,7 @@ interface EnemyData {
   chaseRange: number;
   baseColor: THREE.Color;
   dead: boolean;
+  deadAnimTimer: number;     // death fade/shrink animation countdown (0.7s)
   isElite: boolean;
   // New behavior fields
   behavior: EnemyBehavior;
@@ -853,6 +854,11 @@ interface EnemyData {
   chargeWindup: number;      // time spent charging (auto-ends after 1.8s)
   rangedTimer: number;       // time until next ranged shot
   projColor: string;         // projectile color for this enemy type
+  // Status effects
+  burnTimer: number;         // fire DoT remaining duration
+  burnTickTimer: number;     // next fire tick countdown
+  poisonTimer: number;       // poison DoT remaining duration
+  poisonTickTimer: number;   // next poison tick countdown
 }
 
 // Boss shadow bolt data
@@ -913,6 +919,7 @@ export function Enemies() {
           chaseRange: cfg.chaseRange * (elite ? 1.4 : 1),
           baseColor: new THREE.Color(cfg.body),
           dead: false,
+          deadAnimTimer: 0,
           isElite: elite,
           behavior: cfg.behavior ?? 'chase',
           chargeTimer: seeded(n,8)*2,
@@ -921,6 +928,8 @@ export function Enemies() {
           chargeWindup: 0,
           rangedTimer: 2 + seeded(n,9)*3,
           projColor: elite ? '#ffcc00' : projColorMap[cfg.meshType],
+          burnTimer: 0, burnTickTimer: 0,
+          poisonTimer: 0, poisonTickTimer: 0,
         });
         meshDefs.push({ meshType: cfg.meshType, palette: { body: cfg.body, accent: cfg.accent }, isElite: elite });
       }
@@ -964,7 +973,24 @@ export function Enemies() {
     enemiesRef.current.forEach((enemy, index) => {
       const child = children[index] as THREE.Group | undefined;
       if (!child) return;
-      if (enemy.dead) { child.visible = false; return; }
+      // Death animation — shrink + fade over 0.7s before hiding
+      if (enemy.dead) {
+        if (enemy.deadAnimTimer > 0) {
+          enemy.deadAnimTimer -= delta;
+          const p = Math.max(0, enemy.deadAnimTimer / 0.7);
+          child.visible = true;
+          child.scale.setScalar(p + Math.abs(Math.sin(t * 14)) * p * 0.08);
+          const dm = child.children[0] as THREE.Mesh | undefined;
+          if (dm?.material) {
+            const mat = dm.material as THREE.MeshStandardMaterial;
+            mat.transparent = true; mat.opacity = p;
+            mat.emissive.setHex(0xff8800); mat.emissiveIntensity = 2.5;
+          }
+        } else {
+          child.visible = false;
+        }
+        return;
+      }
 
       if (enemy.stunTimer > 0) {
         enemy.stunTimer -= delta;
@@ -1080,6 +1106,38 @@ export function Enemies() {
       if (enemy.hitTimer > 0) { enemy.hitTimer -= delta; if (enemy.hitTimer <= 0) enemy.isHit = false; }
       if (enemy.invulnTimer > 0) enemy.invulnTimer -= delta;
 
+      // ── Status effect ticks ──────────────────────────────────────
+      if (enemy.burnTimer > 0) {
+        enemy.burnTimer -= delta;
+        enemy.burnTickTimer -= delta;
+        if (enemy.burnTickTimer <= 0) {
+          enemy.burnTickTimer = 0.45;
+          enemy.hp -= 0.45;
+          if (enemy.hp <= 0) {
+            enemy.dead = true;
+            enemy.deadAnimTimer = 0.7;
+            sfxDeath();
+            useGameStore.getState().addKill(Math.ceil(enemy.maxHp * 50));
+            if (enemy.isElite) { useGameStore.getState().addEliteKill(); useGameStore.getState().healPlayer(0.5); }
+          }
+        }
+      }
+      if (enemy.poisonTimer > 0) {
+        enemy.poisonTimer -= delta;
+        enemy.poisonTickTimer -= delta;
+        if (enemy.poisonTickTimer <= 0) {
+          enemy.poisonTickTimer = 0.7;
+          enemy.hp -= 0.3;
+          if (enemy.hp <= 0) {
+            enemy.dead = true;
+            enemy.deadAnimTimer = 0.7;
+            sfxDeath();
+            useGameStore.getState().addKill(Math.ceil(enemy.maxHp * 50));
+            if (enemy.isElite) { useGameStore.getState().addEliteKill(); useGameStore.getState().healPlayer(0.5); }
+          }
+        }
+      }
+
       const hoverY = currentArea === 'forest'
         ? 0.35 + Math.abs(Math.sin(t*3+enemy.wobble))*0.35
         : currentArea === 'boss'
@@ -1094,22 +1152,54 @@ export function Enemies() {
       const bodyMesh = child.children[0] as THREE.Mesh | undefined;
       if (bodyMesh?.material) {
         const mat = bodyMesh.material as THREE.MeshStandardMaterial;
-        if (enemy.isHit) { mat.color.setHex(0xffffff); mat.emissive.setHex(0xff6666); mat.emissiveIntensity = 1.2; }
-        else { mat.color.copy(enemy.baseColor); mat.emissive.setHex(0x000000); mat.emissiveIntensity = 0; }
+        if (enemy.isHit) {
+          mat.color.setHex(0xffffff); mat.emissive.setHex(0xff6666); mat.emissiveIntensity = 1.2;
+          mat.transparent = false; mat.opacity = 1;
+        } else if (enemy.burnTimer > 0) {
+          mat.color.copy(enemy.baseColor);
+          mat.emissive.setHex(0xff4400);
+          mat.emissiveIntensity = 0.9 + Math.sin(t * 9) * 0.35;
+          mat.transparent = true; mat.opacity = 0.88;
+        } else if (enemy.poisonTimer > 0) {
+          mat.color.copy(enemy.baseColor);
+          mat.emissive.setHex(0x00cc33);
+          mat.emissiveIntensity = 0.8 + Math.sin(t * 7) * 0.25;
+          mat.transparent = true; mat.opacity = 0.9;
+        } else if (enemy.slowTimer > 0) {
+          mat.color.copy(enemy.baseColor);
+          mat.emissive.setHex(0x3399ff);
+          mat.emissiveIntensity = 0.7;
+          mat.transparent = false; mat.opacity = 1;
+        } else {
+          mat.color.copy(enemy.baseColor); mat.emissive.setHex(0x000000);
+          mat.emissiveIntensity = 0; mat.transparent = false; mat.opacity = 1;
+        }
       }
 
       // Sword hit
       if (swordActive && enemy.invulnTimer <= 0) {
         if (enemy.pos.clone().setY(0).distanceTo(swordPosition.clone().setY(0)) < 1.7) {
           applyHit(enemy, swordDmg, swordPosition);
-          if (enemy.dead) child.visible = false;
+          if (!enemy.dead) {
+            if (store.activeSword === 'flame' && enemy.burnTimer <= 0) {
+              enemy.burnTimer = 3.0; enemy.burnTickTimer = 0.45; sfxStatusEffect();
+            } else if (store.activeSword === 'viper' && enemy.poisonTimer <= 0) {
+              enemy.poisonTimer = 4.0; enemy.poisonTickTimer = 0.7; sfxStatusEffect();
+            }
+          }
         }
       }
       // Spin attack — radius depends on active sword (storm = wider)
       if (spinActive && enemy.invulnTimer <= 0) {
         if (enemy.pos.clone().setY(0).distanceTo(spinPosition.clone().setY(0)) < spinRadius) {
           applyHit(enemy, swordDmg * 2, spinPosition);
-          if (enemy.dead) child.visible = false;
+          if (!enemy.dead) {
+            if (store.activeSword === 'flame' && enemy.burnTimer <= 0) {
+              enemy.burnTimer = 3.0; enemy.burnTickTimer = 0.45; sfxStatusEffect();
+            } else if (store.activeSword === 'viper' && enemy.poisonTimer <= 0) {
+              enemy.poisonTimer = 4.0; enemy.poisonTickTimer = 0.7; sfxStatusEffect();
+            }
+          }
         }
       }
       // Arrow hits
@@ -1186,7 +1276,13 @@ export function Enemies() {
       // Bomb explosion / Solara's Flare / Cragus Strike (all use explosions channel)
       for (const zone of hitZones.explosions) {
         if (enemy.pos.distanceTo(zone.pos) < zone.radius) {
-          enemy.hp = 0; enemy.dead = true; child.visible = false; break;
+          if (!enemy.dead) {
+            enemy.hp = 0; enemy.dead = true; enemy.deadAnimTimer = 0.7;
+            sfxDeath();
+            useGameStore.getState().addKill(Math.ceil(enemy.maxHp * 50));
+            if (enemy.isElite) { useGameStore.getState().addEliteKill(); useGameStore.getState().healPlayer(0.5); }
+          }
+          break;
         }
       }
       // Player melee
@@ -1895,6 +1991,7 @@ function applyHit(enemy: EnemyData, damage: number, sourcePos: THREE.Vector3) {
   enemy.pos.addScaledVector(kb, 1.3);
   if (enemy.hp <= 0) {
     enemy.dead = true;
+    enemy.deadAnimTimer = 0.7;
     sfxDeath();
     useGameStore.getState().addKill(Math.ceil(enemy.maxHp * 50));
     if (enemy.isElite) {

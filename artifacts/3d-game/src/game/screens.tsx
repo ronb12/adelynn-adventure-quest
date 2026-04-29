@@ -24,6 +24,21 @@ const AREA_NAMES: Record<string, string> = {
   desert: 'Ashrock Summit', boss: 'Malgrath\'s Lair',
 };
 
+const ALL_AREA_META: { id: string; name: string; icon: string }[] = [
+  { id: 'field',   name: 'Sunfield Plains',   icon: '🌾' },
+  { id: 'forest',  name: 'Whisper Woods',     icon: '🌲' },
+  { id: 'desert',  name: 'Ashrock Summit',    icon: '🏔' },
+  { id: 'jungle',  name: 'Thornwick Jungle',  icon: '🌿' },
+  { id: 'ice',     name: "Glacira's Domain",  icon: '❄' },
+  { id: 'volcano', name: 'Embris Depths',     icon: '🔥' },
+  { id: 'sky',     name: 'Sky Sanctum',       icon: '☁' },
+  { id: 'crypt',   name: "Warrior's Crypt",   icon: '💀' },
+  { id: 'void',    name: 'The Shattered Void',icon: '🌀' },
+  { id: 'cave',    name: "Adelynn's Cave",    icon: '💎' },
+  { id: 'home',    name: 'Home Village',      icon: '🏠' },
+  { id: 'boss',    name: "Malgrath's Lair",   icon: '👁' },
+];
+
 // ── Leaderboard Table ─────────────────────────────────────────────
 function LeaderboardTable({ refresh = 0 }: { refresh?: number }) {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
@@ -163,23 +178,28 @@ function ScoreSubmitForm({
 
 // ── Pause Screen ──────────────────────────────────────────────────
 export function PauseScreen() {
-  const togglePause  = useGameStore(s => s.togglePause);
-  const setGameState = useGameStore(s => s.setGameState);
-  const score        = useGameStore(s => s.score);
-  const shards       = useGameStore(s => s.shardsCollected);
-  const lore         = useGameStore(s => s.loreRead);
-  const currentArea  = useGameStore(s => s.currentArea);
-  const runStartTime = useGameStore(s => s.runStartTime);
+  const togglePause      = useGameStore(s => s.togglePause);
+  const setGameState     = useGameStore(s => s.setGameState);
+  const score            = useGameStore(s => s.score);
+  const shards           = useGameStore(s => s.shardsCollected);
+  const lore             = useGameStore(s => s.loreRead);
+  const currentArea      = useGameStore(s => s.currentArea);
+  const runStartTime     = useGameStore(s => s.runStartTime);
+  const areasVisited     = useGameStore(s => s.areasVisited);
+  const guardianDefeated = useGameStore(s => s.guardianDefeated);
+  const completedQuests  = useGameStore(s => s.completedQuests);
+  const totalKills       = useGameStore(s => s.totalKills);
   const elapsed = formatTime(runStartTime);
 
   const [showLB, setShowLB] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   return (
     <div
-      className="absolute inset-0 flex flex-col items-center justify-center pointer-events-auto select-none"
+      className="absolute inset-0 flex flex-col items-center justify-center pointer-events-auto select-none overflow-y-auto"
       style={{ backdropFilter: 'blur(5px)', background: 'rgba(4,2,16,0.72)' }}
     >
-      <div className="bg-[#0d0820] border-2 border-purple-700/60 rounded-2xl px-8 py-7 flex flex-col items-center gap-4 w-full max-w-sm shadow-2xl">
+      <div className="bg-[#0d0820] border-2 border-purple-700/60 rounded-2xl px-6 py-6 flex flex-col items-center gap-3 w-full max-w-md shadow-2xl my-4 mx-4">
 
         {/* Header */}
         <div className="flex items-center gap-2">
@@ -190,10 +210,12 @@ export function PauseScreen() {
         {/* Run stats */}
         <div className="flex gap-2 w-full justify-center flex-wrap">
           {[
-            { label: 'Score',  value: score.toLocaleString(), color: 'text-amber-400' },
-            { label: 'Time',   value: elapsed,                color: 'text-white' },
-            { label: 'Shards', value: `${shards}/3`,          color: 'text-blue-300' },
-            { label: 'Lore',   value: `${lore.length}/9`,     color: 'text-purple-300' },
+            { label: 'Score',  value: score.toLocaleString(),  color: 'text-amber-400' },
+            { label: 'Time',   value: elapsed,                  color: 'text-white' },
+            { label: 'Shards', value: `${shards}/3`,            color: 'text-blue-300' },
+            { label: 'Lore',   value: `${lore.length}/27`,      color: 'text-purple-300' },
+            { label: 'Kills',  value: String(totalKills),       color: 'text-red-300' },
+            { label: 'Quests', value: `${completedQuests.length}/10`, color: 'text-green-300' },
           ].map(({ label, value, color }) => (
             <div key={label} className="flex flex-col items-center bg-black/40 rounded-xl px-3 py-2 border border-purple-900/40">
               <span className={`${color} font-bold text-sm font-mono`}>{value}</span>
@@ -213,11 +235,62 @@ export function PauseScreen() {
           <span><span className="text-amber-400">Shift</span> — Run</span>
           <span><span className="text-amber-400">Space</span> — Attack</span>
           <span><span className="text-amber-400">E</span> — Interact</span>
+          <span><span className="text-amber-400">V</span> — Jump</span>
           <span><span className="text-amber-400">Q</span> — Cycle weapon</span>
           <span><span className="text-amber-400">Z</span> — Cycle sword</span>
           <span><span className="text-amber-400">F</span> — Shield block</span>
           <span><span className="text-amber-400">Esc</span> — Pause</span>
+          <span><span className="text-amber-400">Shift+Atk</span> — Spin</span>
         </div>
+
+        {/* World Map toggle */}
+        <button
+          onClick={() => setShowMap(v => !v)}
+          className="w-full text-xs text-purple-300/80 hover:text-purple-200 bg-purple-900/20 hover:bg-purple-900/40 border border-purple-800/40 rounded-lg py-2 cursor-pointer transition-colors font-serif"
+        >
+          🗺 {showMap ? 'Hide World Map ▲' : 'Show World Map ▼'}
+        </button>
+
+        {showMap && (
+          <div className="w-full bg-black/40 rounded-xl p-3 border border-purple-900/40">
+            <p className="text-purple-400 text-xs font-bold mb-2 text-center">World Map — Aldenmere</p>
+            <div className="grid grid-cols-3 gap-1.5">
+              {ALL_AREA_META.map(area => {
+                const visited = areasVisited.includes(area.id as any);
+                const defeated = guardianDefeated.includes(area.id as any);
+                const isCurrent = area.id === currentArea;
+                return (
+                  <div
+                    key={area.id}
+                    className="rounded-lg px-2 py-1.5 flex flex-col items-center gap-0.5"
+                    style={{
+                      background: visited
+                        ? isCurrent ? 'rgba(120,60,220,0.4)' : 'rgba(40,20,80,0.6)'
+                        : 'rgba(20,10,40,0.4)',
+                      border: `1px solid ${isCurrent ? '#a855f7' : visited ? '#4c1d95' : '#1e1030'}`,
+                    }}
+                  >
+                    <span className="text-base leading-none" style={{ filter: visited ? 'none' : 'grayscale(100%) opacity(30%)' }}>
+                      {area.icon}
+                    </span>
+                    <span className="text-center text-white font-bold leading-tight" style={{ fontSize: '0.6rem' }}>
+                      {visited ? area.name : '???'}
+                    </span>
+                    {visited && (
+                      <div className="flex gap-1 mt-0.5">
+                        {defeated && <span style={{ fontSize: '0.55rem' }} className="text-yellow-400">👑</span>}
+                        {isCurrent && <span style={{ fontSize: '0.55rem' }} className="text-purple-400">📍</span>}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-gray-600 text-xs text-center mt-2 font-mono">
+              📍 current &nbsp; 👑 guardian defeated
+            </p>
+          </div>
+        )}
 
         {/* Leaderboard toggle */}
         {showLB ? (
@@ -425,7 +498,7 @@ export function TitleScreen() {
         </Button>
 
         <p className="text-xs text-gray-500 font-mono">
-          WASD move · Shift run · Space attack · Q cycle weapon · E interact · {saveMeta ? 'Enter to continue' : 'Enter/Space to start'}
+          WASD move · Shift run · Space attack · V jump · Q weapon · E interact · {saveMeta ? 'Enter to continue' : 'Enter/Space to start'}
         </p>
         </div>}
       </div>

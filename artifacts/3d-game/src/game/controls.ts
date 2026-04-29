@@ -13,6 +13,7 @@ export enum Controls {
   shield = 'shield',
   swordCycle = 'swordCycle',
   run = 'run',
+  jump = 'jump',
 }
 
 export const keyMap = [
@@ -30,6 +31,7 @@ export const keyMap = [
   { name: Controls.shield,     keys: ['KeyF'] },
   { name: Controls.swordCycle, keys: ['KeyZ'] },
   { name: Controls.run,        keys: ['ShiftLeft'] },
+  { name: Controls.jump,       keys: ['KeyV'] },
 ];
 
 // 14 sub-weapons + 10 sword tiers + shield = 25 total (matches ALTTP's ~24)

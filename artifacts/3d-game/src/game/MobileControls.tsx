@@ -177,7 +177,7 @@ function ActionButton({ label, sublabel, color, size = 60, onPress, onRelease, f
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     e.preventDefault();
     pressedRef.current = false;
-    if (flag && flag !== 'attack' && flag !== 'shield') {
+    if (flag && flag !== 'attack' && flag !== 'shield' && flag !== 'jump') {
       // Impulse — keep true for ~1 frame, Player.tsx clears it
     } else if (flag) {
       (mobileInput[flag] as boolean) = false;
@@ -275,6 +275,11 @@ export function MobileControls() {
             label="🛡" sublabel="Block"
             color="rgba(60,60,180,0.75)" size={52}
             flag="shield"
+          />
+          <ActionButton
+            label="↑" sublabel="Jump"
+            color="rgba(40,160,80,0.80)" size={52}
+            flag="jump"
           />
           <ActionButton
             label="⚔" sublabel="Attack"

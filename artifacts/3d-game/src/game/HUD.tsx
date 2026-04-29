@@ -4,6 +4,7 @@ import { GUARDIAN_CONFIG } from './Enemy';
 import { WeaponId } from './controls';
 import { NPC_DATA } from './npcData';
 import { playerStamina } from './Player';
+import { sfxLoreRead, sfxQuestComplete, sfxCombo } from './AudioManager';
 
 const WEAPON_ICONS: Record<WeaponId, string> = {
   sword:    '⚔',
@@ -951,7 +952,10 @@ function LorePopup() {
     if (lore) {
       setContent(lore);
       setVisible(true);
-      if (!loreRead.includes(nearLore)) markLoreRead(nearLore);
+      if (!loreRead.includes(nearLore)) {
+        markLoreRead(nearLore);
+        sfxLoreRead();
+      }
     }
   }, [nearLore]);
 
@@ -977,6 +981,102 @@ function LorePopup() {
         </div>
       </div>
       <style>{`@keyframes loreIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`}</style>
+    </div>
+  );
+}
+
+// ── Quest Tracker ─────────────────────────────────────────────────
+type QuestStats = {
+  totalKills: number; loreCount: number; shards: number;
+  maxCombo: number; score: number; weaponCount: number;
+};
+const QUEST_DEFS: {
+  id: string; title: string; icon: string;
+  current: (q: QuestStats) => number; max: number;
+}[] = [
+  { id: 'q-first-kill', title: 'First Blood',    icon: '⚔',  current: q => Math.min(q.totalKills, 1),     max: 1    },
+  { id: 'q-kills-5',   title: 'Battle Tested',   icon: '💪', current: q => Math.min(q.totalKills, 5),     max: 5    },
+  { id: 'q-kills-25',  title: 'Warrior',          icon: '🗡', current: q => Math.min(q.totalKills, 25),    max: 25   },
+  { id: 'q-lore-1',    title: 'Curious Mind',     icon: '📜', current: q => Math.min(q.loreCount, 1),      max: 1    },
+  { id: 'q-lore-5',    title: 'Scholar',          icon: '📚', current: q => Math.min(q.loreCount, 5),      max: 5    },
+  { id: 'q-shard-1',   title: 'Crystal Found',    icon: '💎', current: q => Math.min(q.shards, 1),         max: 1    },
+  { id: 'q-shards-all',title: 'Crown Restored',   icon: '👑', current: q => Math.min(q.shards, 3),         max: 3    },
+  { id: 'q-combo-5',   title: 'On Fire!',         icon: '🔥', current: q => Math.min(q.maxCombo, 5),       max: 5    },
+  { id: 'q-score-1k',  title: 'Rising Hero',      icon: '✦',  current: q => Math.min(q.score, 1000),       max: 1000 },
+  { id: 'q-weapons-3', title: 'Arsenal',          icon: '🏹', current: q => Math.min(q.weaponCount, 3),    max: 3    },
+];
+
+function QuestTracker() {
+  const totalKills       = useGameStore(s => s.totalKills);
+  const loreRead         = useGameStore(s => s.loreRead);
+  const shardsCollected  = useGameStore(s => s.shardsCollected);
+  const maxCombo         = useGameStore(s => s.maxCombo);
+  const score            = useGameStore(s => s.score);
+  const unlockedWeapons  = useGameStore(s => s.unlockedWeapons);
+  const completedQuests  = useGameStore(s => s.completedQuests);
+  const markQuestComplete = useGameStore(s => s.markQuestComplete);
+  const prevMaxCombo     = useRef(0);
+
+  const stats: QuestStats = {
+    totalKills, loreCount: loreRead.length, shards: shardsCollected,
+    maxCombo, score, weaponCount: unlockedWeapons.length,
+  };
+
+  // Combo milestone sfx
+  useEffect(() => {
+    if (maxCombo >= 5 && prevMaxCombo.current < 5) sfxCombo();
+    prevMaxCombo.current = maxCombo;
+  }, [maxCombo]);
+
+  // Quest completion detection
+  useEffect(() => {
+    QUEST_DEFS.forEach(q => {
+      if (!completedQuests.includes(q.id) && q.current(stats) >= q.max) {
+        markQuestComplete(q.id);
+        sfxQuestComplete();
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalKills, loreRead.length, shardsCollected, maxCombo, score, unlockedWeapons.length]);
+
+  const active = QUEST_DEFS
+    .filter(q => !completedQuests.includes(q.id))
+    .sort((a, b) => (b.current(stats) / b.max) - (a.current(stats) / a.max))
+    .slice(0, 3);
+
+  if (active.length === 0) return (
+    <div className="absolute pointer-events-none flex items-center gap-1.5 bg-black/55 rounded-lg px-2 py-1 backdrop-blur-sm"
+      style={{ left: 8, bottom: 100, zIndex: 5500, borderLeft: '3px solid #44ff88' }}>
+      <span className="text-xs">🎉</span>
+      <span className="text-green-400 text-xs font-bold">All quests done!</span>
+    </div>
+  );
+
+  return (
+    <div className="absolute pointer-events-none flex flex-col gap-1"
+      style={{ left: 8, bottom: 100, zIndex: 5500 }}>
+      {active.map(q => {
+        const cur = q.current(stats);
+        const pct = Math.round((cur / q.max) * 100);
+        return (
+          <div key={q.id} className="flex items-center gap-1.5 bg-black/55 rounded-lg px-2 py-1 backdrop-blur-sm"
+            style={{ borderLeft: '3px solid #8855cc' }}>
+            <span className="text-xs leading-none">{q.icon}</span>
+            <div className="flex flex-col min-w-0">
+              <span className="text-white text-xs font-bold leading-none truncate">{q.title}</span>
+              <div className="flex items-center gap-1 mt-0.5">
+                <div className="bg-gray-700/80 rounded-full h-1 w-14 flex-shrink-0">
+                  <div className="h-1 rounded-full"
+                    style={{ width: `${pct}%`, background: '#a855f7', transition: 'width 0.3s' }} />
+                </div>
+                <span className="text-gray-400 text-xs leading-none font-mono flex-shrink-0">
+                  {cur}/{q.max}
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -1016,6 +1116,9 @@ export function HUD() {
 
       {/* Area entry banner */}
       <AreaEntryBanner />
+
+      {/* Quest Tracker */}
+      <QuestTracker />
 
       {/* Lore popup */}
       <LorePopup />

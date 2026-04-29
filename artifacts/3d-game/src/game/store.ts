@@ -224,6 +224,12 @@ interface GameStore {
   addEliteKill: () => void;
   spawnGuardian: (area: AreaId, maxHP: number) => void;
   damageGuardian: (dmg: number) => void;
+  // Quest tracking
+  totalKills: number;
+  areaKills: Record<string, number>;
+  maxCombo: number;
+  completedQuests: string[];
+  markQuestComplete: (id: string) => void;
   triggerSave: () => void;
   performSave: () => void;
   loadFromSave: () => boolean;
@@ -286,6 +292,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   score: 0,
   comboCount: 0,
   comboTimer: 0,
+  totalKills: 0,
+  areaKills: {},
+  maxCombo: 0,
+  completedQuests: [],
   runStartTime: 0,
   nearLore: null,
   loreRead: [],
@@ -582,9 +592,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setArmorLevel: (level) => set({ armorLevel: level }),
 
   addKill: (pts) => set((s) => {
-    const multiplier = Math.min(s.comboCount + 1, 5);
+    const newCombo = s.comboCount + 1;
+    const multiplier = Math.min(newCombo, 5);
     const earned = pts * multiplier;
-    return { score: s.score + earned, comboCount: s.comboCount + 1, comboTimer: 3.5 };
+    const area = s.currentArea;
+    const newAreaKills = { ...s.areaKills, [area]: (s.areaKills[area] ?? 0) + 1 };
+    return {
+      score: s.score + earned,
+      comboCount: newCombo,
+      comboTimer: 3.5,
+      totalKills: s.totalKills + 1,
+      areaKills: newAreaKills,
+      maxCombo: Math.max(s.maxCombo, newCombo),
+    };
   }),
   tickCombo: (delta) => set((s) => {
     if (s.comboTimer <= 0) return {};
@@ -592,6 +612,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (newTimer <= 0) return { comboTimer: 0, comboCount: 0 };
     return { comboTimer: newTimer };
   }),
+  markQuestComplete: (id) => set((s) => ({
+    completedQuests: s.completedQuests.includes(id) ? s.completedQuests : [...s.completedQuests, id],
+  })),
   setNearLore: (id) => set({ nearLore: id }),
   markLoreRead: (id) => set((s) => ({ loreRead: [...s.loreRead.filter(x => x !== id), id] })),
   addEliteKill: () => set((s) => ({
@@ -683,6 +706,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     guardianDefeated: [],
     currentGuardianHP: 0,
     currentGuardianMaxHP: 0,
+    totalKills: 0,
+    areaKills: {},
+    maxCombo: 0,
+    completedQuests: [],
   }),
 
   triggerSave: () => set({ lastSaveTime: Date.now() }),

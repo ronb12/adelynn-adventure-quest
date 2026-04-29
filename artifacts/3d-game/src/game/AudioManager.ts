@@ -424,3 +424,60 @@ export function sfxGameOver() {
     schedNote(f / 2, now + i * 0.15, 0.2, 'triangle', 0.1, dest);
   });
 }
+
+/** Jump boing */
+export function sfxJump() {
+  const ctx  = getCtx(); const dest = getSfxDest();
+  if (!ctx || !dest) return;
+  const now  = ctx.currentTime;
+  schedNote(NOTE.C4, now,        0.06, 'sine', 0.28, dest, NOTE.G4);
+  schedNote(NOTE.G4, now + 0.05, 0.08, 'sine', 0.22, dest, NOTE.C5);
+  schedNote(NOTE.C5, now + 0.10, 0.12, 'sine', 0.18, dest, NOTE.G5);
+}
+
+/** Lore stone read — mystical chime */
+export function sfxLoreRead() {
+  const ctx  = getCtx(); const dest = getSfxDest();
+  if (!ctx || !dest) return;
+  const now  = ctx.currentTime;
+  const melody = [NOTE.E5, NOTE.G5, NOTE.B5, NOTE.E5 * 2];
+  melody.forEach((f, i) => {
+    schedNote(f,       now + i * 0.14, 0.22, 'sine',     0.22, dest);
+    schedNote(f * 0.5, now + i * 0.14, 0.22, 'triangle', 0.10, dest);
+  });
+  schedNote(NOTE.B5, now + melody.length * 0.14, 0.5, 'sine', 0.16, dest);
+}
+
+/** Status effect applied (burn / poison / freeze) */
+export function sfxStatusEffect() {
+  const ctx  = getCtx(); const dest = getSfxDest();
+  if (!ctx || !dest) return;
+  const now  = ctx.currentTime;
+  schedNote(880, now,        0.06, 'sawtooth', 0.18, dest, 440);
+  schedNote(440, now + 0.05, 0.10, 'sawtooth', 0.12, dest, 220);
+  schedNote(220, now + 0.12, 0.14, 'sine',     0.10, dest, 110);
+}
+
+/** Quest completed — short triumphant ding */
+export function sfxQuestComplete() {
+  const ctx  = getCtx(); const dest = getSfxDest();
+  if (!ctx || !dest) return;
+  const now  = ctx.currentTime;
+  const notes = [NOTE.C5, NOTE.E5, NOTE.G5, NOTE.C5 * 2];
+  notes.forEach((f, i) => {
+    schedNote(f,       now + i * 0.09, 0.15, 'square',   0.25, dest);
+    schedNote(f * 0.5, now + i * 0.09, 0.15, 'triangle', 0.12, dest);
+  });
+  schedNote(NOTE.C5 * 2, now + notes.length * 0.09, 0.5, 'sine', 0.28, dest);
+}
+
+/** Combo milestone — ascending whoosh at ×5 */
+export function sfxCombo() {
+  const ctx  = getCtx(); const dest = getSfxDest();
+  if (!ctx || !dest) return;
+  const now  = ctx.currentTime;
+  schedNote(NOTE.C4, now,        0.06, 'square', 0.20, dest, NOTE.C5);
+  schedNote(NOTE.E4, now + 0.06, 0.06, 'square', 0.20, dest, NOTE.E5);
+  schedNote(NOTE.G4, now + 0.12, 0.06, 'square', 0.20, dest, NOTE.G5);
+  schedNote(NOTE.C5, now + 0.18, 0.18, 'square', 0.26, dest, NOTE.C5 * 2);
+}
