@@ -73,6 +73,176 @@ function spawnEnemies(area: AreaId, bossDefeated: boolean): EnemyData[] {
 
 let projSeq = 0;
 
+// ── Slime mesh ────────────────────────────────────────────────────
+function SlimeMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group>
+      <mesh position={[0, 0.52, 0]} scale={[1, 0.72, 1]}>
+        <sphereGeometry args={[0.58, 16, 12]} />
+        <meshStandardMaterial color={color} roughness={0.45} transparent opacity={0.92} />
+      </mesh>
+      <mesh position={[0.12, 0.72, 0.32]} scale={[1, 0.6, 1]}>
+        <sphereGeometry args={[0.22, 8, 6]} />
+        <meshStandardMaterial color="#ffffff" transparent opacity={0.18} roughness={0} />
+      </mesh>
+      <mesh position={[-0.2, 0.64, 0.5]}><sphereGeometry args={[0.1, 8, 6]} /><meshStandardMaterial color="#fff" /></mesh>
+      <mesh position={[0.2, 0.64, 0.5]}><sphereGeometry args={[0.1, 8, 6]} /><meshStandardMaterial color="#fff" /></mesh>
+      <mesh position={[-0.2, 0.64, 0.6]}><sphereGeometry args={[0.056, 7, 5]} /><meshStandardMaterial color="#110a1a" /></mesh>
+      <mesh position={[0.2, 0.64, 0.6]}><sphereGeometry args={[0.056, 7, 5]} /><meshStandardMaterial color="#110a1a" /></mesh>
+      {[0,1,2,3,4,5].map(i => {
+        const a = (i / 6) * Math.PI * 2;
+        return (
+          <mesh key={i} position={[Math.cos(a)*0.52, 0.15, Math.sin(a)*0.52]} rotation={[0, -a, 0.35]}>
+            <coneGeometry args={[0.1, 0.3, 6]} />
+            <meshStandardMaterial color={accent} roughness={0.7} />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+}
+
+// ── Goblin mesh ───────────────────────────────────────────────────
+function GoblinMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group scale={[0.72, 0.72, 0.72]}>
+      <mesh position={[0, 0.7, 0]}><capsuleGeometry args={[0.28, 0.5, 8, 12]} /><meshStandardMaterial color={color} roughness={0.75} /></mesh>
+      <mesh position={[0, 1.24, 0]}><sphereGeometry args={[0.36, 12, 10]} /><meshStandardMaterial color={color} roughness={0.7} /></mesh>
+      <mesh position={[-0.32, 1.48, 0]} rotation={[0, 0, 0.7]}><coneGeometry args={[0.1, 0.42, 6]} /><meshStandardMaterial color={accent} roughness={0.7} /></mesh>
+      <mesh position={[0.32, 1.48, 0]} rotation={[0, 0, -0.7]}><coneGeometry args={[0.1, 0.42, 6]} /><meshStandardMaterial color={accent} roughness={0.7} /></mesh>
+      <mesh position={[-0.14, 1.28, 0.3]}><sphereGeometry args={[0.07, 8, 6]} /><meshStandardMaterial color="#ff2200" emissive="#cc1100" emissiveIntensity={2} /></mesh>
+      <mesh position={[0.14, 1.28, 0.3]}><sphereGeometry args={[0.07, 8, 6]} /><meshStandardMaterial color="#ff2200" emissive="#cc1100" emissiveIntensity={2} /></mesh>
+      <mesh position={[0.38, 0.75, 0.1]} rotation={[0.2, 0, 0.5]}><cylinderGeometry args={[0.06, 0.1, 0.55, 7]} /><meshStandardMaterial color="#5a3a1a" roughness={0.9} /></mesh>
+      <mesh position={[0.52, 1.0, 0.15]}><sphereGeometry args={[0.14, 8, 6]} /><meshStandardMaterial color="#3a2a0a" roughness={0.85} /></mesh>
+      <mesh position={[-0.14, 0.22, 0]}><cylinderGeometry args={[0.09, 0.07, 0.34, 7]} /><meshStandardMaterial color={color} roughness={0.8} /></mesh>
+      <mesh position={[0.14, 0.22, 0]}><cylinderGeometry args={[0.09, 0.07, 0.34, 7]} /><meshStandardMaterial color={color} roughness={0.8} /></mesh>
+    </group>
+  );
+}
+
+// ── BriarWolf mesh ────────────────────────────────────────────────
+function BriarWolfMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group>
+      <mesh position={[0, 0.62, 0]} scale={[1, 0.7, 1.5]}><sphereGeometry args={[0.42, 12, 9]} /><meshStandardMaterial color={color} roughness={0.9} /></mesh>
+      <mesh position={[0, 0.78, 0.38]} rotation={[-0.4, 0, 0]}><cylinderGeometry args={[0.19, 0.22, 0.38, 9]} /><meshStandardMaterial color={color} roughness={0.9} /></mesh>
+      <mesh position={[0, 0.9, 0.62]} scale={[0.8, 0.7, 1.0]}><sphereGeometry args={[0.3, 10, 8]} /><meshStandardMaterial color={color} roughness={0.85} /></mesh>
+      <mesh position={[0, 0.78, 0.88]} scale={[0.6, 0.5, 1]}><sphereGeometry args={[0.2, 8, 6]} /><meshStandardMaterial color="#1a3a1a" roughness={0.9} /></mesh>
+      <mesh position={[-0.1, 0.96, 0.84]}><sphereGeometry args={[0.055, 7, 5]} /><meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={3} /></mesh>
+      <mesh position={[0.1, 0.96, 0.84]}><sphereGeometry args={[0.055, 7, 5]} /><meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={3} /></mesh>
+      <mesh position={[-0.16, 1.16, 0.6]} rotation={[0.2, 0.2, 0.3]}><coneGeometry args={[0.09, 0.22, 6]} /><meshStandardMaterial color="#1a3a1a" roughness={0.9} /></mesh>
+      <mesh position={[0.16, 1.16, 0.6]} rotation={[0.2, -0.2, -0.3]}><coneGeometry args={[0.09, 0.22, 6]} /><meshStandardMaterial color="#1a3a1a" roughness={0.9} /></mesh>
+      {([[-0.22, 0.92, -0.1], [0, 1.0, -0.18], [0.22, 0.92, -0.08]] as [number,number,number][]).map(([x,y,z], i) => (
+        <mesh key={i} position={[x, y, z]} rotation={[0.3, 0, i === 1 ? 0 : (i === 0 ? 0.3 : -0.3)]}>
+          <coneGeometry args={[0.04, 0.24, 5]} />
+          <meshStandardMaterial color="#0d2e0d" roughness={0.85} />
+        </mesh>
+      ))}
+      {([-0.2, 0.2] as number[]).map((x) =>
+        [-0.28, 0.28].map((z, j) => (
+          <mesh key={`${x}-${j}`} position={[x, 0.22, z]}><cylinderGeometry args={[0.07, 0.06, 0.44, 7]} /><meshStandardMaterial color="#1a3a1a" roughness={0.9} /></mesh>
+        ))
+      )}
+      <mesh position={[0, 0.78, -0.54]} rotation={[-0.7, 0, 0]}><cylinderGeometry args={[0.04, 0.09, 0.44, 7]} /><meshStandardMaterial color={color} roughness={0.9} /></mesh>
+    </group>
+  );
+}
+
+// ── Thornspitter mesh ─────────────────────────────────────────────
+function ThornspitterMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group>
+      <mesh position={[0, 0.18, 0]}><cylinderGeometry args={[0.38, 0.55, 0.35, 10]} /><meshStandardMaterial color="#3a2a10" roughness={1} /></mesh>
+      <mesh position={[0, 0.85, 0]}><cylinderGeometry args={[0.18, 0.24, 1.0, 10]} /><meshStandardMaterial color={color} roughness={0.85} /></mesh>
+      <mesh position={[0, 1.45, 0]}><sphereGeometry args={[0.42, 12, 10]} /><meshStandardMaterial color={accent} roughness={0.6} /></mesh>
+      {[0,1,2,3,4,5].map(i => {
+        const a = (i/6)*Math.PI*2;
+        return (
+          <mesh key={i} position={[Math.cos(a)*0.46, 1.45, Math.sin(a)*0.46]} rotation={[0, -a, 0.6]}>
+            <coneGeometry args={[0.1, 0.5, 6]} />
+            <meshStandardMaterial color="#2d5a10" roughness={0.75} />
+          </mesh>
+        );
+      })}
+      <mesh position={[0, 1.45, 0]}><sphereGeometry args={[0.22, 9, 7]} /><meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={1.8} roughness={0} transparent opacity={0.9} /></mesh>
+      <mesh position={[-0.52, 0.95, 0]} rotation={[0, 0, 0.5]}><boxGeometry args={[0.06, 0.55, 0.28]} /><meshStandardMaterial color={color} roughness={0.8} /></mesh>
+      <mesh position={[0.52, 0.95, 0]} rotation={[0, 0, -0.5]}><boxGeometry args={[0.06, 0.55, 0.28]} /><meshStandardMaterial color={color} roughness={0.8} /></mesh>
+      <mesh position={[-0.18, 1.52, 0.34]}><sphereGeometry args={[0.09, 7, 5]} /><meshStandardMaterial color="#ffe030" emissive="#ffcc00" emissiveIntensity={2} /></mesh>
+      <mesh position={[0.18, 1.52, 0.34]}><sphereGeometry args={[0.09, 7, 5]} /><meshStandardMaterial color="#ffe030" emissive="#ffcc00" emissiveIntensity={2} /></mesh>
+    </group>
+  );
+}
+
+// ── EmberScorpion mesh ────────────────────────────────────────────
+function EmberScorpionMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group>
+      <mesh position={[0, 0.28, 0]} scale={[1.1, 0.6, 1.4]}><sphereGeometry args={[0.4, 12, 9]} /><meshStandardMaterial color={color} roughness={0.6} metalness={0.3} /></mesh>
+      {([0.3, 0.0, -0.28] as number[]).map((z, i) => (
+        <mesh key={i} position={[0, 0.22, z]} scale={[0.9 - i*0.1, 0.5, 0.4]}>
+          <sphereGeometry args={[0.28, 9, 7]} />
+          <meshStandardMaterial color={i % 2 === 0 ? color : accent} roughness={0.5} metalness={0.35} emissive={accent} emissiveIntensity={0.4} />
+        </mesh>
+      ))}
+      <mesh position={[0, 0.32, 0.52]} scale={[0.9, 0.7, 0.8]}><sphereGeometry args={[0.28, 10, 8]} /><meshStandardMaterial color={color} roughness={0.5} metalness={0.3} /></mesh>
+      <mesh position={[-0.1, 0.38, 0.72]}><sphereGeometry args={[0.045, 6, 5]} /><meshStandardMaterial color="#ff4400" emissive="#ff6600" emissiveIntensity={5} /></mesh>
+      <mesh position={[0.1, 0.38, 0.72]}><sphereGeometry args={[0.045, 6, 5]} /><meshStandardMaterial color="#ff4400" emissive="#ff6600" emissiveIntensity={5} /></mesh>
+      {([-1, 1] as number[]).map(side => (
+        <group key={side} position={[side * 0.5, 0.28, 0.54]} rotation={[0, side * -0.4, 0]}>
+          <mesh position={[0, 0, 0.18]} rotation={[Math.PI/2, 0, 0]}><cylinderGeometry args={[0.055, 0.08, 0.38, 7]} /><meshStandardMaterial color={color} roughness={0.5} metalness={0.3} /></mesh>
+          <mesh position={[side * 0.08, 0.06, 0.38]}><boxGeometry args={[0.14, 0.1, 0.2]} /><meshStandardMaterial color={accent} roughness={0.4} metalness={0.4} /></mesh>
+        </group>
+      ))}
+      {([-0.3, -0.1, 0.1, 0.3] as number[]).map((z, j) =>
+        ([-1, 1] as number[]).map(side => (
+          <mesh key={`${j}-${side}`} position={[side * 0.42, 0.1, z]} rotation={[0, 0, side * 0.5]}><cylinderGeometry args={[0.03, 0.025, 0.42, 6]} /><meshStandardMaterial color={color} roughness={0.55} metalness={0.25} /></mesh>
+        ))
+      )}
+      {([[0, 0.38, -0.42, -0.6], [0, 0.62, -0.56, -1.1], [0, 0.84, -0.48, -1.5]] as [number,number,number,number][]).map(([x,y,z,rx], i) => (
+        <mesh key={i} position={[x, y, z]} rotation={[rx, 0, 0]}>
+          <sphereGeometry args={[0.12 - i*0.02, 7, 5]} />
+          <meshStandardMaterial color={i === 2 ? accent : color} roughness={0.5} metalness={0.3} emissive={i === 2 ? accent : '#000'} emissiveIntensity={i === 2 ? 2 : 0} />
+        </mesh>
+      ))}
+      <pointLight color={accent} intensity={0.5} distance={4} decay={2} position={[0, 0.5, 0]} />
+    </group>
+  );
+}
+
+// ── VoidWraith mesh ───────────────────────────────────────────────
+function VoidWraithMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group>
+      <mesh position={[0, 0.55, 0]}><coneGeometry args={[0.52, 1.1, 12]} /><meshStandardMaterial color={color} roughness={0.6} transparent opacity={0.88} emissive={accent} emissiveIntensity={0.15} /></mesh>
+      {[0,1,2,3,4,5].map(i => {
+        const a = (i / 6) * Math.PI * 2;
+        return (
+          <mesh key={i} position={[Math.cos(a)*0.38, 0.08, Math.sin(a)*0.38]}>
+            <sphereGeometry args={[0.1, 6, 5]} />
+            <meshStandardMaterial color={color} roughness={0.7} transparent opacity={0.55} emissive={accent} emissiveIntensity={0.2} />
+          </mesh>
+        );
+      })}
+      <mesh position={[0, 1.18, 0]}><sphereGeometry args={[0.3, 10, 8]} /><meshStandardMaterial color={color} roughness={0.5} transparent opacity={0.9} emissive={accent} emissiveIntensity={0.2} /></mesh>
+      <mesh position={[0, 1.6, 0]}><sphereGeometry args={[0.28, 10, 8]} /><meshStandardMaterial color={color} roughness={0.55} transparent opacity={0.92} emissive={accent} emissiveIntensity={0.1} /></mesh>
+      <mesh position={[-0.1, 1.63, 0.22]}><sphereGeometry args={[0.06, 7, 5]} /><meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={6} transparent opacity={0.95} /></mesh>
+      <mesh position={[0.1, 1.63, 0.22]}><sphereGeometry args={[0.06, 7, 5]} /><meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={6} transparent opacity={0.95} /></mesh>
+      {([-1, 1] as number[]).map(side => (
+        <group key={side} position={[side * 0.48, 1.02, 0.14]} rotation={[0.3, side * -0.3, side * 0.4]}>
+          <mesh><sphereGeometry args={[0.1, 7, 5]} /><meshStandardMaterial color={color} roughness={0.6} emissive={accent} emissiveIntensity={0.3} /></mesh>
+          {[0, 1, 2].map(f => (
+            <mesh key={f} position={[side * 0.04, -0.06, 0.1 + f * 0.05]} rotation={[-0.3 - f * 0.1, 0, side * 0.15]}>
+              <coneGeometry args={[0.025, 0.14, 5]} />
+              <meshStandardMaterial color="#0a0014" roughness={0.5} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+      <pointLight color={accent} intensity={1.2} distance={5} decay={2} position={[0, 1.2, 0]} />
+    </group>
+  );
+}
+
 // ── Bat mesh ──────────────────────────────────────────────────────
 function BatMesh({ color, accent }: { color: string; accent: string }) {
   return (
@@ -120,44 +290,27 @@ function EnemyMesh({ data }: { data: EnemyData }) {
   const def = ENEMY_DEFS[data.type];
   const s = def.size;
   const groupRef = useRef<THREE.Group>(null!);
-  const meshRef = useRef<THREE.Mesh>(null!);
   const flashStateRef = useRef<"none" | "flash" | "frozen">("none");
 
   useFrame(() => {
     if (!groupRef.current) return;
     groupRef.current.position.set(data.x, data.type === "bat" ? 1.2 : 0, data.z);
 
-    if (data.type === "bat" || data.type === "knight") {
-      const newState = data.frozenTimer > 0 ? "frozen" : data.hurtFlash > 0 ? "flash" : "none";
-      if (newState !== flashStateRef.current) {
-        flashStateRef.current = newState;
+    const newState = data.frozenTimer > 0 ? "frozen" : data.hurtFlash > 0 ? "flash" : "none";
+    if (newState !== flashStateRef.current) {
+      flashStateRef.current = newState;
+      if (newState !== "none") {
         groupRef.current.traverse((child) => {
           const mesh = child as THREE.Mesh;
           if (!mesh.isMesh) return;
           const mat = mesh.material as THREE.MeshStandardMaterial;
           if (newState === "frozen") { mat.color.setHex(0x88ccff); mat.emissiveIntensity = 2; }
-          else if (newState === "flash") { mat.color.setHex(0xffffff); mat.emissiveIntensity = 4; }
+          else { mat.color.setHex(0xffffff); mat.emissiveIntensity = 4; }
         });
-      }
-      return;
-    }
-
-    if (meshRef.current) {
-      const mat = meshRef.current.material as THREE.MeshStandardMaterial;
-      if (data.frozenTimer > 0) {
-        mat.color.setHex(0x88ccff);
-        mat.emissiveIntensity = 2;
-      } else if (data.hurtFlash > 0) {
-        mat.color.setHex(0xffffff);
-        mat.emissiveIntensity = 4;
-      } else {
-        mat.color.set(def.color);
-        mat.emissiveIntensity = 0.8;
       }
     }
   });
 
-  const isWraith = data.type === "voidwraith";
   const isBoss = data.type === "boss";
 
   if (data.type === "bat") {
@@ -194,28 +347,12 @@ function EnemyMesh({ data }: { data: EnemyData }) {
 
   return (
     <group ref={groupRef}>
-      <mesh
-        ref={meshRef}
-        position={[0, s * (data.type === "slime" ? 0.6 : 0.9), 0]}
-        scale={data.type === "slime" ? [1, 0.65, 1] : isWraith ? [1, 1.4, 1] : [1, 1, 1]}
-      >
-        {data.type === "slime" ? (
-          <sphereGeometry args={[s, 8, 8]} />
-        ) : data.type === "goblin" ? (
-          <capsuleGeometry args={[s * 0.5, s * 0.8, 6, 10]} />
-        ) : data.type === "briarwolf" ? (
-          <boxGeometry args={[s * 1.4, s * 0.75, s * 2]} />
-        ) : (
-          <cylinderGeometry args={[s * 0.55, s * 0.65, s * 1.6, 8]} />
-        )}
-        <meshStandardMaterial
-          color={def.color}
-          emissive={def.emissive}
-          emissiveIntensity={0.8}
-          transparent={isWraith}
-          opacity={isWraith ? 0.7 : 1}
-        />
-      </mesh>
+      {data.type === "slime"         && <SlimeMesh         color={def.color} accent={def.emissive} />}
+      {data.type === "goblin"        && <GoblinMesh        color={def.color} accent={def.emissive} />}
+      {data.type === "briarwolf"     && <BriarWolfMesh     color={def.color} accent={def.emissive} />}
+      {data.type === "thornspitter"  && <ThornspitterMesh  color={def.color} accent={def.emissive} />}
+      {data.type === "emberscorpion" && <EmberScorpionMesh color={def.color} accent={def.emissive} />}
+      {data.type === "voidwraith"    && <VoidWraithMesh    color={def.color} accent={def.emissive} />}
     </group>
   );
 }
