@@ -100,6 +100,22 @@ export default function TouchControls() {
     Haptics.selectionAsync();
   }, []);
 
+  const handleShieldIn = useCallback(() => {
+    touchInput.shield = true;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, []);
+
+  const handleShieldOut = useCallback(() => {
+    touchInput.shield = false;
+  }, []);
+
+  const handleGroundSlam = useCallback(() => {
+    if (!touchInput.groundSlamConsumed) return;
+    touchInput.groundSlam = true;
+    touchInput.groundSlamConsumed = false;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+  }, []);
+
   const handlePause = useCallback(() => {
     if (gameState === "playing" || gameState === "paused") {
       togglePause();
@@ -155,6 +171,16 @@ export default function TouchControls() {
           <TouchableOpacity style={styles.dashBtn} onPress={handleDash} activeOpacity={0.7}>
             <Ionicons name="flash" size={20} color="#60d8ff" />
             <Text style={styles.dashLabel}>R</Text>
+          </TouchableOpacity>
+          {/* Shield / Block */}
+          <TouchableOpacity style={styles.shieldBtn} onPressIn={handleShieldIn} onPressOut={handleShieldOut} activeOpacity={0.75}>
+            <Text style={styles.shieldBtnIcon}>🛡️</Text>
+            <Text style={styles.shieldBtnLabel}>S</Text>
+          </TouchableOpacity>
+          {/* Ground Slam */}
+          <TouchableOpacity style={styles.slamBtn} onPressIn={handleGroundSlam} activeOpacity={0.75}>
+            <Text style={styles.slamBtnIcon}>💥</Text>
+            <Text style={styles.slamBtnLabel}>G</Text>
           </TouchableOpacity>
           {/* Fire weapon */}
           <TouchableOpacity style={styles.weaponBtn} onPressIn={handleFireWeapon} activeOpacity={0.7}>
@@ -260,6 +286,38 @@ const styles = StyleSheet.create({
     gap: 0,
   },
   dashLabel: { color: "rgba(255,255,255,0.5)", fontSize: 9, fontWeight: "bold" },
+  shieldBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#0a3a2a",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#2a8a5a",
+    shadowColor: "#00ff88",
+    shadowOpacity: 0.4,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  shieldBtnIcon: { fontSize: 18, lineHeight: 20 },
+  shieldBtnLabel: { color: "rgba(255,255,255,0.5)", fontSize: 9, fontWeight: "bold" },
+  slamBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#3a1a00",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#cc6600",
+    shadowColor: "#ff8800",
+    shadowOpacity: 0.4,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  slamBtnIcon: { fontSize: 18, lineHeight: 20 },
+  slamBtnLabel: { color: "rgba(255,255,255,0.5)", fontSize: 9, fontWeight: "bold" },
   weaponBtn: {
     width: 58,
     height: 58,

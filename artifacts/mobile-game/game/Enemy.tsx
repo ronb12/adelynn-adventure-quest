@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { useGameStore, AreaId, SWORD_DEFS } from "./store";
 import { playerState, pendingPickupSpawns, weaponHitZones, weaponEffects } from "./controls";
 
-export type EnemyType = "slime" | "goblin" | "briarwolf" | "thornspitter" | "emberscorpion" | "voidwraith" | "boss";
+export type EnemyType = "slime" | "goblin" | "briarwolf" | "thornspitter" | "emberscorpion" | "voidwraith" | "boss" | "bat" | "knight";
 
 interface EnemyDef {
   hp: number; speed: number; contactDamage: number; pts: number; size: number;
@@ -20,6 +20,8 @@ const ENEMY_DEFS: Record<EnemyType, EnemyDef> = {
   thornspitter:  { hp: 2, speed: 1.5, contactDamage: 0.5,  pts: 30,  size: 0.45, color: "#88aa22", emissive: "#445511", behavior: "ranged", rangedInterval: 2.2, projectileSpeed: 8,  projectileDamage: 0.5 },
   emberscorpion: { hp: 3, speed: 1.8, contactDamage: 0.5,  pts: 35,  size: 0.52, color: "#cc4411", emissive: "#661100", behavior: "ranged", rangedInterval: 1.6, projectileSpeed: 9,  projectileDamage: 0.5 },
   voidwraith:    { hp: 3, speed: 2.2, contactDamage: 0.5,  pts: 40,  size: 0.5,  color: "#7722cc", emissive: "#330066", behavior: "ranged", rangedInterval: 1.2, projectileSpeed: 10, projectileDamage: 0.5 },
+  bat:           { hp: 2, speed: 4.0, contactDamage: 0.5,  pts: 25,  size: 0.42, color: "#4a235a", emissive: "#220033", behavior: "chase" },
+  knight:        { hp: 4, speed: 1.4, contactDamage: 0.75, pts: 45,  size: 0.5,  color: "#a04020", emissive: "#502010", behavior: "charge", chargeInterval: 2.2, chargeDuration: 0.55 },
   boss:          { hp: 20,speed: 3.5, contactDamage: 1.0,  pts: 500, size: 1.8,  color: "#550033", emissive: "#220011", behavior: "charge", chargeInterval: 2.0, chargeDuration: 0.8, rangedInterval: 1.5, projectileSpeed: 12, projectileDamage: 0.75 },
 };
 
@@ -39,8 +41,8 @@ interface Projectile {
 
 const AREA_CONFIGS: Record<AreaId, Array<{ type: EnemyType; count: number; radius: number }>> = {
   field:  [{ type: "slime", count: 8, radius: 14 }, { type: "goblin", count: 4, radius: 16 }],
-  forest: [{ type: "briarwolf", count: 6, radius: 14 }, { type: "thornspitter", count: 4, radius: 16 }],
-  desert: [{ type: "emberscorpion", count: 6, radius: 14 }, { type: "voidwraith", count: 4, radius: 16 }],
+  forest: [{ type: "briarwolf", count: 6, radius: 14 }, { type: "thornspitter", count: 4, radius: 16 }, { type: "bat", count: 4, radius: 12 }],
+  desert: [{ type: "emberscorpion", count: 6, radius: 14 }, { type: "voidwraith", count: 4, radius: 16 }, { type: "knight", count: 3, radius: 12 }],
   boss:   [{ type: "boss", count: 1, radius: 0 }],
 };
 
@@ -71,15 +73,75 @@ function spawnEnemies(area: AreaId, bossDefeated: boolean): EnemyData[] {
 
 let projSeq = 0;
 
+// ── Bat mesh ──────────────────────────────────────────────────────
+function BatMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group>
+      <mesh position={[0, 0.76, 0]}><sphereGeometry args={[0.42, 12, 10]} /><meshStandardMaterial color={color} roughness={0.85} /></mesh>
+      <mesh position={[0, 0.7, 0.26]}><sphereGeometry args={[0.24, 8, 7]} /><meshStandardMaterial color={accent} roughness={0.9} /></mesh>
+      <mesh position={[-0.4, 0.78, 0]} rotation={[0, 0, 0.3]}><cylinderGeometry args={[0.04, 0.03, 0.6, 6]} /><meshStandardMaterial color={color} /></mesh>
+      <mesh position={[-0.64, 0.78, 0]}><boxGeometry args={[0.5, 0.04, 0.48]} /><meshStandardMaterial color={accent} transparent opacity={0.85} /></mesh>
+      <mesh position={[0.4, 0.78, 0]} rotation={[0, 0, -0.3]}><cylinderGeometry args={[0.04, 0.03, 0.6, 6]} /><meshStandardMaterial color={color} /></mesh>
+      <mesh position={[0.64, 0.78, 0]}><boxGeometry args={[0.5, 0.04, 0.48]} /><meshStandardMaterial color={accent} transparent opacity={0.85} /></mesh>
+      <mesh position={[-0.18, 1.13, 0]} rotation={[0, 0, -0.25]}><coneGeometry args={[0.08, 0.28, 7]} /><meshStandardMaterial color={color} roughness={0.85} /></mesh>
+      <mesh position={[0.18, 1.13, 0]} rotation={[0, 0, 0.25]}><coneGeometry args={[0.08, 0.28, 7]} /><meshStandardMaterial color={color} roughness={0.85} /></mesh>
+      <mesh position={[-0.14, 0.85, 0.35]}><sphereGeometry args={[0.06, 7, 7]} /><meshStandardMaterial color="#ff1100" emissive="#ff0000" emissiveIntensity={3} /></mesh>
+      <mesh position={[0.14, 0.85, 0.35]}><sphereGeometry args={[0.06, 7, 7]} /><meshStandardMaterial color="#ff1100" emissive="#ff0000" emissiveIntensity={3} /></mesh>
+      <pointLight color="#8800ff" intensity={0.8} distance={4} decay={2} position={[0, 0.7, 0]} />
+    </group>
+  );
+}
+
+// ── Knight mesh ───────────────────────────────────────────────────
+function KnightMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group>
+      <mesh position={[-0.17, 0.1, 0]}><boxGeometry args={[0.17, 0.18, 0.3]} /><meshStandardMaterial color="#2a1a0a" roughness={0.85} /></mesh>
+      <mesh position={[0.17, 0.1, 0]}><boxGeometry args={[0.17, 0.18, 0.3]} /><meshStandardMaterial color="#2a1a0a" roughness={0.85} /></mesh>
+      <mesh position={[-0.17, 0.38, 0]}><cylinderGeometry args={[0.1, 0.11, 0.4, 8]} /><meshStandardMaterial color="#d4b896" roughness={0.9} /></mesh>
+      <mesh position={[0.17, 0.38, 0]}><cylinderGeometry args={[0.1, 0.11, 0.4, 8]} /><meshStandardMaterial color="#d4b896" roughness={0.9} /></mesh>
+      <mesh position={[-0.17, 0.74, 0]}><cylinderGeometry args={[0.13, 0.11, 0.36, 8]} /><meshStandardMaterial color={color} metalness={0.55} roughness={0.42} /></mesh>
+      <mesh position={[0.17, 0.74, 0]}><cylinderGeometry args={[0.13, 0.11, 0.36, 8]} /><meshStandardMaterial color={color} metalness={0.55} roughness={0.42} /></mesh>
+      <mesh position={[0, 0.96, 0]}><cylinderGeometry args={[0.29, 0.25, 0.18, 10]} /><meshStandardMaterial color="#d4b896" roughness={0.85} /></mesh>
+      <mesh position={[0, 1.28, 0]}><boxGeometry args={[0.52, 0.56, 0.3]} /><meshStandardMaterial color={color} metalness={0.6} roughness={0.38} /></mesh>
+      <mesh position={[-0.33, 1.42, 0]}><sphereGeometry args={[0.18, 8, 7]} /><meshStandardMaterial color={accent} metalness={0.7} roughness={0.28} /></mesh>
+      <mesh position={[0.33, 1.42, 0]}><sphereGeometry args={[0.18, 8, 7]} /><meshStandardMaterial color={accent} metalness={0.7} roughness={0.28} /></mesh>
+      <mesh position={[-0.36, 1.1, 0]}><cylinderGeometry args={[0.1, 0.09, 0.45, 7]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.4} /></mesh>
+      <mesh position={[0.36, 1.1, 0]}><cylinderGeometry args={[0.1, 0.09, 0.45, 7]} /><meshStandardMaterial color={color} metalness={0.5} roughness={0.4} /></mesh>
+      <mesh position={[0, 1.76, 0]}><sphereGeometry args={[0.28, 10, 9]} /><meshStandardMaterial color={color} metalness={0.65} roughness={0.35} /></mesh>
+      <mesh position={[0, 1.73, 0.24]}><boxGeometry args={[0.3, 0.1, 0.06]} /><meshStandardMaterial color="#1a0a00" roughness={0.9} /></mesh>
+      <mesh position={[-0.08, 1.75, 0.27]}><sphereGeometry args={[0.04, 6, 6]} /><meshStandardMaterial color="#ff6600" emissive="#ff4400" emissiveIntensity={3} /></mesh>
+      <mesh position={[0.08, 1.75, 0.27]}><sphereGeometry args={[0.04, 6, 6]} /><meshStandardMaterial color="#ff6600" emissive="#ff4400" emissiveIntensity={3} /></mesh>
+    </group>
+  );
+}
+
 function EnemyMesh({ data }: { data: EnemyData }) {
   const def = ENEMY_DEFS[data.type];
   const s = def.size;
   const groupRef = useRef<THREE.Group>(null!);
   const meshRef = useRef<THREE.Mesh>(null!);
+  const flashStateRef = useRef<"none" | "flash" | "frozen">("none");
 
   useFrame(() => {
     if (!groupRef.current) return;
-    groupRef.current.position.set(data.x, 0, data.z);
+    groupRef.current.position.set(data.x, data.type === "bat" ? 1.2 : 0, data.z);
+
+    if (data.type === "bat" || data.type === "knight") {
+      const newState = data.frozenTimer > 0 ? "frozen" : data.hurtFlash > 0 ? "flash" : "none";
+      if (newState !== flashStateRef.current) {
+        flashStateRef.current = newState;
+        groupRef.current.traverse((child) => {
+          const mesh = child as THREE.Mesh;
+          if (!mesh.isMesh) return;
+          const mat = mesh.material as THREE.MeshStandardMaterial;
+          if (newState === "frozen") { mat.color.setHex(0x88ccff); mat.emissiveIntensity = 2; }
+          else if (newState === "flash") { mat.color.setHex(0xffffff); mat.emissiveIntensity = 4; }
+        });
+      }
+      return;
+    }
+
     if (meshRef.current) {
       const mat = meshRef.current.material as THREE.MeshStandardMaterial;
       if (data.frozenTimer > 0) {
@@ -97,6 +159,22 @@ function EnemyMesh({ data }: { data: EnemyData }) {
 
   const isWraith = data.type === "voidwraith";
   const isBoss = data.type === "boss";
+
+  if (data.type === "bat") {
+    return (
+      <group ref={groupRef}>
+        <BatMesh color={def.color} accent={def.emissive} />
+      </group>
+    );
+  }
+
+  if (data.type === "knight") {
+    return (
+      <group ref={groupRef}>
+        <KnightMesh color={def.color} accent={def.emissive} />
+      </group>
+    );
+  }
 
   if (isBoss) {
     return (

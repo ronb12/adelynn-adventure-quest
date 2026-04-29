@@ -162,11 +162,18 @@ interface GameStore {
   bossDefeated: boolean;
   hurtCooldownEnd: number;
 
+  // Shield / Parry
+  isBlocking: boolean;
+  parryWindowUntil: number;
+  parryCounterActive: boolean;
+
   // Actions
   setGameState: (s: GameState) => void;
   togglePause: () => void;
   resetGame: () => void;
   damagePlayer: (amount: number) => void;
+  setBlocking: (v: boolean) => void;
+  triggerParryCounter: () => void;
   healPlayer: (amount: number) => void;
   fullHeal: () => void;
   addRupees: (n: number) => void;
@@ -268,6 +275,9 @@ const INITIAL_STATE = {
   bossMaxHP: 20,
   bossDefeated: false,
   hurtCooldownEnd: 0,
+  isBlocking: false,
+  parryWindowUntil: 0,
+  parryCounterActive: false,
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -280,10 +290,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
   resetGame: () => set({ ...INITIAL_STATE, gameState: "playing", runStartTime: Date.now() }),
 
   damagePlayer: (amount) => {
-    const { hurtCooldownEnd, hearts, armorLevel, shadowEndTime } = get();
+    const { hurtCooldownEnd, hearts, armorLevel, shadowEndTime, isBlocking, parryWindowUntil } = get();
     const now = Date.now();
     if (now < hurtCooldownEnd) return;
     if (now < shadowEndTime) return;
+    if (isBlocking) {
+      if (now < parryWindowUntil) {
+        set({ parryCounterActive: true, hurtCooldownEnd: now + 400 });
+        return;
+      }
+      const armorReduction = armorLevel === 2 ? 0.5 : armorLevel === 1 ? 0.75 : 1.0;
+      const newHearts = Math.max(0, hearts - amount * 0.25 * armorReduction);
+      set({ hearts: newHearts, hurtCooldownEnd: now + 600, gameState: newHearts <= 0 ? "gameover" : "playing" });
+      return;
+    }
     const reduction = armorLevel === 2 ? 0.5 : armorLevel === 1 ? 0.75 : 1.0;
     const newHearts = Math.max(0, hearts - amount * reduction);
     set({
@@ -292,6 +312,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
       gameState: newHearts <= 0 ? "gameover" : "playing",
     });
   },
+  setBlocking: (v) => {
+    if (v && !get().isBlocking) {
+      set({ isBlocking: true, parryWindowUntil: Date.now() + 300 });
+    } else {
+      set({ isBlocking: v });
+    }
+  },
+  triggerParryCounter: () => set({ parryCounterActive: true }),
   healPlayer: (amount) => set((st) => ({ hearts: Math.min(st.maxHearts, st.hearts + amount) })),
   fullHeal: () => set((st) => ({ hearts: st.maxHearts })),
   addRupees: (n) => set((st) => ({ rupees: st.rupees + n })),

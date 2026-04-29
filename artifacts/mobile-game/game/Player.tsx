@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from "react";
 import { useFrame } from "@react-three/fiber/native";
 import * as THREE from "three";
 import { useGameStore, SWORD_DEFS, SWORD_CHESTS, SwordId } from "./store";
-import { touchInput, playerState, WeaponId } from "./controls";
+import { touchInput, playerState, weaponHitZones, WeaponId } from "./controls";
 
 const PLAYER_SPEED = 6.5;
 const DASH_SPEED = 16;
@@ -11,6 +11,10 @@ const DASH_COOLDOWN = 1.4;
 const SWORD_DURATION = 0.35;
 const SPIN_DURATION = 0.55;
 const AREA_BOUND = 22.5;
+const STAMINA_MAX = 100;
+const STAMINA_REGEN = 16;
+const STAMINA_DRAIN_RUN = 22;
+const STAMINA_SLAM_COST = 25;
 
 // ── Colour palette — Adelynn ──────────────────────────────────────
 const C = {
@@ -213,6 +217,7 @@ export default function Player() {
   const dashCoolRef    = useRef(0);
   const hurtFlashRef   = useRef(0);
   const walkTimeRef    = useRef(0);
+  const staminaRef     = useRef(STAMINA_MAX);
 
   const activeSword   = useGameStore(s => s.activeSword);
   const armorLevel    = useGameStore(s => s.armorLevel);
@@ -289,6 +294,35 @@ export default function Player() {
       else if (store.nearLore) { /* lore handled in HUD tap */ }
     }
 
+    // ── Shield / Block ────────────────────────────────────────────
+    const wantsShield = touchInput.shield;
+    if (wantsShield !== playerState.isBlocking) {
+      useGameStore.getState().setBlocking(wantsShield);
+      playerState.isBlocking = wantsShield;
+    }
+
+    // ── Parry counter riposte ─────────────────────────────────────
+    if (useGameStore.getState().parryCounterActive) {
+      useGameStore.setState({ parryCounterActive: false });
+      swordTimerRef.current = SWORD_DURATION;
+    }
+
+    // ── Ground Slam ───────────────────────────────────────────────
+    if (!touchInput.groundSlamConsumed) {
+      touchInput.groundSlamConsumed = true;
+      if (staminaRef.current >= STAMINA_SLAM_COST) {
+        staminaRef.current -= STAMINA_SLAM_COST;
+        weaponHitZones.push({
+          id: `slam_${Date.now()}`,
+          x: posRef.current.x,
+          z: posRef.current.z,
+          radius: 3.5,
+          damage: 1.5,
+          type: "groundSlam",
+        });
+      }
+    }
+
     dashCoolRef.current  = Math.max(0, dashCoolRef.current  - dt);
     swordTimerRef.current = Math.max(0, swordTimerRef.current - dt);
     dashTimerRef.current  = Math.max(0, dashTimerRef.current  - dt);
@@ -337,6 +371,13 @@ export default function Player() {
     const isSwordActive = swordTimerRef.current > 0 || isSpinning;
     const swordExtend = isSpinning ? 0 : 1.4;
 
+    // ── Stamina drain / regen ─────────────────────────────────────
+    if (jLen > 0.7 && !isDashing) {
+      staminaRef.current = Math.max(0, staminaRef.current - STAMINA_DRAIN_RUN * dt);
+    } else if (!wantsShield) {
+      staminaRef.current = Math.min(STAMINA_MAX, staminaRef.current + STAMINA_REGEN * dt);
+    }
+
     playerState.x = posRef.current.x;
     playerState.z = posRef.current.z;
     playerState.facingX = facingRef.current.x;
@@ -351,6 +392,9 @@ export default function Player() {
     playerState.swordRadius = isSpinning ? 1.4 : 1.1;
     playerState.dashActive = isDashing;
     playerState.isShadowVeil = Date.now() < shadowEndTime;
+    playerState.isBlocking = wantsShield;
+    playerState.staminaCurrent = staminaRef.current;
+    playerState.staminaMax = STAMINA_MAX;
 
     if (swordRef.current) swordRef.current.visible = isSwordActive;
 

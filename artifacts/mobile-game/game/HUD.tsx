@@ -6,9 +6,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useGameStore, SWORD_DEFS, LORE_STONES } from "./store";
 import { NPC_DATA } from "./npcData";
-import { WEAPON_ICONS, WEAPON_LABELS, WeaponId } from "./controls";
+import { WEAPON_ICONS, WEAPON_LABELS, WeaponId, playerState } from "./controls";
 import { saveBestRecord } from "./saveManager";
 import colors from "../constants/colors";
+
+const AREA_BOUND = 22.5;
+const MAP_SIZE = 76;
 
 // ── Hearts ────────────────────────────────────────────────────────
 function Hearts() {
@@ -448,6 +451,121 @@ function VictoryScreen() {
   );
 }
 
+// ── Stamina Bar ───────────────────────────────────────────────────
+function StaminaBar() {
+  const [stamina, setStamina] = useState(100);
+  const insets = useSafeAreaInsets();
+  const gameState = useGameStore(s => s.gameState);
+  useEffect(() => {
+    const id = setInterval(() => setStamina(playerState.staminaCurrent), 80);
+    return () => clearInterval(id);
+  }, []);
+  if (gameState === "gameover" || gameState === "victory" || gameState === "paused") return null;
+  const pct = Math.max(0, Math.min(1, stamina / 100));
+  const barColor = pct > 0.5 ? "#44dd66" : pct > 0.25 ? "#ffcc00" : "#ff4422";
+  return (
+    <View style={[styles.staminaWrap, { top: insets.top + 38 }]}>
+      <View style={styles.staminaBg}>
+        <View style={[styles.staminaFill, { width: `${pct * 100}%` as any, backgroundColor: barColor }]} />
+      </View>
+    </View>
+  );
+}
+
+// ── Shield Indicator ──────────────────────────────────────────────
+function ShieldIndicator() {
+  const isBlocking = useGameStore(s => s.isBlocking);
+  const parryWindow = useGameStore(s => s.parryWindowUntil);
+  const now = Date.now();
+  const isParry = isBlocking && parryWindow > now;
+  return isBlocking ? (
+    <View style={[styles.shieldIndicator, isParry && styles.shieldIndicatorParry]}>
+      <Text style={styles.shieldIndicatorIcon}>🛡️</Text>
+      {isParry && <Text style={styles.shieldIndicatorText}>PARRY!</Text>}
+    </View>
+  ) : null;
+}
+
+// ── Mini-map ──────────────────────────────────────────────────────
+const AREA_LANDMARKS: Record<string, Array<{ x: number; z: number; color: string; shape: "circle" | "diamond" | "square" }>> = {
+  field:  [
+    { x: 22, z: 0, color: "#22ff88", shape: "diamond" },
+    { x: -22, z: 0, color: "#ffaa44", shape: "diamond" },
+    { x: -18, z: -18, color: "#44aaff", shape: "circle" },
+  ],
+  forest: [
+    { x: -20, z: 0, color: "#66ff88", shape: "diamond" },
+    { x: 0, z: -22, color: "#ff4444", shape: "diamond" },
+    { x: 18, z: 18, color: "#44aaff", shape: "circle" },
+  ],
+  desert: [
+    { x: 20, z: 0, color: "#66ff88", shape: "diamond" },
+    { x: 0, z: -22, color: "#ff4444", shape: "diamond" },
+    { x: 18, z: -18, color: "#44aaff", shape: "circle" },
+  ],
+  boss: [{ x: -18, z: 18, color: "#44aaff", shape: "circle" }],
+};
+
+function MiniMap() {
+  const [px, setPx] = useState(0);
+  const [pz, setPz] = useState(0);
+  const currentArea = useGameStore(s => s.currentArea);
+  const gameState = useGameStore(s => s.gameState);
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPx(playerState.x);
+      setPz(playerState.z);
+    }, 100);
+    return () => clearInterval(id);
+  }, []);
+  if (gameState === "gameover" || gameState === "victory") return null;
+  const scale = MAP_SIZE / (AREA_BOUND * 2);
+  const toMapX = (wx: number) => MAP_SIZE / 2 + wx * scale;
+  const toMapY = (wz: number) => MAP_SIZE / 2 + wz * scale;
+  const landmarks = AREA_LANDMARKS[currentArea] ?? [];
+  return (
+    <View style={styles.miniMapWrap}>
+      <View style={styles.miniMapBg}>
+        {/* Cardinal grid lines */}
+        <View style={styles.miniMapGridH} />
+        <View style={styles.miniMapGridV} />
+        {/* Landmarks */}
+        {landmarks.map((lm, i) => {
+          const mx = toMapX(lm.x);
+          const my = toMapY(lm.z);
+          if (lm.shape === "diamond") {
+            return (
+              <View key={i} style={[styles.miniMapDiamond, {
+                left: mx - 4, top: my - 4,
+                borderColor: lm.color,
+              }]} />
+            );
+          }
+          if (lm.shape === "circle") {
+            return (
+              <View key={i} style={[styles.miniMapCircle, {
+                left: mx - 3, top: my - 3,
+                backgroundColor: lm.color,
+              }]} />
+            );
+          }
+          return (
+            <View key={i} style={[styles.miniMapSquare, {
+              left: mx - 3, top: my - 3,
+              backgroundColor: lm.color,
+            }]} />
+          );
+        })}
+        {/* Player dot */}
+        <View style={[styles.miniMapPlayer, {
+          left: toMapX(px) - 4,
+          top: toMapY(pz) - 4,
+        }]} />
+      </View>
+    </View>
+  );
+}
+
 // ── Root HUD ──────────────────────────────────────────────────────
 export default function HUD() {
   const gameState = useGameStore(s => s.gameState);
@@ -455,8 +573,11 @@ export default function HUD() {
   return (
     <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
       <Hearts />
+      <StaminaBar />
       <ScorePanel />
       <WeaponDisplay />
+      <ShieldIndicator />
+      <MiniMap />
       <ComboPopup />
       <ItemFanfare />
       <NPCDialogue />
@@ -709,4 +830,115 @@ const styles = StyleSheet.create({
   menuBtnDanger: { backgroundColor: "#7a1a1a" },
   menuBtnText: { color: "#fff", fontSize: 15, fontFamily: "Inter_600SemiBold" },
   statText: { color: "#c4b8e0", fontSize: 14, fontFamily: "Inter_400Regular", marginVertical: 3 },
+
+  // ── Stamina bar
+  staminaWrap: {
+    position: "absolute",
+    left: 14,
+  },
+  staminaBg: {
+    width: 120,
+    height: 7,
+    backgroundColor: "rgba(20,10,10,0.6)",
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    overflow: "hidden",
+  },
+  staminaFill: {
+    height: "100%",
+    borderRadius: 4,
+  },
+
+  // ── Shield indicator
+  shieldIndicator: {
+    position: "absolute",
+    bottom: 220,
+    left: "50%" as any,
+    transform: [{ translateX: -22 }],
+    backgroundColor: "rgba(0,60,30,0.8)",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1.5,
+    borderColor: "#2a8a5a",
+  },
+  shieldIndicatorParry: {
+    backgroundColor: "rgba(60,120,255,0.85)",
+    borderColor: "#88aaff",
+    shadowColor: "#88aaff",
+    shadowOpacity: 0.9,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  shieldIndicatorIcon: { fontSize: 18 },
+  shieldIndicatorText: { color: "#ffffff", fontSize: 11, fontFamily: "Inter_700Bold", letterSpacing: 1.5 },
+
+  // ── Mini-map
+  miniMapWrap: {
+    position: "absolute",
+    bottom: 200,
+    left: 14,
+  },
+  miniMapBg: {
+    width: MAP_SIZE,
+    height: MAP_SIZE,
+    backgroundColor: "rgba(10,10,20,0.7)",
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.15)",
+    overflow: "hidden",
+    position: "relative",
+  },
+  miniMapGridH: {
+    position: "absolute",
+    left: 0,
+    top: MAP_SIZE / 2 - 0.5,
+    width: MAP_SIZE,
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  miniMapGridV: {
+    position: "absolute",
+    left: MAP_SIZE / 2 - 0.5,
+    top: 0,
+    width: 1,
+    height: MAP_SIZE,
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  miniMapPlayer: {
+    position: "absolute",
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#ffffff",
+    shadowColor: "#ffffff",
+    shadowOpacity: 1,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  miniMapDiamond: {
+    position: "absolute",
+    width: 8,
+    height: 8,
+    transform: [{ rotate: "45deg" }],
+    borderWidth: 1.5,
+    borderRadius: 1,
+  },
+  miniMapCircle: {
+    position: "absolute",
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    opacity: 0.9,
+  },
+  miniMapSquare: {
+    position: "absolute",
+    width: 6,
+    height: 6,
+    opacity: 0.9,
+  },
 });

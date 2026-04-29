@@ -13,6 +13,9 @@ export interface TouchInput {
   cycleSwordConsumed: boolean;
   cycleWeapon: boolean;
   cycleWeaponConsumed: boolean;
+  shield: boolean;
+  groundSlam: boolean;
+  groundSlamConsumed: boolean;
 }
 
 export const touchInput: TouchInput = {
@@ -23,6 +26,8 @@ export const touchInput: TouchInput = {
   fireWeapon: false, fireWeaponConsumed: true,
   cycleSword: false, cycleSwordConsumed: true,
   cycleWeapon: false, cycleWeaponConsumed: true,
+  shield: false,
+  groundSlam: false, groundSlamConsumed: true,
 };
 
 export interface PlayerState {
@@ -34,6 +39,9 @@ export interface PlayerState {
   dashActive: boolean;
   isRunning: boolean;
   isShadowVeil: boolean;
+  isBlocking: boolean;
+  staminaCurrent: number;
+  staminaMax: number;
 }
 
 export const playerState: PlayerState = {
@@ -45,6 +53,9 @@ export const playerState: PlayerState = {
   dashActive: false,
   isRunning: false,
   isShadowVeil: false,
+  isBlocking: false,
+  staminaCurrent: 100,
+  staminaMax: 100,
 };
 
 export interface PickupSpawn {
