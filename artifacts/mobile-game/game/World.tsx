@@ -28,9 +28,7 @@ function Portal({ x, z, rotY = 0, color, targetArea, spawnX, spawnZ }: {
   x: number; z: number; rotY?: number; color: string; targetArea: AreaId; spawnX: number; spawnZ: number;
 }) {
   const glowRef = useRef<THREE.Mesh>(null!);
-  const triggerAreaTransition = useGameStore(s => s.triggerAreaTransition);
-  const gameState = useGameStore(s => s.gameState);
-  const cooldownRef = useRef(0);
+  const cooldownRef = useRef(2.0); // initial cooldown prevents immediate re-trigger on spawn
   const timeRef = useRef(0);
 
   useFrame((_, delta) => {
@@ -40,14 +38,15 @@ function Portal({ x, z, rotY = 0, color, targetArea, spawnX, spawnZ }: {
       mat.emissiveIntensity = 0.8 + Math.sin(timeRef.current * 2.5) * 0.4;
       mat.opacity = 0.5 + Math.sin(timeRef.current * 2.5) * 0.1;
     }
-    if (gameState !== "playing") return;
+    const store = useGameStore.getState();
+    if (store.gameState !== "playing") return;
     cooldownRef.current -= delta;
     if (cooldownRef.current > 0) return;
     const dx = playerState.x - x;
     const dz = playerState.z - z;
     if (Math.sqrt(dx * dx + dz * dz) < 1.8) {
       cooldownRef.current = 2;
-      triggerAreaTransition({ area: targetArea, spawnX, spawnZ });
+      store.triggerAreaTransition({ area: targetArea, spawnX, spawnZ });
     }
   });
 

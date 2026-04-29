@@ -222,8 +222,7 @@ export default function Player() {
   const activeSword   = useGameStore(s => s.activeSword);
   const armorLevel    = useGameStore(s => s.armorLevel);
   const hurtCooldownEnd = useGameStore(s => s.hurtCooldownEnd);
-  const pendingTransition = useGameStore(s => s.pendingTransition);
-  const completeAreaTransition = useGameStore(s => s.completeAreaTransition);
+  // pendingTransition is read live from getState() inside useFrame (not via hook) to avoid stale closures
   const gameState     = useGameStore(s => s.gameState);
   const shadowEndTime = useGameStore(s => s.shadowEndTime);
 
@@ -239,10 +238,11 @@ export default function Player() {
   useFrame((state, delta) => {
     if (!groupRef.current) return;
 
+    const pendingTransition = useGameStore.getState().pendingTransition;
     if (pendingTransition && !transitionRef.current) {
       transitionRef.current = true;
       posRef.current.set(pendingTransition.spawnX, 0, pendingTransition.spawnZ);
-      completeAreaTransition();
+      useGameStore.getState().completeAreaTransition();
       transitionRef.current = false;
       return;
     }
