@@ -356,11 +356,12 @@ function BossHealthBar() {
   const currentArea = useGameStore(s => s.currentArea);
   const bossDefeated = useGameStore(s => s.bossDefeated);
   const insets = useSafeAreaInsets();
-  if (currentArea !== "boss" || bossDefeated) return null;
+  if ((currentArea !== "boss" && currentArea !== "dungeon11") || bossDefeated) return null;
   const pct = bossHP / bossMaxHP;
+  const bossLabel = currentArea === "dungeon11" ? "💀 MALGRATH — TRUE FORM 💀" : "☠ MALGRATHAK ☠";
   return (
     <View style={[styles.bossBarContainer, { bottom: insets.bottom + 180 }]}>
-      <Text style={styles.bossName}>☠ MALGRATHAK ☠</Text>
+      <Text style={styles.bossName}>{bossLabel}</Text>
       <View style={styles.bossBarBg}>
         <View style={[styles.bossBarFill, { width: `${pct * 100}%`, backgroundColor: pct < 0.3 ? "#ff2244" : "#cc0066" }]} />
       </View>
@@ -443,6 +444,7 @@ function GameOverScreen() {
     <View style={styles.overlay}>
       <View style={styles.menuCard}>
         <Text style={[styles.menuTitle, { color: "#ff4444", fontSize: 32 }]}>DEFEATED</Text>
+        <Text style={styles.defeatLine}>Malgrath's shadow consumed the realm... but Adelynn's light cannot be extinguished forever.</Text>
         <Text style={styles.statText}>Score: {score.toLocaleString()}</Text>
         <Text style={styles.statText}>Best Combo: x{maxCombo}</Text>
         <Text style={styles.statText}>Enemies Slain: {totalKills}</Text>
@@ -476,6 +478,12 @@ function VictoryScreen() {
       <View style={styles.menuCard}>
         <Text style={[styles.menuTitle, { color: "#f59e0b", fontSize: 28 }]}>👑 VICTORY!</Text>
         <Text style={styles.victorySubtitle}>The Crown of Radiance is Restored!</Text>
+        <Text style={[styles.victoryEpilogue]}>
+          With Malgrath's last cry, the shadow armour shattered.{"\n"}
+          The seven Bound Spirits were freed — Lumis, Zephyr, Solara, Glacira and the others rose into the sky, reuniting with the Crown.{"\n"}
+          Adelynn placed the mended Crown upon the altar of Aldenmere.{"\n"}
+          Light flooded every corner of the realm, and the long shadow of the Shattered Crown passed into legend.
+        </Text>
         <Text style={styles.statText}>Score: {score.toLocaleString()}</Text>
         <Text style={styles.statText}>Time: {mins}:{secs}</Text>
         <Text style={styles.statText}>Best Combo: x{maxCombo}</Text>
@@ -609,7 +617,7 @@ const AREA_INFO: Record<AreaId, { name: string; subtitle: string; color: string 
   field:    { name: "Verdant Fields",       subtitle: "Chapter I — The Journey Begins",   color: "#44cc66" },
   forest:   { name: "Thornwood Forest",     subtitle: "Chapter II — Into the Dark",       color: "#228833" },
   desert:   { name: "Ashrock Sands",        subtitle: "Chapter III — Heat of Betrayal",   color: "#ffaa44" },
-  boss:     { name: "Malgrath's Sanctum",   subtitle: "Final Chapter — The Shattered Crown", color: "#ff4488" },
+  boss:     { name: "Malgrath's Sanctum",   subtitle: "The Inner Sanctum — His Antechamber", color: "#ff4488" },
   cave:     { name: "Deepstone Caverns",    subtitle: "Chapter IV — Bones of the Earth",  color: "#886633" },
   jungle:   { name: "Verdant Depths",       subtitle: "Chapter V — The Ancient Green",    color: "#22aa44" },
   ice:      { name: "Frostpeak Tundra",     subtitle: "Chapter VI — Frozen in Time",      color: "#88ccff" },
@@ -626,7 +634,7 @@ const AREA_INFO: Record<AreaId, { name: string; subtitle: string; color: string 
   dungeon8:  { name: "Misery Mire",         subtitle: "Dungeon VIII — The Shapeless Dark", color: "#88aa33" },
   dungeon9:  { name: "Turtle Rock",         subtitle: "Dungeon IX — The Dragon's Bones",   color: "#ff5511" },
   dungeon10: { name: "Palace of Darkness",  subtitle: "Dungeon X — Crystallised Despair",  color: "#6600cc" },
-  dungeon11: { name: "Malgrath's Fortress", subtitle: "Dungeon XI — End of All Shadows",   color: "#cc00ff" },
+  dungeon11: { name: "Malgrath's Fortress", subtitle: "Final Chapter — The End of All Shadows", color: "#cc00ff" },
 };
 
 function AreaChapterCard() {
@@ -1153,7 +1161,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   menuTitle: { color: "#e8e0d4", fontSize: 26, fontFamily: "Inter_700Bold", letterSpacing: 4, marginBottom: 24 },
-  victorySubtitle: { color: "#b89aff", fontSize: 13, fontFamily: "Inter_400Regular", marginTop: -16, marginBottom: 20, textAlign: "center" },
+  victorySubtitle: { color: "#b89aff", fontSize: 13, fontFamily: "Inter_400Regular", marginTop: -16, marginBottom: 12, textAlign: "center" },
+  victoryEpilogue: {
+    color: "rgba(220,210,255,0.78)", fontSize: 12, fontFamily: "Inter_400Regular",
+    lineHeight: 19, textAlign: "center", marginBottom: 18,
+    paddingHorizontal: 6,
+    borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.1)",
+    paddingTop: 12,
+  },
+  defeatLine: {
+    color: "rgba(255,180,180,0.7)", fontSize: 12, fontFamily: "Inter_400Regular",
+    lineHeight: 18, textAlign: "center", marginTop: -16, marginBottom: 18, paddingHorizontal: 6,
+  },
   menuBtn: {
     flexDirection: "row", alignItems: "center", gap: 10,
     backgroundColor: "#4c2a8a",

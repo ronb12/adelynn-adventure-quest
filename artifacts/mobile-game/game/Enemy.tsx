@@ -664,6 +664,10 @@ export default function Enemies() {
   useEffect(() => {
     enemiesRef.current = spawnEnemies(currentArea, bossDefeated);
     projectilesRef.current = [];
+    // Reset boss HP bar for Malgrath's true form in dungeon11
+    if (currentArea === "dungeon11") {
+      useGameStore.setState({ bossHP: 50, bossMaxHP: 50, bossDefeated: false });
+    }
     triggerRender(n => n + 1);
   }, [currentArea]);
 
@@ -693,12 +697,13 @@ export default function Enemies() {
           e.iframes = 0.4;
           e.hurtFlash = 0.18;
           if (hz.type === "frost") e.frozenTimer = 1.5;
-          if (e.type === "boss") useGameStore.getState().damageBoss(hz.damage);
+          if (e.type === "boss" || e.type === "malgrathtrue") useGameStore.getState().damageBoss(hz.damage);
           if (e.hp <= 0) {
             const r = Math.random();
             if (r < 0.3) pendingPickupSpawns.push({ type: "heart", x: e.x, z: e.z });
             else if (r < 0.7) pendingPickupSpawns.push({ type: "rupee", x: e.x, z: e.z });
             useGameStore.getState().addKill(ENEMY_DEFS[e.type].pts);
+            if (e.type === "malgrathtrue") useGameStore.getState().setGameState("victory");
             anyDied = true;
           }
         }
@@ -718,12 +723,13 @@ export default function Enemies() {
           e.hp -= dmg;
           e.iframes = 0.4;
           e.hurtFlash = 0.18;
-          if (e.type === "boss") useGameStore.getState().damageBoss(dmg);
+          if (e.type === "boss" || e.type === "malgrathtrue") useGameStore.getState().damageBoss(dmg);
           if (e.hp <= 0) {
             const r = Math.random();
             if (r < 0.3) pendingPickupSpawns.push({ type: "heart", x: e.x, z: e.z });
             else if (r < 0.7) pendingPickupSpawns.push({ type: "rupee", x: e.x, z: e.z });
             useGameStore.getState().addKill(def.pts);
+            if (e.type === "malgrathtrue") useGameStore.getState().setGameState("victory");
             anyDied = true;
           }
           continue;

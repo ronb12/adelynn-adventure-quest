@@ -144,7 +144,7 @@ export default function MenuScreen() {
       {/* Footer */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
         <Text style={styles.footerText}>
-          4 Areas · 8 Enemy Types · 10 Swords · 13 Weapons
+          21 Areas · 59 Enemy Types · 10 Swords · 22 Weapons
         </Text>
       </View>
     </ImageBackground>
