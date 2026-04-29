@@ -714,7 +714,7 @@ function BossArea() {
 }
 
 function ItemAltar({ altarKey, item, x, z, color, icon }: {
-  altarKey: string; item: "magicMirror" | "speedBoots" | "hookshot";
+  altarKey: string; item: "magicMirror" | "speedBoots" | "hookshot" | "flippers";
   x: number; z: number; color: string; icon: string;
 }) {
   const chestsOpened = useGameStore(s => s.chestsOpened);
@@ -739,7 +739,14 @@ function ItemAltar({ altarKey, item, x, z, color, icon }: {
     const dz = playerState.z - z;
     if (Math.sqrt(dx * dx + dz * dz) < 1.6) {
       cooldownRef.current = 2;
-      store.collectSpecialItem(item, altarKey);
+      if (item === "flippers") {
+        if (!store.chestsOpened.includes(altarKey)) {
+          store.unlockFlippers();
+          useGameStore.setState(st => ({ chestsOpened: [...st.chestsOpened, altarKey] }));
+        }
+      } else {
+        store.collectSpecialItem(item, altarKey);
+      }
     }
   });
 
@@ -1044,7 +1051,7 @@ function Dungeon4Area() {
       {pillars.map(([px,pz],i)=>(
         <mesh key={i} position={[px,2.5,pz]}><cylinderGeometry args={[0.5,0.6,5,6]}/><meshStandardMaterial color={cols[i%cols.length]} emissive="#003311" emissiveIntensity={0.4}/></mesh>
       ))}
-      <ItemAltar altarKey="item-flippers" item="hookshot" x={0} z={-14} color="#33bbff" icon="🌊"/>
+      <ItemAltar altarKey="item-flippers" item="flippers" x={0} z={-14} color="#33bbff" icon="🌊"/>
       <Portal x={-20} z={0} rotY={Math.PI/2} color="#33bb66" targetArea="jungle" spawnX={20} spawnZ={0}/>
       <Portal x={20}  z={0} rotY={Math.PI/2} color="#33bb66" targetArea="dungeon5" spawnX={-20} spawnZ={0}/>
       {chests.map(sc=><SwordChest key={sc.key} chestKey={sc.key} x={sc.x} z={sc.z}/>)}

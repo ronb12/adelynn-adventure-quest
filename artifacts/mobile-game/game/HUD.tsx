@@ -257,15 +257,23 @@ function FountainPrompt() {
 }
 
 // ── Shop UI ───────────────────────────────────────────────────────
-const SHOP_ITEMS = [
+const SHOP_ITEMS: { id: string; label: string; icon: string; cost: number; requiredWeapon?: string }[] = [
   { id: "arrows",   label: "Arrows +10",      icon: "🏹", cost: 20  },
-  { id: "moonbow",  label: "Moonbow Ammo +15", icon: "🌙", cost: 25  },
+  { id: "moonbow",  label: "Moonbow Ammo +15", icon: "🌙", cost: 25,  requiredWeapon: "moonbow"  },
   { id: "bombs",    label: "Bombs +5",         icon: "🧪", cost: 35  },
   { id: "shurikens",label: "Stars +15",        icon: "⭐", cost: 15  },
-  { id: "frost",    label: "Frost +5",         icon: "❄️", cost: 30  },
-  { id: "flare",    label: "Flare +3",         icon: "☀️", cost: 40  },
-  { id: "veil",     label: "Veil Crystal",     icon: "💠", cost: 60  },
-  { id: "quake",    label: "Quake Rune",       icon: "🪨", cost: 55  },
+  { id: "frost",    label: "Frost +5",         icon: "❄️", cost: 30,  requiredWeapon: "frost"    },
+  { id: "flare",    label: "Flare +3",         icon: "☀️", cost: 40,  requiredWeapon: "flare"    },
+  { id: "veil",     label: "Veil Crystal",     icon: "💠", cost: 60,  requiredWeapon: "veil"     },
+  { id: "quake",    label: "Quake Rune",       icon: "🪨", cost: 55,  requiredWeapon: "quake"    },
+  { id: "firerod",  label: "Fire Rod x5",      icon: "🔥", cost: 50,  requiredWeapon: "firerod"  },
+  { id: "icerod",   label: "Ice Rod x5",       icon: "🧊", cost: 50,  requiredWeapon: "icerod"   },
+  { id: "hammer",   label: "Hammer x3",        icon: "🔨", cost: 45,  requiredWeapon: "hammer"   },
+  { id: "net",      label: "Bug Net x3",       icon: "🕸️", cost: 40,  requiredWeapon: "net"      },
+  { id: "cape",     label: "Cape x2",          icon: "🧣", cost: 55,  requiredWeapon: "cape"     },
+  { id: "bombos",   label: "Bombos x2",        icon: "💣", cost: 70,  requiredWeapon: "bombos"   },
+  { id: "ether",    label: "Ether x2",         icon: "🌀", cost: 70,  requiredWeapon: "ether"    },
+  { id: "dipsgram", label: "Dipsgram x2",      icon: "⚡", cost: 70,  requiredWeapon: "dipsgram" },
   { id: "heart",    label: "Restore Hearts",   icon: "❤️", cost: 80  },
 ];
 
@@ -274,8 +282,13 @@ function ShopUI() {
   const closeShop = useGameStore(s => s.closeShop);
   const rupees = useGameStore(s => s.rupees);
   const buyItem = useGameStore(s => s.buyItem);
+  const unlockedWeapons = useGameStore(s => s.unlockedWeapons);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const visibleItems = SHOP_ITEMS.filter(item =>
+    !item.requiredWeapon || unlockedWeapons.includes(item.requiredWeapon as WeaponId)
+  );
 
   const handleBuy = useCallback((item: typeof SHOP_ITEMS[0]) => {
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
@@ -300,7 +313,7 @@ function ShopUI() {
           </View>
         )}
         <ScrollView style={{ maxHeight: 340 }} showsVerticalScrollIndicator={false}>
-          {SHOP_ITEMS.map(item => (
+          {visibleItems.map(item => (
             <TouchableOpacity
               key={item.id}
               style={[styles.shopRow, rupees < item.cost && styles.shopRowDim]}

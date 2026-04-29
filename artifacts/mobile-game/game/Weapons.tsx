@@ -69,6 +69,18 @@ function ProjMesh({ p }: { p: Proj }) {
       <meshStandardMaterial color="#888899" emissive="#5566aa" emissiveIntensity={1} />
     </mesh>
   );
+  if (p.type === "firerod") return (
+    <mesh ref={ref}>
+      <sphereGeometry args={[0.2, 8, 8]} />
+      <meshStandardMaterial color="#ff5500" emissive="#ff3300" emissiveIntensity={3.5} />
+    </mesh>
+  );
+  if (p.type === "icerod") return (
+    <mesh ref={ref}>
+      <octahedronGeometry args={[0.22]} />
+      <meshStandardMaterial color="#aaeeff" emissive="#44aaff" emissiveIntensity={3} />
+    </mesh>
+  );
   // default (flare, etc.)
   return (
     <mesh ref={ref}>
@@ -195,6 +207,55 @@ export default function Weapons() {
     } else if (w === "chain") {
       store.activateChain();
       projRef.current.push({ id: nextId(), x: px, z: pz, dx: fx, dz: fz, speed: 20, damage: 0.5, life: 0.8, type: "chain" });
+    } else if (w === "firerod") {
+      if (!store.useFireRod()) return;
+      // Three-way fire beam spread
+      for (let i = -1; i <= 1; i++) {
+        const ang = Math.atan2(fz, fx) + i * 0.25;
+        projRef.current.push({ id: nextId(), x: px, z: pz, dx: Math.cos(ang), dz: Math.sin(ang), speed: 22, damage: 1.8, life: 1.2, type: "firerod" });
+      }
+    } else if (w === "icerod") {
+      if (!store.useIceRod()) return;
+      // Freeze cone — instant range projectile + freeze effect
+      projRef.current.push({ id: nextId(), x: px, z: pz, dx: fx, dz: fz, speed: 18, damage: 1.2, life: 1.5, type: "icerod" });
+      weaponEffects.freezeUntil = Math.max(weaponEffects.freezeUntil, Date.now() + 3000);
+    } else if (w === "hammer") {
+      if (!store.useHammer()) return;
+      // Ground slam — instant wide area around player
+      weaponHitZones.push({ id: nextId(), x: px, z: pz, radius: 3.0, damage: 2.5, type: "hammer" });
+      setExplosions(prev => [...prev, { id: nextId(), x: px, z: pz }]);
+      setTimeout(() => weaponHitZones.splice(0, weaponHitZones.length), 120);
+    } else if (w === "net") {
+      if (!store.useNet()) return;
+      // Stun zone in front of player
+      const tx = px + fx * 2.5;
+      const tz = pz + fz * 2.5;
+      weaponHitZones.push({ id: nextId(), x: tx, z: tz, radius: 3.5, damage: 0.25, type: "net" });
+      weaponEffects.stunUntil = Math.max(weaponEffects.stunUntil, Date.now() + 2500);
+      setExplosions(prev => [...prev, { id: nextId(), x: tx, z: tz }]);
+      setTimeout(() => weaponHitZones.splice(0, weaponHitZones.length), 120);
+    } else if (w === "cape") {
+      if (!store.useCape()) return;
+      // Brief invincibility (uses shadowEndTime the same way the Shadow Veil does)
+      store.activateShadow();
+    } else if (w === "bombos") {
+      if (!store.useBombos()) return;
+      // Explosive ring — large area, high damage
+      weaponHitZones.push({ id: nextId(), x: px, z: pz, radius: 18, damage: 2.0, type: "bombos" });
+      setExplosions(prev => [...prev, { id: nextId(), x: px, z: pz }]);
+      setTimeout(() => weaponHitZones.splice(0, weaponHitZones.length), 150);
+    } else if (w === "ether") {
+      if (!store.useEther()) return;
+      // Freeze every enemy on screen
+      weaponEffects.freezeUntil = Math.max(weaponEffects.freezeUntil, Date.now() + 3500);
+      setExplosions(prev => [...prev, { id: nextId(), x: px, z: pz }]);
+    } else if (w === "dipsgram") {
+      if (!store.useDip()) return;
+      // Lightning — hits all, stun + damage
+      weaponHitZones.push({ id: nextId(), x: px, z: pz, radius: 22, damage: 1.5, type: "dipsgram" });
+      weaponEffects.stunUntil = Math.max(weaponEffects.stunUntil, Date.now() + 1800);
+      setExplosions(prev => [...prev, { id: nextId(), x: px, z: pz }]);
+      setTimeout(() => weaponHitZones.splice(0, weaponHitZones.length), 150);
     }
     triggerRender(n => n + 1);
   }

@@ -751,7 +751,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     else if (item === "flare") updates.flareCharges = Math.min(st.flareCharges + 3, 10);
     else if (item === "veil") updates.veilCrystals = Math.min(st.veilCrystals + 2, 10);
     else if (item === "quake") updates.quakeRunes = Math.min(st.quakeRunes + 2, 8);
-    else if (item === "moonbow") updates.moonbowAmmo = Math.min(st.moonbowAmmo + 15, 60);
+    else if (item === "moonbow")  updates.moonbowAmmo    = Math.min(st.moonbowAmmo    + 15, 60);
+    else if (item === "firerod")  updates.fireRodCharges  = Math.min(st.fireRodCharges  + 5,  15);
+    else if (item === "icerod")   updates.iceRodCharges   = Math.min(st.iceRodCharges   + 5,  15);
+    else if (item === "hammer")   updates.hammerCharges   = Math.min(st.hammerCharges   + 3,  10);
+    else if (item === "net")      updates.netCharges      = Math.min(st.netCharges      + 3,  10);
+    else if (item === "cape")     updates.capeCharges     = Math.min(st.capeCharges     + 2,   5);
+    else if (item === "bombos")   updates.bombosCharges   = Math.min(st.bombosCharges   + 2,   5);
+    else if (item === "ether")    updates.etherCharges    = Math.min(st.etherCharges    + 2,   5);
+    else if (item === "dipsgram") updates.dipCharges      = Math.min(st.dipCharges      + 2,   5);
     set(updates as any);
     return true;
   },
