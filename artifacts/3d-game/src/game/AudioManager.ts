@@ -481,3 +481,74 @@ export function sfxCombo() {
   schedNote(NOTE.G4, now + 0.12, 0.06, 'square', 0.20, dest, NOTE.G5);
   schedNote(NOTE.C5, now + 0.18, 0.18, 'square', 0.26, dest, NOTE.C5 * 2);
 }
+
+export function sfxDodge() {
+  const ctx = getCtx(); const dest = getSfxDest();
+  if (!ctx || !dest) return;
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator(); const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(dest);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(520, now);
+  osc.frequency.exponentialRampToValueAtTime(140, now + 0.13);
+  gain.gain.setValueAtTime(0.18, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+  osc.start(now); osc.stop(now + 0.13);
+}
+
+export function sfxGroundSlam() {
+  const ctx = getCtx(); const dest = getSfxDest();
+  if (!ctx || !dest) return;
+  const now = ctx.currentTime;
+  // Deep rumble
+  const osc = ctx.createOscillator(); const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(dest);
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(200, now);
+  osc.frequency.exponentialRampToValueAtTime(35, now + 0.38);
+  gain.gain.setValueAtTime(0.55, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+  osc.start(now); osc.stop(now + 0.38);
+  // High crack
+  const osc2 = ctx.createOscillator(); const gain2 = ctx.createGain();
+  osc2.connect(gain2); gain2.connect(dest);
+  osc2.type = 'square';
+  osc2.frequency.setValueAtTime(900, now);
+  osc2.frequency.exponentialRampToValueAtTime(200, now + 0.06);
+  gain2.gain.setValueAtTime(0.25, now);
+  gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+  osc2.start(now); osc2.stop(now + 0.08);
+}
+
+export function sfxParry() {
+  const ctx = getCtx(); const dest = getSfxDest();
+  if (!ctx || !dest) return;
+  const now = ctx.currentTime;
+  // Metallic clang
+  const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.14), ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.035));
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const filter = ctx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = 1800;
+  const gain = ctx.createGain();
+  src.connect(filter); filter.connect(gain); gain.connect(dest);
+  gain.gain.setValueAtTime(0.45, now);
+  src.start(now);
+  // Resonant ping
+  schedNote(NOTE.A4 * 2, now, 0.22, 'sine', 0.22, dest, NOTE.A4 * 2);
+}
+
+export function sfxShieldBash() {
+  const ctx = getCtx(); const dest = getSfxDest();
+  if (!ctx || !dest) return;
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator(); const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(dest);
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(320, now);
+  osc.frequency.exponentialRampToValueAtTime(90, now + 0.18);
+  gain.gain.setValueAtTime(0.35, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+  osc.start(now); osc.stop(now + 0.18);
+  schedNote(NOTE.E3 ?? 164.8, now + 0.04, 0.12, 'triangle', 0.18, dest, NOTE.E3 ?? 164.8);
+}

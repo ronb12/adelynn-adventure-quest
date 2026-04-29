@@ -9,6 +9,7 @@ export const mobileInput = {
   shield:     false,
   run:        false,
   jump:       false,
+  dodge:      false,
   // Impulse flags — Player.tsx clears these after reading
   interact:   false,
   nextWeapon: false,

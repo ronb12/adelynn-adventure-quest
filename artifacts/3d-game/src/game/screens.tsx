@@ -236,11 +236,15 @@ export function PauseScreen() {
           <span><span className="text-amber-400">Space</span> — Attack</span>
           <span><span className="text-amber-400">E</span> — Interact</span>
           <span><span className="text-amber-400">V</span> — Jump</span>
+          <span><span className="text-amber-400">R</span> — Dodge roll</span>
           <span><span className="text-amber-400">Q</span> — Cycle weapon</span>
           <span><span className="text-amber-400">Z</span> — Cycle sword</span>
           <span><span className="text-amber-400">F</span> — Shield block</span>
+          <span><span className="text-amber-400">F (on press)</span> — Parry</span>
+          <span><span className="text-amber-400">F+Space</span> — Shield bash</span>
+          <span><span className="text-amber-400">V+Space</span> — Ground slam</span>
           <span><span className="text-amber-400">Esc</span> — Pause</span>
-          <span><span className="text-amber-400">Shift+Atk</span> — Spin</span>
+          <span><span className="text-amber-400">Hold+Space</span> — Spin</span>
         </div>
 
         {/* World Map toggle */}

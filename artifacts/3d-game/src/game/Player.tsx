@@ -4,7 +4,7 @@ import { useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { Controls } from './controls';
 import { useGameStore, SWORD_DEFS, SWORD_CHESTS, WEAPON_PICKUPS, SwordId, SleepPhase } from './store';
-import { sfxSword, sfxArrow, sfxBomb, sfxBoomerang, sfxJump } from './AudioManager';
+import { sfxSword, sfxArrow, sfxBomb, sfxBoomerang, sfxJump, sfxDodge, sfxGroundSlam, sfxParry, sfxShieldBash } from './AudioManager';
 import { mobileInput } from './mobileControls';
 
 const SPEED      = 5;
@@ -540,6 +540,20 @@ export function Player() {
   const stamina       = useRef(STAMINA_MAX);
   const sleepTimer    = useRef(0);
   const sleepFinished = useRef(false);
+  // Dodge roll
+  const isRolling    = useRef(false);
+  const rollTimer    = useRef(0);
+  const rollCooldown = useRef(0);
+  const rollDirX     = useRef(0);
+  const rollDirZ     = useRef(0);
+  const prevDodge    = useRef(false);
+  // Ground slam
+  const isSlamming   = useRef(false);
+  // Parry
+  const prevBlockRef = useRef(false);
+  // Shield bash
+  const isShieldBashing = useRef(false);
+  const shieldBashTimer = useRef(0);
 
   // Track armor level without re-renders
   useGameStore.subscribe((s) => { armorLevel.current = s.armorLevel; });
@@ -669,6 +683,21 @@ export function Player() {
     // Shield block
     store.setBlocking(shield);
 
+    // ── Parry window (rising edge of block = 300ms perfect-block) ──
+    if (shield && !prevBlockRef.current) {
+      store.setParryWindow(Date.now() + 300);
+      sfxParry();
+    }
+    prevBlockRef.current = shield;
+
+    // Parry riposte: auto-swing if the enemy hit during the window
+    if (store.parryCounterActive && !isSwinging.current && !isSpinning.current) {
+      isSwinging.current = true;
+      swingTime.current  = 0;
+      useGameStore.setState({ parryCounterActive: false });
+      sfxSword();
+    }
+
     // ── Jump + gravity ─────────────────────────────────────────────
     const isGrounded = pos.current.y <= 0.002;
     if (jump && !prevJump.current && isGrounded) {
@@ -709,23 +738,36 @@ export function Player() {
     attackHeld.current = attack;
 
     if (sel === 'sword') {
-      if (attack && !isSpinning.current && !isSwinging.current) {
-        chargeTime.current += delta;
+      // Shield bash: attack press while blocking → powerful bash that stuns+knocks back enemies
+      if (!wasHeld && attack && shield && !isSwinging.current && !isSpinning.current && !isShieldBashing.current) {
+        isShieldBashing.current = true;
+        shieldBashTimer.current = 0.28;
+        sfxShieldBash();
+        const bashPos = pos.current.clone().addScaledVector(facingDir.current, 1.1);
+        store.triggerShieldBash(bashPos, facingDir.current.clone());
+      } else {
+        if (attack && !isSpinning.current && !isSwinging.current && !shield) {
+          chargeTime.current += delta;
+        }
+        // Press: regular swing
+        if (!wasHeld && attack && !isSwinging.current && !isSpinning.current && !shield) {
+          isSwinging.current = true;
+          swingTime.current  = 0;
+          sfxSword();
+        }
+        // Release after charging ≥ 0.7s: spin attack
+        if (wasHeld && !attack && chargeTime.current >= 0.7 && !isSpinning.current) {
+          isSpinning.current = true;
+          spinTime.current   = 0;
+          isSwinging.current = false;
+          sfxSword();
+        }
+        if (!attack) chargeTime.current = 0;
       }
-      // Press: regular swing
-      if (!wasHeld && attack && !isSwinging.current && !isSpinning.current) {
-        isSwinging.current = true;
-        swingTime.current  = 0;
-        sfxSword();
+      if (isShieldBashing.current) {
+        shieldBashTimer.current -= delta;
+        if (shieldBashTimer.current <= 0) isShieldBashing.current = false;
       }
-      // Release after charging ≥ 0.7s: spin attack
-      if (wasHeld && !attack && chargeTime.current >= 0.7 && !isSpinning.current) {
-        isSpinning.current = true;
-        spinTime.current   = 0;
-        isSwinging.current = false;
-        sfxSword();
-      }
-      if (!attack) chargeTime.current = 0;
     } else {
       if (attack && !wasHeld) {
         if      (sel === 'bow')            { store.fireWeapon('bow');        sfxArrow();     }
@@ -750,12 +792,62 @@ export function Player() {
       }
     }
 
+    // ── Ground slam (attack while airborne + falling) ──────────────
+    if (!wasHeld && attack && velY.current < -2.5 && !isSlamming.current && pos.current.y > 0.12) {
+      isSlamming.current = true;
+      velY.current = -24;
+      sfxGroundSlam();
+    }
+    if (isSlamming.current && pos.current.y <= 0.01) {
+      isSlamming.current = false;
+      store.triggerGroundSlam(pos.current.clone());
+    }
+
     // Invulnerability flash
     if (invulnTime.current > 0) {
       invulnTime.current -= delta;
       groupRef.current.visible = Math.floor(invulnTime.current * 10) % 2 === 0;
     } else {
       groupRef.current.visible = true;
+    }
+
+    // ── Dodge roll ─────────────────────────────────────────────────
+    rollCooldown.current = Math.max(0, rollCooldown.current - delta);
+    const dodge = kb[Controls.dodge] || mobileInput.dodge;
+    if (dodge && !prevDodge.current && !isRolling.current && rollCooldown.current <= 0
+        && !isSwinging.current && !isSpinning.current && !isSlamming.current) {
+      isRolling.current = true;
+      rollTimer.current = 0.42;
+      rollCooldown.current = 1.1;
+      // Direction: movement dir if moving, else facing dir
+      const fw = kb[Controls.forward] || mobileInput.forward;
+      const bk = kb[Controls.back]    || mobileInput.back;
+      const lt = kb[Controls.left]    || mobileInput.left;
+      const rt = kb[Controls.right]   || mobileInput.right;
+      const mx = (rt ? 1 : 0) - (lt ? 1 : 0);
+      const mz = (bk ? 1 : 0) - (fw ? 1 : 0);
+      if (mx !== 0 || mz !== 0) {
+        const len = Math.sqrt(mx * mx + mz * mz);
+        rollDirX.current = mx / len;
+        rollDirZ.current = mz / len;
+      } else {
+        rollDirX.current = Math.sin(groupRef.current.rotation.y);
+        rollDirZ.current = Math.cos(groupRef.current.rotation.y);
+      }
+      useGameStore.setState({ hurtCooldownEnd: Date.now() + 420 }); // iframe during roll
+      sfxDodge();
+    }
+    prevDodge.current = dodge;
+    if (isRolling.current) {
+      rollTimer.current -= delta;
+      if (rollTimer.current <= 0) {
+        isRolling.current = false;
+        bodyBobRef.current.rotation.x = 0;
+      } else {
+        pos.current.x += rollDirX.current * 10.5 * delta;
+        pos.current.z += rollDirZ.current * 10.5 * delta;
+        bodyBobRef.current.rotation.x = (rollTimer.current / 0.42) * -1.1;
+      }
     }
 
     // Stamina — drain while actively sprinting, regen otherwise
@@ -778,7 +870,7 @@ export function Player() {
     playerStamina.max      = STAMINA_MAX;
     playerStamina.isRunning = sprinting;
 
-    if (moving) {
+    if (moving && !isRolling.current) {
       velocity.current.normalize();
       const moveSpeed = sprinting ? RUN_SPEED : SPEED;
       pos.current.addScaledVector(velocity.current, moveSpeed * delta);

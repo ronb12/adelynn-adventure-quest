@@ -859,6 +859,8 @@ interface EnemyData {
   burnTickTimer: number;     // next fire tick countdown
   poisonTimer: number;       // poison DoT remaining duration
   poisonTickTimer: number;   // next poison tick countdown
+  kbVx: number;              // knockback velocity X
+  kbVz: number;              // knockback velocity Z
 }
 
 // Boss shadow bolt data
@@ -930,6 +932,7 @@ export function Enemies() {
           projColor: elite ? '#ffcc00' : projColorMap[cfg.meshType],
           burnTimer: 0, burnTickTimer: 0,
           poisonTimer: 0, poisonTickTimer: 0,
+          kbVx: 0, kbVz: 0,
         });
         meshDefs.push({ meshType: cfg.meshType, palette: { body: cfg.body, accent: cfg.accent }, isElite: elite });
       }
@@ -990,6 +993,58 @@ export function Enemies() {
           child.visible = false;
         }
         return;
+      }
+
+      // ── Knockback momentum ───────────────────────────────────────
+      if (enemy.kbVx !== 0 || enemy.kbVz !== 0) {
+        enemy.pos.x += enemy.kbVx * delta;
+        enemy.pos.z += enemy.kbVz * delta;
+        const decay = Math.exp(-7 * delta);
+        enemy.kbVx *= decay;
+        enemy.kbVz *= decay;
+        if (Math.abs(enemy.kbVx) < 0.08) enemy.kbVx = 0;
+        if (Math.abs(enemy.kbVz) < 0.08) enemy.kbVz = 0;
+      }
+
+      // ── Ground slam AoE ──────────────────────────────────────────
+      if (store.groundSlamActive) {
+        const sx = enemy.pos.x - store.groundSlamPos.x;
+        const sz = enemy.pos.z - store.groundSlamPos.z;
+        if (Math.sqrt(sx * sx + sz * sz) < 2.8) {
+          const slamDmg = 2.5 * (SWORD_DEFS[store.activeSword]?.damage ?? 1.0);
+          enemy.hp -= slamDmg;
+          const dlen = Math.sqrt(sx * sx + sz * sz) + 0.001;
+          enemy.kbVx = (sx / dlen) * 10;
+          enemy.kbVz = (sz / dlen) * 10;
+          enemy.stunTimer = Math.max(enemy.stunTimer, 1.2);
+          if (enemy.hp <= 0 && !enemy.dead) {
+            enemy.dead = true; enemy.deadAnimTimer = 0.7;
+            useGameStore.getState().addKill(Math.ceil(enemy.maxHp * 50));
+          }
+        }
+      }
+
+      // ── Shield bash AoE ──────────────────────────────────────────
+      if (store.shieldBashActive) {
+        const bx = enemy.pos.x - store.shieldBashPos.x;
+        const bz = enemy.pos.z - store.shieldBashPos.z;
+        const dist = Math.sqrt(bx * bx + bz * bz);
+        if (dist < 2.2) {
+          // Check enemy is roughly in front of the bash direction
+          const dot = (bx / (dist + 0.001)) * store.shieldBashDir.x
+                    + (bz / (dist + 0.001)) * store.shieldBashDir.z;
+          if (dot > -0.4) { // 130° cone in front
+            const bashDmg = 0.5 * (SWORD_DEFS[store.activeSword]?.damage ?? 1.0);
+            enemy.hp -= bashDmg;
+            enemy.kbVx = store.shieldBashDir.x * 12;
+            enemy.kbVz = store.shieldBashDir.z * 12;
+            enemy.stunTimer = Math.max(enemy.stunTimer, 0.8);
+            if (enemy.hp <= 0 && !enemy.dead) {
+              enemy.dead = true; enemy.deadAnimTimer = 0.7;
+              useGameStore.getState().addKill(Math.ceil(enemy.maxHp * 50));
+            }
+          }
+        }
       }
 
       if (enemy.stunTimer > 0) {
@@ -1293,6 +1348,9 @@ export function Enemies() {
         enemy.pos.addScaledVector(enemy.dir, 0.5);
       }
     });
+    // Clear one-shot AoE flags after all enemies have been processed
+    if (store.groundSlamActive) store.clearGroundSlam();
+    if (store.shieldBashActive) store.clearShieldBash();
   });
 
   return (

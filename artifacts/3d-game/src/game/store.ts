@@ -230,6 +230,19 @@ interface GameStore {
   maxCombo: number;
   completedQuests: string[];
   markQuestComplete: (id: string) => void;
+  // Advanced combat moves
+  groundSlamActive: boolean;
+  groundSlamPos: THREE.Vector3;
+  parryWindowEnd: number;
+  parryCounterActive: boolean;
+  shieldBashActive: boolean;
+  shieldBashPos: THREE.Vector3;
+  shieldBashDir: THREE.Vector3;
+  setParryWindow: (endTime: number) => void;
+  triggerGroundSlam: (pos: THREE.Vector3) => void;
+  clearGroundSlam: () => void;
+  triggerShieldBash: (pos: THREE.Vector3, dir: THREE.Vector3) => void;
+  clearShieldBash: () => void;
   triggerSave: () => void;
   performSave: () => void;
   loadFromSave: () => boolean;
@@ -296,6 +309,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
   areaKills: {},
   maxCombo: 0,
   completedQuests: [],
+  groundSlamActive: false,
+  groundSlamPos: new THREE.Vector3(),
+  parryWindowEnd: 0,
+  parryCounterActive: false,
+  shieldBashActive: false,
+  shieldBashPos: new THREE.Vector3(),
+  shieldBashDir: new THREE.Vector3(0, 0, -1),
   runStartTime: 0,
   nearLore: null,
   loreRead: [],
@@ -380,6 +400,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (s.shadowEndTime > now) return {};
     // Invincibility frames — 1.5s after each hit
     if (s.hurtCooldownEnd > now) return {};
+    // Parry window — perfect block timing negates the hit and queues a riposte
+    if (s.parryWindowEnd > now) {
+      return { parryCounterActive: true, parryWindowEnd: 0 };
+    }
     const reduction = s.armorLevel === 2 ? 0.5 : s.armorLevel === 1 ? 0.75 : 1.0;
     const blockReduction = s.isBlocking ? 0.25 : 1.0;
     const finalAmount = amount * reduction * blockReduction;
@@ -615,6 +639,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
   markQuestComplete: (id) => set((s) => ({
     completedQuests: s.completedQuests.includes(id) ? s.completedQuests : [...s.completedQuests, id],
   })),
+
+  setParryWindow: (endTime) => set({ parryWindowEnd: endTime }),
+  triggerGroundSlam: (pos) => set({ groundSlamActive: true, groundSlamPos: pos }),
+  clearGroundSlam:   () => set({ groundSlamActive: false }),
+  triggerShieldBash: (pos, dir) => set({ shieldBashActive: true, shieldBashPos: pos, shieldBashDir: dir }),
+  clearShieldBash:   () => set({ shieldBashActive: false }),
+
   setNearLore: (id) => set({ nearLore: id }),
   markLoreRead: (id) => set((s) => ({ loreRead: [...s.loreRead.filter(x => x !== id), id] })),
   addEliteKill: () => set((s) => ({
@@ -710,6 +741,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     areaKills: {},
     maxCombo: 0,
     completedQuests: [],
+    groundSlamActive: false,
+    parryWindowEnd: 0,
+    parryCounterActive: false,
+    shieldBashActive: false,
   }),
 
   triggerSave: () => set({ lastSaveTime: Date.now() }),
