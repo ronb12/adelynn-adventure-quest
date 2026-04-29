@@ -7,7 +7,7 @@ import { playerStamina } from './Player';
 import { sfxLoreRead, sfxQuestComplete, sfxCombo } from './AudioManager';
 
 const WEAPON_ICONS: Record<WeaponId, string> = {
-  sword:    '⚔',
+  sword:    '⚔️',
   bow:      '🏹',
   moonbow:  '🌙',
   bomb:     '🧪',
@@ -121,7 +121,7 @@ function StaminaBar() {
 
   return (
     <div className="flex items-center gap-1.5 mt-1">
-      <span className="text-xs" style={{ color }}>⚡</span>
+      <span className="text-xs" style={{ color }}>⚡️</span>
       <div className="flex-1 h-2 bg-gray-800/70 rounded-full overflow-hidden w-20 border border-gray-700/50">
         <div
           className="h-full rounded-full transition-all duration-100"
@@ -348,7 +348,7 @@ function GuardianHPBar() {
     <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-76 max-w-xs px-4 pointer-events-none">
       <div className="bg-black/80 rounded-xl px-4 py-2 border shadow-2xl" style={{ borderColor: cfg.barColor + '55' }}>
         <div className="font-bold text-xs text-center mb-1 tracking-wider" style={{ color: cfg.barColor }}>
-          ⚔ {cfg.name} — <span className="opacity-70 font-normal">{cfg.title}</span>
+          ⚔️ {cfg.name} — <span className="opacity-70 font-normal">{cfg.title}</span>
         </div>
         <div className="w-full h-3 bg-gray-900 rounded-full overflow-hidden border border-white/10">
           <div className="h-full rounded-full transition-all duration-200"
@@ -782,7 +782,7 @@ function ScorePanel() {
   return (
     <div className="flex flex-col items-end gap-0.5">
       <div className="bg-black/55 rounded-lg px-2 py-1 backdrop-blur-sm flex items-center gap-2">
-        <span className="text-gray-400 font-mono text-xs">⏱</span>
+        <span className="text-gray-400 font-mono text-xs">⏱️</span>
         <span className="text-white font-mono text-sm font-bold">{mm}:{ss}</span>
       </div>
       <div className="bg-black/55 rounded-lg px-2 py-1 backdrop-blur-sm flex items-center gap-1.5">
@@ -994,15 +994,15 @@ const QUEST_DEFS: {
   id: string; title: string; icon: string;
   current: (q: QuestStats) => number; max: number;
 }[] = [
-  { id: 'q-first-kill', title: 'First Blood',    icon: '⚔',  current: q => Math.min(q.totalKills, 1),     max: 1    },
+  { id: 'q-first-kill', title: 'First Blood',    icon: '⚔️', current: q => Math.min(q.totalKills, 1),     max: 1    },
   { id: 'q-kills-5',   title: 'Battle Tested',   icon: '💪', current: q => Math.min(q.totalKills, 5),     max: 5    },
-  { id: 'q-kills-25',  title: 'Warrior',          icon: '🗡', current: q => Math.min(q.totalKills, 25),    max: 25   },
+  { id: 'q-kills-25',  title: 'Warrior',          icon: '🗡️',current: q => Math.min(q.totalKills, 25),    max: 25   },
   { id: 'q-lore-1',    title: 'Curious Mind',     icon: '📜', current: q => Math.min(q.loreCount, 1),      max: 1    },
   { id: 'q-lore-5',    title: 'Scholar',          icon: '📚', current: q => Math.min(q.loreCount, 5),      max: 5    },
   { id: 'q-shard-1',   title: 'Crystal Found',    icon: '💎', current: q => Math.min(q.shards, 1),         max: 1    },
   { id: 'q-shards-all',title: 'Crown Restored',   icon: '👑', current: q => Math.min(q.shards, 3),         max: 3    },
   { id: 'q-combo-5',   title: 'On Fire!',         icon: '🔥', current: q => Math.min(q.maxCombo, 5),       max: 5    },
-  { id: 'q-score-1k',  title: 'Rising Hero',      icon: '✦',  current: q => Math.min(q.score, 1000),       max: 1000 },
+  { id: 'q-score-1k',  title: 'Rising Hero',      icon: '⭐', current: q => Math.min(q.score, 1000),       max: 1000 },
   { id: 'q-weapons-3', title: 'Arsenal',          icon: '🏹', current: q => Math.min(q.weaponCount, 3),    max: 3    },
 ];
 

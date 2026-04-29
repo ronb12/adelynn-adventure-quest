@@ -27,16 +27,16 @@ const AREA_NAMES: Record<string, string> = {
 const ALL_AREA_META: { id: string; name: string; icon: string }[] = [
   { id: 'field',   name: 'Sunfield Plains',   icon: '🌾' },
   { id: 'forest',  name: 'Whisper Woods',     icon: '🌲' },
-  { id: 'desert',  name: 'Ashrock Summit',    icon: '🏔' },
+  { id: 'desert',  name: 'Ashrock Summit',    icon: '🏔️' },
   { id: 'jungle',  name: 'Thornwick Jungle',  icon: '🌿' },
-  { id: 'ice',     name: "Glacira's Domain",  icon: '❄' },
+  { id: 'ice',     name: "Glacira's Domain",  icon: '❄️' },
   { id: 'volcano', name: 'Embris Depths',     icon: '🔥' },
-  { id: 'sky',     name: 'Sky Sanctum',       icon: '☁' },
+  { id: 'sky',     name: 'Sky Sanctum',       icon: '☁️' },
   { id: 'crypt',   name: "Warrior's Crypt",   icon: '💀' },
   { id: 'void',    name: 'The Shattered Void',icon: '🌀' },
   { id: 'cave',    name: "Adelynn's Cave",    icon: '💎' },
   { id: 'home',    name: 'Home Village',      icon: '🏠' },
-  { id: 'boss',    name: "Malgrath's Lair",   icon: '👁' },
+  { id: 'boss',    name: "Malgrath's Lair",   icon: '👁️' },
 ];
 
 // ── Leaderboard Table ─────────────────────────────────────────────
@@ -203,7 +203,7 @@ export function PauseScreen() {
 
         {/* Header */}
         <div className="flex items-center gap-2">
-          <span className="text-2xl" style={{ filter: 'drop-shadow(0 0 8px #c084fc)' }}>⏸</span>
+          <span className="text-2xl" style={{ filter: 'drop-shadow(0 0 8px #c084fc)' }}>⏸️</span>
           <h2 className="text-3xl font-bold font-serif tracking-widest text-amber-300">Paused</h2>
         </div>
 
@@ -252,7 +252,7 @@ export function PauseScreen() {
           onClick={() => setShowMap(v => !v)}
           className="w-full text-xs text-purple-300/80 hover:text-purple-200 bg-purple-900/20 hover:bg-purple-900/40 border border-purple-800/40 rounded-lg py-2 cursor-pointer transition-colors font-serif"
         >
-          🗺 {showMap ? 'Hide World Map ▲' : 'Show World Map ▼'}
+          🗺️ {showMap ? 'Hide World Map ▲' : 'Show World Map ▼'}
         </button>
 
         {showMap && (
@@ -319,7 +319,7 @@ export function PauseScreen() {
           onClick={togglePause}
           className="w-full bg-purple-700 hover:bg-purple-600 text-white font-serif border border-purple-500 cursor-pointer"
         >
-          ▶ Resume <span className="text-purple-300 text-xs ml-1">(Esc)</span>
+          ▶️ Resume <span className="text-purple-300 text-xs ml-1">(Esc)</span>
         </Button>
         <Button
           variant="outline"
@@ -393,7 +393,7 @@ export function TitleScreen() {
             className={`text-xs px-4 py-1.5 rounded-full font-serif border transition-colors cursor-pointer
               ${tab === 'main' ? 'bg-amber-700 border-amber-500 text-amber-100' : 'bg-black/40 border-gray-700 text-gray-400 hover:border-amber-700 hover:text-amber-300'}`}
           >
-            ⚔ Quest
+            ⚔️ Quest
           </button>
           <button
             onClick={() => setTab('leaderboard')}
@@ -423,7 +423,7 @@ export function TitleScreen() {
         {tab === 'main' && <div className="w-full flex flex-col items-center gap-3">
 
         {/* Title */}
-        <div className="text-5xl mb-0" style={{ filter: 'drop-shadow(0 0 14px #f0c030)' }}>♛</div>
+        <div className="text-5xl mb-0" style={{ filter: 'drop-shadow(0 0 14px #f0c030)' }}>👑</div>
         <h1 className="text-3xl font-bold font-serif tracking-widest text-amber-300 drop-shadow-lg text-center leading-tight">
           {STORY.title}
         </h1>
@@ -468,7 +468,7 @@ export function TitleScreen() {
                 className="flex-1 bg-amber-600 hover:bg-amber-500 text-amber-100 font-serif border border-amber-400 cursor-pointer text-sm"
                 onClick={continueGame}
               >
-                ▶ Continue Quest
+                ▶️ Continue Quest
               </Button>
               <Button
                 size="sm"
@@ -480,7 +480,7 @@ export function TitleScreen() {
                 onClick={handleDeleteSave}
                 title="Delete save data"
               >
-                {confirmDelete ? '⚠ Confirm Delete' : '🗑'}
+                {confirmDelete ? '⚠️ Confirm Delete' : '🗑️'}
               </Button>
             </div>
             {confirmDelete && (
@@ -498,7 +498,7 @@ export function TitleScreen() {
           } font-serif tracking-wider cursor-pointer`}
           onClick={startNewGame}
         >
-          {saveMeta ? '+ New Game' : '▶ Begin the Quest'}
+          {saveMeta ? '+ New Game' : '▶️ Begin the Quest'}
         </Button>
 
         <p className="text-xs text-gray-500 font-mono">
@@ -642,7 +642,7 @@ export function VictoryScreen() {
           style={{ background: 'radial-gradient(circle, rgba(240,192,48,0.22) 0%, transparent 70%)' }} />
       </div>
 
-      <div className="text-7xl mb-3" style={{ filter: 'drop-shadow(0 0 28px #f0c030)' }}>♛</div>
+      <div className="text-7xl mb-3" style={{ filter: 'drop-shadow(0 0 28px #f0c030)' }}>👑</div>
 
       <h1 className="text-4xl font-bold font-serif tracking-widest text-amber-300 drop-shadow-lg mb-2">
         The Crown Restored!
