@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useUser, SignInButton } from '@clerk/react';
 import { useGameStore } from './store';
 import { Button } from '@/components/ui/button';
 import { getSaveMeta, formatSaveTime, AREA_DISPLAY, deleteSave } from './saveManager';
@@ -6,6 +7,7 @@ import {
   getLeaderboard, addLeaderboardEntry, formatLeaderboardTime,
   type LeaderboardEntry,
 } from './leaderboardManager';
+import { PolicyLinks } from './PolicyModals';
 
 const STORY = {
   title: "Adelynn's Adventure Quest",
@@ -96,6 +98,27 @@ function LeaderboardTable({ refresh = 0 }: { refresh?: number }) {
   );
 }
 
+// ── Apple Sign-In Button ──────────────────────────────────────────
+function AppleSignInButton({ className = '' }: { className?: string }) {
+  const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+  return (
+    <SignInButton
+      mode="redirect"
+      fallbackRedirectUrl={`${window.location.origin}${basePath}/`}
+    >
+      <button
+        className={`flex items-center justify-center gap-2 w-full bg-black hover:bg-gray-900 text-white font-semibold rounded-xl px-4 py-2.5 border border-gray-700 cursor-pointer transition-colors text-sm ${className}`}
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <path d="M11.182 0c.08.676-.235 1.408-.698 1.93-.48.543-1.233.96-1.946.903-.096-.72.247-1.438.697-1.93.48-.52 1.265-.942 1.947-.903zm2.666 5.617c-.104.064-1.93 1.11-1.91 3.312.022 2.63 2.316 3.508 2.362 3.527-.022.1-.363 1.244-1.205 2.412-.73 1.01-1.488 2.023-2.617 2.043-1.107.02-1.46-.657-2.726-.657-1.266 0-1.663.637-2.716.677-1.097.04-1.93-1.073-2.67-2.077C.817 12.58-.46 9.294.184 6.13c.317-1.534 1.143-2.96 2.034-3.937.889-.977 2.148-1.616 3.255-1.636 1.086-.02 2.1.73 2.77.73.67 0 1.927-.903 3.246-.77.554.022 2.11.224 3.108 1.686l-.715.414z"/>
+        </svg>
+        Sign in with Apple
+      </button>
+    </SignInButton>
+  );
+}
+
 // ── Score Submit Form ─────────────────────────────────────────────
 function ScoreSubmitForm({
   score, runStartTime, shards, lore, area,
@@ -106,13 +129,21 @@ function ScoreSubmitForm({
   accentColor?: 'amber' | 'red';
   onSubmitted?: () => void;
 }) {
+  const { user, isLoaded: userLoaded } = useUser();
   const [name, setName] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { inputRef.current?.focus(); }, []);
+  useEffect(() => {
+    if (user) {
+      const displayName = (user.fullName ?? user.username ?? '').slice(0, 20);
+      if (displayName) setName(displayName);
+    }
+  }, [user]);
+
+  useEffect(() => { if (!user) inputRef.current?.focus(); }, [user]);
 
   const timeSeconds = runStartTime > 0
     ? Math.max(1, Math.floor((Date.now() - runStartTime) / 1000))
@@ -149,9 +180,28 @@ function ScoreSubmitForm({
   }
 
   return (
-    <div className={`w-full rounded-xl px-4 py-3 ${bg} border ${border}`}>
-      <p className="text-amber-300/80 text-xs font-serif mb-2 text-center">Save your score to the global leaderboard</p>
-      {error && <p className="text-red-400 text-xs mb-1 text-center">{error}</p>}
+    <div className={`w-full rounded-xl px-4 py-3 ${bg} border ${border} space-y-2`}>
+      <p className="text-amber-300/80 text-xs font-serif text-center">Save your score to the global leaderboard</p>
+
+      {userLoaded && !user && (
+        <>
+          <AppleSignInButton />
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-px bg-gray-700" />
+            <span className="text-gray-600 text-xs">or enter a name</span>
+            <div className="flex-1 h-px bg-gray-700" />
+          </div>
+        </>
+      )}
+
+      {user && (
+        <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
+          <span className="text-green-400">✓</span>
+          <span>Signed in as <span className="text-white font-semibold">{user.fullName ?? user.username}</span></span>
+        </div>
+      )}
+
+      {error && <p className="text-red-400 text-xs text-center">{error}</p>}
       <div className="flex gap-2">
         <input
           ref={inputRef}
@@ -504,6 +554,7 @@ export function TitleScreen() {
         <p className="text-xs text-gray-500 font-mono">
           WASD move · Shift run · Space attack · V jump · Q weapon · E interact · {saveMeta ? 'Enter to continue' : 'Enter/Space to start'}
         </p>
+        <PolicyLinks />
         </div>}
       </div>
     </div>

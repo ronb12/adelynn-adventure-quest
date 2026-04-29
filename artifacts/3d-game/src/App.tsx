@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { KeyboardControls } from '@react-three/drei';
+import { ClerkProvider } from '@clerk/react';
+import { Router as WouterRouter, Route, Switch, useLocation } from 'wouter';
 import { useGameStore } from './game/store';
 import { keyMap } from './game/controls';
 import { Player } from './game/Player';
@@ -15,6 +17,18 @@ import { AudioSystem, MuteButton } from './game/AudioSystem';
 import { ShopUI } from './game/Shop';
 import { SaveSystem } from './game/SaveSystem';
 import { MobileControls } from './game/MobileControls';
+import { SignInPage, SignUpPage } from './game/AuthPages';
+
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string;
+const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL as string | undefined;
+
+function stripBase(path: string): string {
+  return basePath && path.startsWith(basePath)
+    ? path.slice(basePath.length) || '/'
+    : path;
+}
 
 function GameScene() {
   const currentArea  = useGameStore(s => s.currentArea);
@@ -33,11 +47,10 @@ function GameScene() {
   );
 }
 
-export default function App() {
+function GameApp() {
   const gameState   = useGameStore(s => s.gameState);
   const togglePause = useGameStore(s => s.togglePause);
 
-  // Escape key toggles pause
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -71,5 +84,34 @@ export default function App() {
       {gameState === 'gameover' && <div className="absolute inset-0" style={{ zIndex: 9999 }}><GameOverScreen /></div>}
       {gameState === 'victory'  && <div className="absolute inset-0" style={{ zIndex: 9999 }}><VictoryScreen /></div>}
     </div>
+  );
+}
+
+function ClerkProviderWithRoutes() {
+  const [, setLocation] = useLocation();
+
+  return (
+    <ClerkProvider
+      publishableKey={clerkPubKey ?? ''}
+      proxyUrl={clerkProxyUrl}
+      signInUrl={`${basePath}/sign-in`}
+      signUpUrl={`${basePath}/sign-up`}
+      routerPush={(to) => setLocation(stripBase(to))}
+      routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
+    >
+      <Switch>
+        <Route path="/sign-in/*?" component={SignInPage} />
+        <Route path="/sign-up/*?" component={SignUpPage} />
+        <Route component={GameApp} />
+      </Switch>
+    </ClerkProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <WouterRouter base={basePath}>
+      <ClerkProviderWithRoutes />
+    </WouterRouter>
   );
 }
