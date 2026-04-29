@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useGameStore } from './store';
 
 type ItemId = 'arrows' | 'bombs' | 'heart' | 'shurikens' | 'frost' | 'flare' | 'veil' | 'quake' | 'moonbow';
@@ -28,16 +29,27 @@ export function ShopUI() {
   const closeShop = useGameStore(s => s.closeShop);
   const buyItem   = useGameStore(s => s.buyItem);
 
+  useEffect(() => {
+    if (!showShop) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === 'e' || e.key === 'E') closeShop();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showShop, closeShop]);
+
   if (!showShop) return null;
 
   return (
     <div
       className="absolute inset-0 flex items-center justify-center pointer-events-auto"
       style={{ zIndex: 8000, background: 'rgba(0,0,0,0.65)' }}
+      onClick={closeShop}
     >
       <div
         className="rounded-2xl border-2 p-6 shadow-2xl max-w-sm w-full mx-4 max-h-[85vh] overflow-y-auto"
         style={{ background: 'rgba(12, 6, 30, 0.97)', borderColor: '#f0c030' }}
+        onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
@@ -45,9 +57,17 @@ export function ShopUI() {
             <h2 className="text-amber-300 font-serif font-bold text-xl">🏪 Merchant's Shop</h2>
             <p className="text-amber-600 text-xs mt-0.5">"Every weapon has its moment!"</p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-5 bg-green-400 rotate-45 border border-green-600" />
-            <span className="text-green-300 font-bold text-lg">{rupees}</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-5 bg-green-400 rotate-45 border border-green-600" />
+              <span className="text-green-300 font-bold text-lg">{rupees}</span>
+            </div>
+            <button
+              onClick={closeShop}
+              className="text-amber-500 hover:text-white transition-colors text-xl font-bold leading-none"
+              style={{ lineHeight: 1 }}
+              title="Close shop (E / Esc)"
+            >✕</button>
           </div>
         </div>
 
@@ -83,7 +103,7 @@ export function ShopUI() {
 
         {/* Close hint */}
         <div className="text-center text-amber-700 text-xs">
-          Press <kbd className="bg-amber-900/50 px-1 rounded">E</kbd> to close
+          Press <kbd className="bg-amber-900/50 px-1 rounded">E</kbd> or <kbd className="bg-amber-900/50 px-1 rounded">Esc</kbd> · or click outside to close
         </div>
       </div>
     </div>
