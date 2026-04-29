@@ -24,33 +24,70 @@ function Cactus({ x, z }: { x: number; z: number }) {
   );
 }
 
-function Portal({ x, z, color, targetArea, spawnX, spawnZ }: {
-  x: number; z: number; color: string; targetArea: AreaId; spawnX: number; spawnZ: number;
+function Portal({ x, z, rotY = 0, color, targetArea, spawnX, spawnZ }: {
+  x: number; z: number; rotY?: number; color: string; targetArea: AreaId; spawnX: number; spawnZ: number;
 }) {
-  const ringRef = useRef<THREE.Mesh>(null!);
+  const glowRef = useRef<THREE.Mesh>(null!);
   const triggerAreaTransition = useGameStore(s => s.triggerAreaTransition);
   const gameState = useGameStore(s => s.gameState);
   const cooldownRef = useRef(0);
+  const timeRef = useRef(0);
 
   useFrame((_, delta) => {
-    if (ringRef.current) { ringRef.current.rotation.z += delta * 1.5; ringRef.current.rotation.y += delta * 0.5; }
+    timeRef.current += delta;
+    if (glowRef.current) {
+      const mat = glowRef.current.material as THREE.MeshStandardMaterial;
+      mat.emissiveIntensity = 0.8 + Math.sin(timeRef.current * 2.5) * 0.4;
+      mat.opacity = 0.5 + Math.sin(timeRef.current * 2.5) * 0.1;
+    }
     if (gameState !== "playing") return;
     cooldownRef.current -= delta;
     if (cooldownRef.current > 0) return;
     const dx = playerState.x - x;
     const dz = playerState.z - z;
-    if (Math.sqrt(dx * dx + dz * dz) < 1.4) {
+    if (Math.sqrt(dx * dx + dz * dz) < 1.8) {
       cooldownRef.current = 2;
       triggerAreaTransition({ area: targetArea, spawnX, spawnZ });
     }
   });
 
   return (
-    <group position={[x, 0, z]}>
-      <mesh ref={ringRef} position={[0, 1.8, 0]}><torusGeometry args={[1.1, 0.12, 10, 32]} /><meshStandardMaterial color={color} emissive={color} emissiveIntensity={2} /></mesh>
-      <mesh position={[0, 1.8, 0]}><torusGeometry args={[0.85, 0.07, 8, 32]} /><meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.5} transparent opacity={0.6} /></mesh>
-      <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.9, 24]} /><meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.8} transparent opacity={0.4} /></mesh>
-      <pointLight position={[0, 1.5, 0]} color={color} intensity={8} distance={6} />
+    <group position={[x, 0, z]} rotation={[0, rotY, 0]}>
+      {/* Left pillar */}
+      <mesh position={[-1.1, 2.5, 0]}>
+        <boxGeometry args={[0.38, 5, 0.38]} />
+        <meshStandardMaterial color="#665544" roughness={0.9} />
+      </mesh>
+      {/* Right pillar */}
+      <mesh position={[1.1, 2.5, 0]}>
+        <boxGeometry args={[0.38, 5, 0.38]} />
+        <meshStandardMaterial color="#665544" roughness={0.9} />
+      </mesh>
+      {/* Lintel */}
+      <mesh position={[0, 5.1, 0]}>
+        <boxGeometry args={[2.8, 0.5, 0.38]} />
+        <meshStandardMaterial color="#554433" roughness={0.85} />
+      </mesh>
+      {/* Pillar caps */}
+      <mesh position={[-1.1, 5.0, 0]}><boxGeometry args={[0.5, 0.25, 0.5]} /><meshStandardMaterial color="#554433" roughness={0.9} /></mesh>
+      <mesh position={[1.1, 5.0, 0]}><boxGeometry args={[0.5, 0.25, 0.5]} /><meshStandardMaterial color="#554433" roughness={0.9} /></mesh>
+      {/* Glowing portal plane inside the doorway */}
+      <mesh ref={glowRef} position={[0, 2.5, 0]}>
+        <planeGeometry args={[1.9, 4.8]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.9}
+          transparent opacity={0.55} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Ground glow ring */}
+      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[1.1, 24]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.2} transparent opacity={0.35} />
+      </mesh>
+      {/* Rune orb on top of lintel */}
+      <mesh position={[0, 5.6, 0]}>
+        <sphereGeometry args={[0.22, 9, 7]} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={3} transparent opacity={0.9} />
+      </mesh>
+      <pointLight position={[0, 2.5, 0]} color={color} intensity={10} distance={9} decay={2} />
     </group>
   );
 }
@@ -468,8 +505,8 @@ function FieldArea() {
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[50, 50]} /><meshStandardMaterial color="#3a7a2f" /></mesh>
       {treePos.map(([tx, tz], i) => <Tree key={i} x={tx} z={tz} scale={0.85 + (i % 3) * 0.1} />)}
-      <Portal x={22} z={0} color="#22ff88" targetArea="forest" spawnX={-20} spawnZ={0} />
-      <Portal x={-22} z={0} color="#ffaa44" targetArea="desert" spawnX={20} spawnZ={0} />
+      <Portal x={22} z={0} rotY={Math.PI / 2} color="#22ff88" targetArea="forest" spawnX={-20} spawnZ={0} />
+      <Portal x={-22} z={0} rotY={Math.PI / 2} color="#ffaa44" targetArea="desert" spawnX={20} spawnZ={0} />
       {/* Main shard chest */}
       <ShardChest chestKey="field" x={0} z={-20} />
       {/* Sword chests */}
@@ -506,8 +543,8 @@ function ForestArea() {
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[50, 50]} /><meshStandardMaterial color="#1e4a14" /></mesh>
       {treePos.map(([tx, tz], i) => <Tree key={i} x={tx} z={tz} scale={1.0 + (i % 3) * 0.15} />)}
-      <Portal x={-20} z={0} color="#66ff88" targetArea="field" spawnX={20} spawnZ={0} />
-      <Portal x={0} z={-22} color="#ff4444" targetArea="boss" spawnX={0} spawnZ={18} />
+      <Portal x={-20} z={0} rotY={Math.PI / 2} color="#66ff88" targetArea="field" spawnX={20} spawnZ={0} />
+      <Portal x={0} z={-22} rotY={0} color="#ff4444" targetArea="boss" spawnX={0} spawnZ={18} />
       {/* Main shard chest */}
       <ShardChest chestKey="forest" x={0} z={0} />
       {forestSwordChests.map(sc => <SwordChest key={sc.key} chestKey={sc.key} x={sc.x} z={sc.z} />)}
@@ -534,8 +571,8 @@ function DesertArea() {
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[50, 50]} /><meshStandardMaterial color="#c9a64a" /></mesh>
       {cactiPos.map(([cx, cz], i) => <Cactus key={i} x={cx} z={cz} />)}
-      <Portal x={20} z={0} color="#66ff88" targetArea="field" spawnX={-20} spawnZ={0} />
-      <Portal x={0} z={-22} color="#ff4444" targetArea="boss" spawnX={0} spawnZ={18} />
+      <Portal x={20} z={0} rotY={Math.PI / 2} color="#66ff88" targetArea="field" spawnX={-20} spawnZ={0} />
+      <Portal x={0} z={-22} rotY={0} color="#ff4444" targetArea="boss" spawnX={0} spawnZ={18} />
       {/* Main shard chest */}
       <ShardChest chestKey="desert" x={0} z={-22} />
       {desertSwordChests.map(sc => <SwordChest key={sc.key} chestKey={sc.key} x={sc.x} z={sc.z} />)}
