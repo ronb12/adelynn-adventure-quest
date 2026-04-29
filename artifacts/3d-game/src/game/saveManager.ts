@@ -104,6 +104,9 @@ const AREA_SPAWNS: Record<string, THREE.Vector3> = {
   void:    new THREE.Vector3(0, 0, 5),
   cave:    new THREE.Vector3(0, 0, 22),
   home:    new THREE.Vector3(0, 0, 0),
+  cottage1: new THREE.Vector3(0, 0, 1),
+  cottage2: new THREE.Vector3(0, 0, 1),
+  cottage3: new THREE.Vector3(0, 0, 1),
 };
 
 export function getAreaSpawn(area: string): THREE.Vector3 {
@@ -132,4 +135,7 @@ export const AREA_DISPLAY: Record<string, string> = {
   void:    'The Fractured Void',
   cave:    'Crystal Caverns',
   home:    "Adelynn's Home",
+  cottage1: "Baker's Cottage",
+  cottage2: "Craftsman's Cottage",
+  cottage3: "Herbalist's Cottage",
 };

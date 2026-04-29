@@ -254,7 +254,18 @@ export const PORTALS: Record<AreaId, PortalDef[]> = {
     { pos: [0, 0, 9], rot: [0, Math.PI, 0], label: 'Return to Sunfield Plains',
       destination: { area: 'field', spawnPos: new THREE.Vector3(-20, 0, -12) }, color: '#ffdd88' },
   ],
+  cottage1: [],
+  cottage2: [],
+  cottage3: [],
 };
+
+// ── Village cottage door entry points (no stone arch — warm glow only) ──
+const COTTAGE_DOORS: { pos: THREE.Vector3; label: string; dest: AreaId; fieldReturn: THREE.Vector3 }[] = [
+  { pos: new THREE.Vector3(6, 0, 9.5),    label: "Baker's Cottage",     dest: 'cottage1', fieldReturn: new THREE.Vector3(6, 0, 11.5) },
+  { pos: new THREE.Vector3(13.7, 0, 6.4), label: "Craftsman's Cottage", dest: 'cottage2', fieldReturn: new THREE.Vector3(14, 0, 8) },
+  { pos: new THREE.Vector3(10.2, 0, 16.5),label: "Herbalist's Cottage", dest: 'cottage3', fieldReturn: new THREE.Vector3(10, 0, 18.5) },
+];
+const COTTAGE_SPAWN = new THREE.Vector3(0, 0, 1);
 
 // ── Boss portal in field (only when all 3 shards collected) ──────
 const BOSS_PORTAL_DEF: PortalDef = {
@@ -308,6 +319,30 @@ function Portal({ def, portalTime }: { def: PortalDef; portalTime: number }) {
           emissiveIntensity={glow} transparent opacity={0.55} side={THREE.DoubleSide} />
       </mesh>
       <pointLight color={def.color} intensity={glow * 3} distance={8} decay={2} />
+    </group>
+  );
+}
+
+// ─── Cottage entrance glow (soft warm orb at each village door) ──
+function CottageEntrance({ pos, t }: { pos: THREE.Vector3; t: number }) {
+  const pulse = 0.65 + Math.sin(t * 2.2) * 0.25;
+  return (
+    <group position={pos}>
+      <pointLight color="#ffcc44" intensity={pulse * 2.5} distance={5} decay={2} />
+      <mesh position={[0, 0.55, 0]}>
+        <sphereGeometry args={[0.13, 8, 6]} />
+        <meshStandardMaterial color="#fff0aa" emissive="#ffcc44"
+          emissiveIntensity={pulse * 5} transparent opacity={0.88} />
+      </mesh>
+      {([0, 1, 2, 3] as number[]).map(i => {
+        const a = (i / 4) * Math.PI * 2 + t * 1.2;
+        return (
+          <mesh key={i} position={[Math.cos(a) * 0.42, 0.55 + Math.sin(t * 3 + i) * 0.11, Math.sin(a) * 0.42]}>
+            <sphereGeometry args={[0.04, 5, 4]} />
+            <meshStandardMaterial color="#ffe090" emissive="#ffcc00" emissiveIntensity={2.5} />
+          </mesh>
+        );
+      })}
     </group>
   );
 }
@@ -2285,6 +2320,811 @@ function HomeArea() {
   );
 }
 
+// ─── Shared cottage room shell helper ─────────────────────────────
+// Room: 10 wide (x: -5..5), 10.5 deep (z: -6..4.5), 5.6 tall
+// Door gap: x ∈ [-3, 3] at z=4.5
+function cottageRoomShell(wallColor: string, floorColor: string, ceilingColor: string) {
+  return (
+    <>
+      {/* Floor */}
+      <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, 0, -0.75]} receiveShadow>
+        <planeGeometry args={[10, 10.5]} />
+        <meshStandardMaterial color={floorColor} roughness={0.88} />
+      </mesh>
+      {/* Floor plank lines */}
+      {Array.from({ length: 5 }).map((_, i) => (
+        <mesh key={i} rotation={[-Math.PI/2, 0, 0]} position={[i * 2.5 - 5, 0.003, -0.75]}>
+          <planeGeometry args={[0.04, 10.5]} />
+          <meshStandardMaterial color="#00000022" roughness={0.95} transparent opacity={0.25} />
+        </mesh>
+      ))}
+      {/* Back wall */}
+      <mesh position={[0, 2.8, -6]} receiveShadow castShadow>
+        <boxGeometry args={[10.3, 5.6, 0.3]} />
+        <meshStandardMaterial color={wallColor} roughness={0.9} />
+      </mesh>
+      {/* Left wall */}
+      <mesh position={[-5, 2.8, -0.75]} receiveShadow castShadow>
+        <boxGeometry args={[0.3, 5.6, 10.8]} />
+        <meshStandardMaterial color={wallColor} roughness={0.9} />
+      </mesh>
+      {/* Right wall */}
+      <mesh position={[5, 2.8, -0.75]} receiveShadow castShadow>
+        <boxGeometry args={[0.3, 5.6, 10.8]} />
+        <meshStandardMaterial color={wallColor} roughness={0.9} />
+      </mesh>
+      {/* South left stub (x: -5 to -3) */}
+      <mesh position={[-4, 2.8, 4.5]} receiveShadow castShadow>
+        <boxGeometry args={[2, 5.6, 0.3]} />
+        <meshStandardMaterial color={wallColor} roughness={0.9} />
+      </mesh>
+      {/* South right stub (x: 3 to 5) */}
+      <mesh position={[4, 2.8, 4.5]} receiveShadow castShadow>
+        <boxGeometry args={[2, 5.6, 0.3]} />
+        <meshStandardMaterial color={wallColor} roughness={0.9} />
+      </mesh>
+      {/* Ceiling */}
+      <mesh position={[0, 5.6, -0.75]} receiveShadow>
+        <boxGeometry args={[10.3, 0.25, 10.8]} />
+        <meshStandardMaterial color={ceilingColor} roughness={0.92} />
+      </mesh>
+      {/* Ceiling beams */}
+      {([-2.5, 0, 2.5] as number[]).map((bx, i) => (
+        <mesh key={i} position={[bx, 5.45, -0.75]} castShadow>
+          <boxGeometry args={[0.28, 0.28, 10.8]} />
+          <meshStandardMaterial color="#3e2810" roughness={0.95} />
+        </mesh>
+      ))}
+      {/* Door frame posts */}
+      <mesh position={[-3, 2.8, 4.45]} castShadow>
+        <boxGeometry args={[0.3, 5.6, 0.3]} />
+        <meshStandardMaterial color="#7a5030" roughness={0.85} />
+      </mesh>
+      <mesh position={[3, 2.8, 4.45]} castShadow>
+        <boxGeometry args={[0.3, 5.6, 0.3]} />
+        <meshStandardMaterial color="#7a5030" roughness={0.85} />
+      </mesh>
+      {/* Door lintel */}
+      <mesh position={[0, 5.48, 4.45]} castShadow>
+        <boxGeometry args={[6.6, 0.3, 0.3]} />
+        <meshStandardMaterial color="#7a5030" roughness={0.85} />
+      </mesh>
+    </>
+  );
+}
+
+// ─── Baker's Cottage interior ─────────────────────────────────────
+function Cottage1Area() {
+  return (
+    <>
+      <color attach="background" args={['#1a0a02']} />
+      <fog attach="fog" args={['#1a0a02', 16, 28]} />
+      <ambientLight intensity={1.3} color="#ffbb77" />
+      {/* Oven fire */}
+      <pointLight position={[-3.5, 1.5, -5.2]} color="#ff6600" intensity={6} distance={12} decay={1.8} />
+      {/* Overhead fill */}
+      <pointLight position={[0, 4, -2]} color="#ffcc88" intensity={3} distance={16} decay={1.4} />
+      {/* Table candle */}
+      <pointLight position={[1, 1.8, -1.5]} color="#ffaa44" intensity={2.2} distance={7} decay={1.8} />
+      <directionalLight position={[0, 8, 6]} intensity={0.6} color="#ffe8cc" />
+
+      {cottageRoomShell('#f0e8d0', '#8b5e32', '#5c3a1a')}
+
+      {/* ── Stone bread oven back-left ── */}
+      <group position={[-3.5, 0, -5.2]}>
+        <mesh position={[0, 1.1, 0]} castShadow>
+          <boxGeometry args={[2.4, 2.2, 1.2]} />
+          <meshStandardMaterial color="#8a7060" roughness={0.95} />
+        </mesh>
+        {/* Oven mouth (dark opening) */}
+        <mesh position={[0, 0.75, 0.63]}>
+          <boxGeometry args={[1.1, 0.85, 0.06]} />
+          <meshStandardMaterial color="#110500" />
+        </mesh>
+        {/* Oven glow */}
+        <mesh position={[0, 0.75, 0.61]}>
+          <planeGeometry args={[0.95, 0.72]} />
+          <meshStandardMaterial color="#ff5500" emissive="#ff4400" emissiveIntensity={2.5}
+            transparent opacity={0.75} side={THREE.DoubleSide} />
+        </mesh>
+        {/* Chimney stack */}
+        <mesh position={[0, 3.1, -0.25]} castShadow>
+          <boxGeometry args={[0.65, 1.9, 0.55]} />
+          <meshStandardMaterial color="#9a8878" roughness={0.95} />
+        </mesh>
+        {/* Mantle shelf */}
+        <mesh position={[0, 2.35, 0.66]} castShadow>
+          <boxGeometry args={[2.6, 0.16, 0.45]} />
+          <meshStandardMaterial color="#7a5030" roughness={0.82} />
+        </mesh>
+        {/* Candle on mantle */}
+        <mesh position={[-0.65, 2.52, 0.7]}>
+          <cylinderGeometry args={[0.06, 0.07, 0.32, 7]} />
+          <meshStandardMaterial color="#f5e8c0" roughness={0.8} />
+        </mesh>
+        <pointLight position={[-0.65, 2.8, 0.7]} color="#ffaa44" intensity={0.9} distance={2.5} decay={2} />
+        {/* Small pot on mantle */}
+        <mesh position={[0.5, 2.52, 0.7]}>
+          <cylinderGeometry args={[0.18, 0.15, 0.38, 9]} />
+          <meshStandardMaterial color="#8b6040" roughness={0.88} />
+        </mesh>
+      </group>
+
+      {/* ── Bread table center ── */}
+      <group position={[0.5, 0, -1.5]}>
+        {([-0.88, 0.88] as number[]).flatMap(x => ([-0.52, 0.52] as number[]).map(z => (
+          <mesh key={`${x}${z}`} position={[x, 0.46, z]} castShadow>
+            <boxGeometry args={[0.13, 0.92, 0.13]} />
+            <meshStandardMaterial color="#6d4c26" roughness={0.88} />
+          </mesh>
+        )))}
+        <mesh position={[0, 0.95, 0]} castShadow>
+          <boxGeometry args={[1.9, 0.12, 1.2]} />
+          <meshStandardMaterial color="#9a6a38" roughness={0.82} />
+        </mesh>
+        {/* Bread loaf 1 */}
+        <mesh scale={[1.1, 0.65, 0.82]} position={[-0.42, 1.14, -0.08]} castShadow>
+          <sphereGeometry args={[0.28, 9, 7]} />
+          <meshStandardMaterial color="#c47c30" roughness={0.85} />
+        </mesh>
+        {/* Bread loaf 2 (smaller) */}
+        <mesh scale={[1.25, 0.55, 0.75]} position={[0.3, 1.1, 0.1]} castShadow>
+          <sphereGeometry args={[0.2, 9, 7]} />
+          <meshStandardMaterial color="#b86828" roughness={0.85} />
+        </mesh>
+        {/* Rolling pin */}
+        <mesh position={[0.6, 1.07, -0.32]} rotation={[0, 0.5, 0]}>
+          <cylinderGeometry args={[0.055, 0.055, 0.8, 8]} />
+          <meshStandardMaterial color="#c8a060" roughness={0.75} />
+        </mesh>
+        {/* Flour bowl */}
+        <mesh position={[-0.65, 1.11, 0.28]}>
+          <cylinderGeometry args={[0.17, 0.14, 0.2, 10]} />
+          <meshStandardMaterial color="#f0e8d8" roughness={0.8} />
+        </mesh>
+      </group>
+
+      {/* ── Shelf unit right wall ── */}
+      <group position={[4.72, 0, -2.5]}>
+        <mesh position={[0, 1.6, 0]} castShadow>
+          <boxGeometry args={[0.12, 3.2, 1.8]} />
+          <meshStandardMaterial color="#7a5030" roughness={0.85} />
+        </mesh>
+        {([0.65, 1.35, 2.05] as number[]).map((y, i) => (
+          <mesh key={i} position={[-0.08, y, 0]} castShadow>
+            <boxGeometry args={[0.24, 0.1, 1.85]} />
+            <meshStandardMaterial color="#9a6a38" roughness={0.8} />
+          </mesh>
+        ))}
+        {[
+          { y: 0.78, z: -0.52, col: '#8b6040', r: 0.15, h: 0.35 },
+          { y: 0.78, z:  0.08, col: '#aa8060', r: 0.13, h: 0.28 },
+          { y: 0.78, z:  0.58, col: '#6d4c26', r: 0.11, h: 0.42 },
+          { y: 1.48, z: -0.42, col: '#c4a050', r: 0.12, h: 0.3  },
+          { y: 1.48, z:  0.32, col: '#dd9940', r: 0.1,  h: 0.38 },
+          { y: 2.18, z: -0.28, col: '#aa7848', r: 0.13, h: 0.25 },
+          { y: 2.18, z:  0.42, col: '#885530', r: 0.1,  h: 0.32 },
+        ].map(({ y, z, col, r, h }, i) => (
+          <mesh key={i} position={[-0.12, y, z]} castShadow>
+            <cylinderGeometry args={[r, r * 0.9, h, 9]} />
+            <meshStandardMaterial color={col} roughness={0.82} />
+          </mesh>
+        ))}
+      </group>
+
+      {/* ── Small bed back-right corner ── */}
+      <group position={[3.5, 0, -4.6]}>
+        <mesh position={[0, 0.28, 0]} castShadow>
+          <boxGeometry args={[1.6, 0.35, 2.5]} />
+          <meshStandardMaterial color="#6d4c26" roughness={0.88} />
+        </mesh>
+        <mesh position={[0, 0.52, 0]} castShadow>
+          <boxGeometry args={[1.5, 0.2, 2.4]} />
+          <meshStandardMaterial color="#e8d8c0" roughness={0.9} />
+        </mesh>
+        <mesh position={[0, 0.65, 0.3]} castShadow>
+          <boxGeometry args={[1.45, 0.12, 1.8]} />
+          <meshStandardMaterial color="#cc8844" roughness={0.88} />
+        </mesh>
+        <mesh position={[0, 0.68, -0.9]} castShadow>
+          <boxGeometry args={[1.2, 0.2, 0.55]} />
+          <meshStandardMaterial color="#f0e8d8" roughness={0.88} />
+        </mesh>
+        <mesh position={[0, 0.82, -1.35]} castShadow>
+          <boxGeometry args={[1.65, 0.85, 0.18]} />
+          <meshStandardMaterial color="#7a5030" roughness={0.85} />
+        </mesh>
+      </group>
+
+      {/* ── Flour sacks front-left corner ── */}
+      <group position={[-4, 0, 2.2]}>
+        <mesh position={[0, 0.3, 0]} castShadow>
+          <boxGeometry args={[0.68, 0.6, 0.55]} />
+          <meshStandardMaterial color="#e8dfc8" roughness={0.95} />
+        </mesh>
+        <mesh position={[0.35, 0.32, 0.05]} rotation={[0, 0.3, 0.1]} castShadow>
+          <boxGeometry args={[0.6, 0.55, 0.5]} />
+          <meshStandardMaterial color="#e0d8c0" roughness={0.95} />
+        </mesh>
+        <mesh position={[0.1, 0.86, 0.02]} castShadow>
+          <boxGeometry args={[0.62, 0.52, 0.48]} />
+          <meshStandardMaterial color="#ddd4bc" roughness={0.95} />
+        </mesh>
+      </group>
+
+      {/* ── Hanging copper pots above oven ── */}
+      {[
+        { x: -2.5, y: 4.85, z: -5.0, rx:  0.3, ry:  0.0, rz:  0.0 },
+        { x: -4.2, y: 4.65, z: -4.2, rx: -0.2, ry:  0.4, rz:  0.0 },
+        { x: -3.2, y: 5.05, z: -4.6, rx:  0.1, ry: -0.3, rz:  0.2 },
+      ].map(({ x, y, z, rx, ry, rz }, i) => (
+        <group key={i} position={[x, y, z]} rotation={[rx, ry, rz]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[0.22, 0.18, 0.35, 10]} />
+            <meshStandardMaterial color="#aa6630" metalness={0.5} roughness={0.45} />
+          </mesh>
+          <mesh position={[0, 0.52, 0]}>
+            <cylinderGeometry args={[0.012, 0.012, 0.58, 5]} />
+            <meshStandardMaterial color="#8a7058" roughness={0.9} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* ── Window right wall ── */}
+      <group position={[4.85, 2.8, 2.2]}>
+        <mesh>
+          <boxGeometry args={[0.06, 1.0, 1.0]} />
+          <meshStandardMaterial color="#aad4f5" transparent opacity={0.6} metalness={0.1} />
+        </mesh>
+        <mesh position={[0, 0, 0]}>
+          <boxGeometry args={[0.14, 1.1, 0.1]} />
+          <meshStandardMaterial color="#7a5030" roughness={0.85} />
+        </mesh>
+        <mesh>
+          <boxGeometry args={[0.14, 0.1, 1.1]} />
+          <meshStandardMaterial color="#7a5030" roughness={0.85} />
+        </mesh>
+        {/* Curtains */}
+        <mesh position={[0.06, 0, -0.44]} rotation={[0, 0, 0.12]}>
+          <planeGeometry args={[0.18, 1.05]} />
+          <meshStandardMaterial color="#e8b880" roughness={0.95} side={THREE.DoubleSide} />
+        </mesh>
+        <mesh position={[0.06, 0, 0.44]} rotation={[0, 0, -0.12]}>
+          <planeGeometry args={[0.18, 1.05]} />
+          <meshStandardMaterial color="#e8b880" roughness={0.95} side={THREE.DoubleSide} />
+        </mesh>
+        <pointLight position={[-0.5, 0, 0]} color="#ffe8cc" intensity={1.2} distance={4} decay={2} />
+      </group>
+
+      {/* ── Decorative sign on back wall ── */}
+      <group position={[3.2, 3.2, -5.8]}>
+        <mesh castShadow>
+          <boxGeometry args={[2.0, 0.65, 0.1]} />
+          <meshStandardMaterial color="#c8a060" roughness={0.7} />
+        </mesh>
+        <mesh position={[0, 0, 0.07]}>
+          <boxGeometry args={[1.85, 0.12, 0.04]} />
+          <meshStandardMaterial color="#cc7744" roughness={0.7} />
+        </mesh>
+      </group>
+
+      {/* ── Exit door glow ── */}
+      <pointLight position={[0, 1.5, 4.2]} color="#ffdd88" intensity={1.5} distance={5} decay={2} />
+    </>
+  );
+}
+
+// ─── Craftsman's Cottage interior ────────────────────────────────
+function Cottage2Area() {
+  return (
+    <>
+      <color attach="background" args={['#160c04']} />
+      <fog attach="fog" args={['#160c04', 16, 28]} />
+      <ambientLight intensity={1.2} color="#ffaa66" />
+      {/* Forge glow back-left */}
+      <pointLight position={[-3.8, 1.2, -5.5]} color="#ff8822" intensity={5} distance={11} decay={1.8} />
+      {/* Overhead lantern */}
+      <pointLight position={[0, 4.2, -2]} color="#ffcc88" intensity={3.5} distance={16} decay={1.4} />
+      {/* Workbench lamp */}
+      <pointLight position={[2, 1.5, -4.5]} color="#ffaa55" intensity={2} distance={8} decay={1.8} />
+      <directionalLight position={[0, 8, 6]} intensity={0.5} color="#ffe8cc" />
+
+      {cottageRoomShell('#e0d4b8', '#6a5a48', '#3e2e18')}
+
+      {/* ── Long workbench along back wall ── */}
+      <group position={[0.5, 0, -5.5]}>
+        {([-3.2, -1.6, 0, 1.6, 3.2] as number[]).map(x => (
+          <mesh key={x} position={[x, 0.46, 0]} castShadow>
+            <boxGeometry args={[0.12, 0.92, 0.5]} />
+            <meshStandardMaterial color="#5a3a1a" roughness={0.9} />
+          </mesh>
+        ))}
+        <mesh position={[0, 0.95, 0]} castShadow>
+          <boxGeometry args={[7.2, 0.14, 0.65]} />
+          <meshStandardMaterial color="#7a5528" roughness={0.82} />
+        </mesh>
+        {/* Vise on bench */}
+        <mesh position={[2.5, 1.12, 0]} castShadow>
+          <boxGeometry args={[0.5, 0.35, 0.5]} />
+          <meshStandardMaterial color="#555550" metalness={0.5} roughness={0.6} />
+        </mesh>
+        {/* Plane tool */}
+        <mesh position={[-1.2, 1.1, 0]} rotation={[0, 0.2, 0]} castShadow>
+          <boxGeometry args={[0.7, 0.14, 0.22]} />
+          <meshStandardMaterial color="#8b6030" roughness={0.75} />
+        </mesh>
+        {/* Chisel set */}
+        {([-0.1, 0.12, 0.34] as number[]).map((ox, i) => (
+          <mesh key={i} position={[ox, 1.1, -0.1]} rotation={[0, 0, 0.15]}>
+            <cylinderGeometry args={[0.03, 0.02, 0.55, 6]} />
+            <meshStandardMaterial color={i === 0 ? '#8b7030' : '#888878'} metalness={i > 0 ? 0.4 : 0} roughness={0.7} />
+          </mesh>
+        ))}
+        {/* Carved wooden figure (in progress) */}
+        <mesh scale={[0.55, 1.2, 0.45]} position={[-3, 1.22, 0]}>
+          <boxGeometry args={[0.35, 0.7, 0.3]} />
+          <meshStandardMaterial color="#c8a060" roughness={0.72} />
+        </mesh>
+        {/* Wood shavings */}
+        <mesh position={[0, 1.0, 0.25]} rotation={[-0.2, 0, 0]}>
+          <planeGeometry args={[3.5, 0.35]} />
+          <meshStandardMaterial color="#d4a850" roughness={1} transparent opacity={0.7} side={THREE.DoubleSide} />
+        </mesh>
+      </group>
+
+      {/* ── Tool rack right wall ── */}
+      <group position={[4.72, 2.0, -2.8]}>
+        <mesh castShadow>
+          <boxGeometry args={[0.12, 2.8, 2.0]} />
+          <meshStandardMaterial color="#5a3a1a" roughness={0.9} />
+        </mesh>
+        {/* Horizontal rails */}
+        {([0.5, 0] as number[]).map((dz, i) => (
+          <mesh key={i} position={[-0.08, i * 0.7 - 0.35, dz - 0.3]} castShadow>
+            <boxGeometry args={[0.18, 0.1, 1.6]} />
+            <meshStandardMaterial color="#7a5030" roughness={0.85} />
+          </mesh>
+        ))}
+        {/* Hanging tools (hammer, saw, mallet) */}
+        <mesh position={[-0.12, -0.6, -0.6]} rotation={[0, 0, 0.4]}>
+          <cylinderGeometry args={[0.04, 0.03, 0.7, 7]} />
+          <meshStandardMaterial color="#7a5030" roughness={0.85} />
+        </mesh>
+        <mesh position={[-0.12, -0.55, -0.6]} rotation={[0, 0, 0.4]}>
+          <boxGeometry args={[0.18, 0.18, 0.25]} />
+          <meshStandardMaterial color="#555550" metalness={0.4} roughness={0.6} />
+        </mesh>
+        <mesh position={[-0.12, -0.6, 0.1]} rotation={[0, 0, 0.3]}>
+          <boxGeometry args={[0.06, 0.7, 0.06]} />
+          <meshStandardMaterial color="#8b6030" roughness={0.78} />
+        </mesh>
+        <mesh position={[-0.12, -0.52, 0.1]}>
+          <boxGeometry args={[0.55, 0.06, 0.06]} />
+          <meshStandardMaterial color="#8b6030" roughness={0.78} />
+        </mesh>
+        <mesh position={[-0.12, -0.6, 0.72]} rotation={[0, 0, -0.2]}>
+          <cylinderGeometry args={[0.055, 0.045, 0.65, 7]} />
+          <meshStandardMaterial color="#8b6030" roughness={0.85} />
+        </mesh>
+        <mesh position={[-0.12, -0.35, 0.72]}>
+          <sphereGeometry args={[0.1, 7, 6]} />
+          <meshStandardMaterial color="#5a4a3a" metalness={0.3} roughness={0.65} />
+        </mesh>
+      </group>
+
+      {/* ── Small forge / anvil area back-left ── */}
+      <group position={[-3.8, 0, -5.3]}>
+        {/* Forge box */}
+        <mesh position={[0, 0.6, 0]} castShadow>
+          <boxGeometry args={[1.5, 1.2, 1.2]} />
+          <meshStandardMaterial color="#5a4a38" roughness={0.9} />
+        </mesh>
+        <mesh position={[0, 1.22, 0.35]}>
+          <boxGeometry args={[0.7, 0.4, 0.06]} />
+          <meshStandardMaterial color="#1a0800" />
+        </mesh>
+        <mesh position={[0, 1.22, 0.33]}>
+          <planeGeometry args={[0.58, 0.32]} />
+          <meshStandardMaterial color="#ff6600" emissive="#ff4400" emissiveIntensity={3}
+            transparent opacity={0.8} side={THREE.DoubleSide} />
+        </mesh>
+        {/* Anvil on stand */}
+        <group position={[0, 0, 1.2]}>
+          <mesh position={[0, 0.55, 0]} castShadow>
+            <boxGeometry args={[0.35, 0.55, 0.55]} />
+            <meshStandardMaterial color="#444440" metalness={0.5} roughness={0.5} />
+          </mesh>
+          <mesh position={[0, 0.95, 0]} castShadow>
+            <boxGeometry args={[0.55, 0.22, 0.38]} />
+            <meshStandardMaterial color="#444440" metalness={0.55} roughness={0.5} />
+          </mesh>
+          <mesh position={[0.24, 1.06, 0]} castShadow>
+            <boxGeometry args={[0.1, 0.2, 0.1]} />
+            <meshStandardMaterial color="#3a3a38" metalness={0.5} roughness={0.55} />
+          </mesh>
+        </group>
+      </group>
+
+      {/* ── Wood pile left wall ── */}
+      <group position={[-4.5, 0, -0.5]}>
+        {[
+          { y: 0.12, z:  0,    r: 0 },
+          { y: 0.12, z:  0.38, r: 0.1 },
+          { y: 0.12, z: -0.38, r: -0.05 },
+          { y: 0.37, z:  0.18, r: 0.08 },
+          { y: 0.37, z: -0.22, r: -0.1 },
+          { y: 0.62, z:  0,    r: 0.05 },
+        ].map(({ y, z, r }, i) => (
+          <mesh key={i} position={[0, y, z]} rotation={[r, 0, Math.PI / 2]} castShadow>
+            <cylinderGeometry args={[0.14, 0.13, 0.65, 8]} />
+            <meshStandardMaterial color={['#7a5030','#8b6040','#6a4020'][i % 3]} roughness={0.88} />
+          </mesh>
+        ))}
+      </group>
+
+      {/* ── Storage barrels left wall ── */}
+      <group position={[-4.2, 0, 1.8]}>
+        <mesh position={[0, 0.55, 0]} castShadow>
+          <cylinderGeometry args={[0.38, 0.34, 1.1, 10]} />
+          <meshStandardMaterial color="#8b5e28" roughness={0.88} />
+        </mesh>
+        {[0.3, 0.68] .map((y, i) => (
+          <mesh key={i} position={[0, y, 0]}>
+            <torusGeometry args={[0.38, 0.04, 6, 14]} />
+            <meshStandardMaterial color="#555540" metalness={0.4} roughness={0.6} />
+          </mesh>
+        ))}
+        <mesh position={[0.78, 0.42, 0.1]} castShadow>
+          <cylinderGeometry args={[0.3, 0.28, 0.85, 10]} />
+          <meshStandardMaterial color="#7a5228" roughness={0.88} />
+        </mesh>
+        {[0.22, 0.54] .map((y, i) => (
+          <mesh key={i} position={[0.78, y, 0.1]}>
+            <torusGeometry args={[0.3, 0.04, 6, 14]} />
+            <meshStandardMaterial color="#555540" metalness={0.4} roughness={0.6} />
+          </mesh>
+        ))}
+      </group>
+
+      {/* ── Workbench chair ── */}
+      <group position={[1.5, 0, -4.5]}>
+        {([-0.28, 0.28] as number[]).flatMap(x => ([-0.22, 0.22] as number[]).map(z => (
+          <mesh key={`${x}${z}`} position={[x, 0.3, z]} castShadow>
+            <boxGeometry args={[0.08, 0.6, 0.08]} />
+            <meshStandardMaterial color="#5a3a1a" roughness={0.9} />
+          </mesh>
+        )))}
+        <mesh position={[0, 0.62, 0]} castShadow>
+          <boxGeometry args={[0.65, 0.08, 0.52]} />
+          <meshStandardMaterial color="#7a5228" roughness={0.85} />
+        </mesh>
+        {/* Back rest */}
+        <mesh position={[0, 0.98, -0.25]} castShadow>
+          <boxGeometry args={[0.62, 0.72, 0.08]} />
+          <meshStandardMaterial color="#7a5228" roughness={0.85} />
+        </mesh>
+      </group>
+
+      {/* ── Window right wall ── */}
+      <group position={[4.85, 2.8, 1.0]}>
+        <mesh>
+          <boxGeometry args={[0.06, 1.0, 1.0]} />
+          <meshStandardMaterial color="#aad4f5" transparent opacity={0.55} metalness={0.1} />
+        </mesh>
+        <mesh>
+          <boxGeometry args={[0.14, 1.1, 0.1]} />
+          <meshStandardMaterial color="#5a3a1a" roughness={0.9} />
+        </mesh>
+        <mesh>
+          <boxGeometry args={[0.14, 0.1, 1.1]} />
+          <meshStandardMaterial color="#5a3a1a" roughness={0.9} />
+        </mesh>
+        <pointLight position={[-0.5, 0, 0]} color="#ffe8cc" intensity={1.0} distance={4} decay={2} />
+      </group>
+
+      {/* ── Exit door glow ── */}
+      <pointLight position={[0, 1.5, 4.2]} color="#ffcc88" intensity={1.5} distance={5} decay={2} />
+    </>
+  );
+}
+
+// ─── Herbalist's Cottage interior ────────────────────────────────
+function Cottage3Area() {
+  return (
+    <>
+      <color attach="background" args={['#0d0d18']} />
+      <fog attach="fog" args={['#0d0d18', 15, 28]} />
+      <ambientLight intensity={1.1} color="#aabbcc" />
+      {/* Cauldron blue-purple glow */}
+      <pointLight position={[-3.2, 1.2, -5.0]} color="#6644cc" intensity={6} distance={12} decay={1.8} />
+      {/* Overhead warm fill */}
+      <pointLight position={[0, 4, -2]} color="#ccbbff" intensity={3} distance={16} decay={1.4} />
+      {/* Potion shelf glow */}
+      <pointLight position={[4, 2.5, -2.5]} color="#44ccaa" intensity={2.2} distance={8} decay={1.8} />
+      <directionalLight position={[0, 8, 6]} intensity={0.5} color="#dde8ff" />
+
+      {cottageRoomShell('#9a9878', '#4a4a5a', '#2a2a3a')}
+
+      {/* ── Cauldron on hearth back-left ── */}
+      <group position={[-3.2, 0, -5.0]}>
+        {/* Hearth base */}
+        <mesh position={[0, 0.35, 0]} castShadow>
+          <boxGeometry args={[2.0, 0.7, 1.4]} />
+          <meshStandardMaterial color="#5a5048" roughness={0.95} />
+        </mesh>
+        {/* Fire block */}
+        <mesh position={[0, 0.75, 0]}>
+          <boxGeometry args={[0.9, 0.25, 0.8]} />
+          <meshStandardMaterial color="#220a00" />
+        </mesh>
+        <mesh position={[0, 0.78, 0]}>
+          <planeGeometry args={[0.75, 0.2]} />
+          <meshStandardMaterial color="#6633ff" emissive="#5522ee" emissiveIntensity={3}
+            transparent opacity={0.8} side={THREE.DoubleSide} />
+        </mesh>
+        {/* Cauldron */}
+        <group position={[0, 0.72, 0]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[0.45, 0.35, 0.7, 12]} />
+            <meshStandardMaterial color="#2a2a2a" metalness={0.4} roughness={0.6} />
+          </mesh>
+          {/* Rim */}
+          <mesh position={[0, 0.35, 0]}>
+            <torusGeometry args={[0.46, 0.055, 7, 14]} />
+            <meshStandardMaterial color="#1a1a1a" metalness={0.5} roughness={0.55} />
+          </mesh>
+          {/* Bubbling liquid */}
+          <mesh position={[0, 0.34, 0]}>
+            <cylinderGeometry args={[0.42, 0.42, 0.04, 12]} />
+            <meshStandardMaterial color="#5533ee" emissive="#4422dd" emissiveIntensity={2.5}
+              transparent opacity={0.88} />
+          </mesh>
+          {/* Bubble particles */}
+          {([[-0.15, 0.42, 0.08], [0.1, 0.44, -0.12], [0.22, 0.43, 0.18]] as [number,number,number][]).map((p, i) => (
+            <mesh key={i} position={p}>
+              <sphereGeometry args={[0.04, 6, 5]} />
+              <meshStandardMaterial color="#8866ff" emissive="#6644ff" emissiveIntensity={3}
+                transparent opacity={0.7} />
+            </mesh>
+          ))}
+        </group>
+        {/* Hanging cauldron chain */}
+        <mesh position={[0, 1.9, 0]}>
+          <cylinderGeometry args={[0.015, 0.015, 1.2, 5]} />
+          <meshStandardMaterial color="#4a3a2a" roughness={0.9} />
+        </mesh>
+      </group>
+
+      {/* ── Bookshelves along back wall ── */}
+      <group position={[1.5, 0, -5.8]}>
+        {/* Shelf frame */}
+        <mesh position={[0, 2.0, 0]} castShadow>
+          <boxGeometry args={[4.5, 4.0, 0.14]} />
+          <meshStandardMaterial color="#4a3a28" roughness={0.9} />
+        </mesh>
+        {/* Shelf boards */}
+        {([0.5, 1.3, 2.1, 2.9] as number[]).map((y, i) => (
+          <mesh key={i} position={[0, y, 0.1]} castShadow>
+            <boxGeometry args={[4.5, 0.09, 0.38]} />
+            <meshStandardMaterial color="#5a4830" roughness={0.85} />
+          </mesh>
+        ))}
+        {/* Books — rows of different sized volumes */}
+        {[
+          { y: 0.62, x: -1.9, col: '#aa3322', w: 0.18, h: 0.45 },
+          { y: 0.62, x: -1.68, col: '#22448a', w: 0.14, h: 0.52 },
+          { y: 0.62, x: -1.5, col: '#224422', w: 0.16, h: 0.48 },
+          { y: 0.62, x: -1.3, col: '#884422', w: 0.22, h: 0.40 },
+          { y: 0.62, x: -1.02, col: '#6622aa', w: 0.15, h: 0.55 },
+          { y: 0.62, x: -0.82, col: '#cc8822', w: 0.18, h: 0.42 },
+          { y: 0.62, x: -0.58, col: '#aa2255', w: 0.12, h: 0.50 },
+          { y: 0.62, x: -0.4, col: '#224488', w: 0.2, h: 0.44 },
+          { y: 0.62, x: -0.14, col: '#3a6622', w: 0.16, h: 0.58 },
+          { y: 0.62, x: 0.1, col: '#882244', w: 0.18, h: 0.46 },
+          { y: 0.62, x: 0.34, col: '#4422aa', w: 0.15, h: 0.53 },
+          { y: 0.62, x: 0.55, col: '#cc4422', w: 0.20, h: 0.41 },
+          { y: 0.62, x: 0.82, col: '#226688', w: 0.16, h: 0.49 },
+          { y: 0.62, x: 1.04, col: '#882266', w: 0.18, h: 0.47 },
+          { y: 0.62, x: 1.28, col: '#228866', w: 0.14, h: 0.54 },
+          { y: 0.62, x: 1.48, col: '#aa6622', w: 0.22, h: 0.43 },
+          { y: 0.62, x: 1.76, col: '#662288', w: 0.15, h: 0.51 },
+          { y: 0.62, x: 1.97, col: '#224466', w: 0.18, h: 0.45 },
+          { y: 1.42, x: -1.85, col: '#bb3333', w: 0.2, h: 0.48 },
+          { y: 1.42, x: -1.6, col: '#333399', w: 0.16, h: 0.55 },
+          { y: 1.42, x: -1.38, col: '#339933', w: 0.18, h: 0.44 },
+          { y: 1.42, x: -1.14, col: '#996633', w: 0.15, h: 0.52 },
+          { y: 1.42, x: -0.92, col: '#663399', w: 0.22, h: 0.40 },
+          { y: 1.42, x: -0.62, col: '#339966', w: 0.17, h: 0.50 },
+          { y: 1.42, x: -0.38, col: '#993333', w: 0.19, h: 0.46 },
+          { y: 1.42, x: -0.12, col: '#336699', w: 0.16, h: 0.53 },
+          { y: 1.42, x: 0.1, col: '#996699', w: 0.20, h: 0.42 },
+          { y: 1.42, x: 0.36, col: '#669933', w: 0.15, h: 0.58 },
+          { y: 1.42, x: 0.58, col: '#993366', w: 0.18, h: 0.47 },
+          { y: 1.42, x: 0.82, col: '#336666', w: 0.22, h: 0.44 },
+          { y: 1.42, x: 1.1, col: '#883322', w: 0.16, h: 0.51 },
+          { y: 1.42, x: 1.32, col: '#228833', w: 0.19, h: 0.48 },
+          { y: 1.42, x: 1.58, col: '#553388', w: 0.17, h: 0.54 },
+          { y: 1.42, x: 1.81, col: '#885533', w: 0.15, h: 0.43 },
+          { y: 2.22, x: -1.9, col: '#cc2244', w: 0.22, h: 0.5 },
+          { y: 2.22, x: -1.6, col: '#2244cc', w: 0.16, h: 0.58 },
+          { y: 2.22, x: -1.38, col: '#44cc44', w: 0.18, h: 0.45 },
+          { y: 2.22, x: -1.14, col: '#cc8833', w: 0.2, h: 0.52 },
+          { y: 2.22, x: -0.88, col: '#8833cc', w: 0.15, h: 0.48 },
+          { y: 2.22, x: -0.66, col: '#33cc88', w: 0.22, h: 0.40 },
+          { y: 2.22, x: -0.36, col: '#cc3388', w: 0.17, h: 0.56 },
+          { y: 2.22, x: -0.12, col: '#3388cc', w: 0.19, h: 0.44 },
+          { y: 2.22, x: 0.14, col: '#88cc33', w: 0.16, h: 0.50 },
+          { y: 2.22, x: 0.36, col: '#cc3344', w: 0.21, h: 0.46 },
+          { y: 2.22, x: 0.64, col: '#3344cc', w: 0.15, h: 0.54 },
+          { y: 2.22, x: 0.85, col: '#44cc66', w: 0.18, h: 0.42 },
+          { y: 2.22, x: 1.08, col: '#cc6644', w: 0.20, h: 0.48 },
+          { y: 2.22, x: 1.34, col: '#6644cc', w: 0.16, h: 0.52 },
+          { y: 2.22, x: 1.56, col: '#44cc88', w: 0.22, h: 0.44 },
+          { y: 2.22, x: 1.84, col: '#cc4466', w: 0.15, h: 0.50 },
+        ].map(({ y, x, col, w, h }, i) => (
+          <mesh key={i} position={[x, y + h / 2, 0.14]} castShadow>
+            <boxGeometry args={[w, h, 0.26]} />
+            <meshStandardMaterial color={col} roughness={0.78} />
+          </mesh>
+        ))}
+      </group>
+
+      {/* ── Potion shelf right wall ── */}
+      <group position={[4.72, 0, -2.0]}>
+        <mesh position={[0, 1.8, 0]} castShadow>
+          <boxGeometry args={[0.12, 3.6, 2.0]} />
+          <meshStandardMaterial color="#4a3828" roughness={0.9} />
+        </mesh>
+        {([0.55, 1.2, 1.85, 2.5] as number[]).map((y, i) => (
+          <mesh key={i} position={[-0.08, y, 0]} castShadow>
+            <boxGeometry args={[0.24, 0.09, 2.05]} />
+            <meshStandardMaterial color="#5a4830" roughness={0.85} />
+          </mesh>
+        ))}
+        {/* Potion bottles */}
+        {[
+          { y: 0.72, z: -0.75, col: '#3366ff', h: 0.45, r: 0.1 },
+          { y: 0.72, z: -0.4,  col: '#ff3366', h: 0.38, r: 0.08 },
+          { y: 0.72, z: -0.08, col: '#33ff88', h: 0.52, r: 0.09 },
+          { y: 0.72, z:  0.28, col: '#ffaa22', h: 0.40, r: 0.11 },
+          { y: 0.72, z:  0.62, col: '#aa44ff', h: 0.48, r: 0.08 },
+          { y: 0.72, z:  0.9,  col: '#22ddff', h: 0.35, r: 0.1 },
+          { y: 1.38, z: -0.7,  col: '#ff6622', h: 0.42, r: 0.09 },
+          { y: 1.38, z: -0.35, col: '#66ff22', h: 0.56, r: 0.08 },
+          { y: 1.38, z:  0.05, col: '#2266ff', h: 0.38, r: 0.12 },
+          { y: 1.38, z:  0.42, col: '#ff22aa', h: 0.44, r: 0.09 },
+          { y: 1.38, z:  0.78, col: '#aaff44', h: 0.50, r: 0.08 },
+          { y: 2.02, z: -0.6,  col: '#ff4488', h: 0.46, r: 0.1 },
+          { y: 2.02, z: -0.22, col: '#44ff88', h: 0.40, r: 0.09 },
+          { y: 2.02, z:  0.18, col: '#8844ff', h: 0.52, r: 0.08 },
+          { y: 2.02, z:  0.55, col: '#ff8844', h: 0.36, r: 0.11 },
+          { y: 2.02, z:  0.88, col: '#44aaff', h: 0.48, r: 0.09 },
+          { y: 2.65, z: -0.5,  col: '#ffcc44', h: 0.42, r: 0.1 },
+          { y: 2.65, z: -0.1,  col: '#cc44ff', h: 0.55, r: 0.08 },
+          { y: 2.65, z:  0.32, col: '#44ffcc', h: 0.38, r: 0.12 },
+          { y: 2.65, z:  0.7,  col: '#ff4444', h: 0.44, r: 0.09 },
+        ].map(({ y, z, col, h, r }, i) => (
+          <group key={i} position={[-0.12, y, z]}>
+            <mesh castShadow>
+              <cylinderGeometry args={[r * 0.85, r, h, 8]} />
+              <meshStandardMaterial color={col} transparent opacity={0.82}
+                emissive={col} emissiveIntensity={0.35} roughness={0.2} metalness={0.1} />
+            </mesh>
+            {/* Cork */}
+            <mesh position={[0, h / 2 + 0.04, 0]}>
+              <cylinderGeometry args={[r * 0.4, r * 0.4, 0.08, 6]} />
+              <meshStandardMaterial color="#8b6030" roughness={0.85} />
+            </mesh>
+          </group>
+        ))}
+      </group>
+
+      {/* ── Hanging herb bundles from ceiling ── */}
+      {[
+        [-1.5, 5.3,  -3.5], [1.2, 5.3,  -4.0],
+        [-3.0, 5.25, -2.5], [0.5, 5.35, -2.8],
+        [2.5, 5.28,  -3.0], [-2.0, 5.32, -4.5],
+      ].map(([x, y, z], i) => (
+        <group key={i} position={[x, y, z]}>
+          <mesh position={[0, -0.15, 0]}>
+            <cylinderGeometry args={[0.01, 0.01, 0.25, 4]} />
+            <meshStandardMaterial color="#8b7050" roughness={0.9} />
+          </mesh>
+          {/* Herb leaves */}
+          {([0, 1, 2, 3, 4] as number[]).map(j => {
+            const a = (j / 5) * Math.PI * 2;
+            const spread = 0.04 + j * 0.025;
+            return (
+              <mesh key={j} position={[Math.cos(a) * spread, -0.25 - j * 0.04, Math.sin(a) * spread]}
+                rotation={[Math.cos(a) * 0.5, 0, Math.sin(a) * 0.5]}>
+                <planeGeometry args={[0.08, 0.18]} />
+                <meshStandardMaterial color={['#4a7a28','#3a6a18','#5a8a38','#2a5a08','#6a9a48'][j]}
+                  roughness={1} side={THREE.DoubleSide} />
+              </mesh>
+            );
+          })}
+        </group>
+      ))}
+
+      {/* ── Low ingredient table center ── */}
+      <group position={[0.5, 0, -1.8]}>
+        {([-0.82, 0.82] as number[]).flatMap(x => ([-0.48, 0.48] as number[]).map(z => (
+          <mesh key={`${x}${z}`} position={[x, 0.38, z]} castShadow>
+            <boxGeometry args={[0.1, 0.76, 0.1]} />
+            <meshStandardMaterial color="#3a2a18" roughness={0.9} />
+          </mesh>
+        )))}
+        <mesh position={[0, 0.78, 0]} castShadow>
+          <boxGeometry args={[1.8, 0.1, 1.1]} />
+          <meshStandardMaterial color="#4a3828" roughness={0.85} />
+        </mesh>
+        {/* Ingredient items */}
+        <mesh scale={[0.9, 0.6, 0.9]} position={[-0.5, 0.9, -0.2]}>
+          <sphereGeometry args={[0.18, 8, 7]} />
+          <meshStandardMaterial color="#4a8a28" roughness={0.75} />
+        </mesh>
+        <mesh scale={[1.1, 0.5, 0.8]} position={[0.2, 0.88, 0.1]}>
+          <sphereGeometry args={[0.14, 8, 7]} />
+          <meshStandardMaterial color="#8a3a88" roughness={0.7} />
+        </mesh>
+        {/* Mortar and pestle */}
+        <group position={[0.55, 0.85, -0.22]}>
+          <mesh>
+            <cylinderGeometry args={[0.14, 0.1, 0.22, 10]} />
+            <meshStandardMaterial color="#888878" roughness={0.7} />
+          </mesh>
+          <mesh position={[0.04, 0.25, 0]} rotation={[0, 0, -0.3]}>
+            <cylinderGeometry args={[0.025, 0.02, 0.36, 6]} />
+            <meshStandardMaterial color="#888878" roughness={0.7} />
+          </mesh>
+        </group>
+        {/* Rolled scroll */}
+        <mesh position={[-0.62, 0.87, 0.3]} rotation={[0, 0.4, 0]}>
+          <cylinderGeometry args={[0.05, 0.05, 0.55, 8]} />
+          <meshStandardMaterial color="#ddd0a8" roughness={0.8} />
+        </mesh>
+      </group>
+
+      {/* ── Plant pots near door ── */}
+      {[
+        [-2.0, 0, 3.5, '#44aa44', 0.4 ],
+        [-1.0, 0, 3.8, '#228833', 0.3 ],
+        [ 1.5, 0, 3.6, '#33aa66', 0.35],
+        [ 2.5, 0, 3.4, '#88cc22', 0.28],
+      ].map(([x, y, z, col, s], i) => (
+        <group key={i} position={[x as number, y as number, z as number]}>
+          <mesh position={[0, 0.2, 0]} castShadow>
+            <cylinderGeometry args={[0.2, 0.16, 0.38, 9]} />
+            <meshStandardMaterial color={['#885530','#7a4a28','#996640','#6a4020'][i]} roughness={0.88} />
+          </mesh>
+          <mesh scale={[s as number, s as number, s as number]} position={[0, 0.5, 0]}>
+            <sphereGeometry args={[0.6, 8, 7]} />
+            <meshStandardMaterial color={col as string} roughness={0.85} transparent opacity={0.9} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* ── Star chart scroll on left wall ── */}
+      <group position={[-4.82, 3.0, -1.5]}>
+        <mesh>
+          <boxGeometry args={[0.06, 1.8, 1.4]} />
+          <meshStandardMaterial color="#2a2240" roughness={0.85} />
+        </mesh>
+        {/* Constellations */}
+        {[[-0.25, 0.2], [0.2, -0.1], [-0.1, -0.35], [0.35, 0.3], [0, 0]] .map(([y, z], i) => (
+          <mesh key={i} position={[0.05, y, z]}>
+            <sphereGeometry args={[0.04, 5, 4]} />
+            <meshStandardMaterial color="#ffee88" emissive="#ffcc44" emissiveIntensity={2} />
+          </mesh>
+        ))}
+      </group>
+
+      {/* ── Exit door glow ── */}
+      <pointLight position={[0, 1.5, 4.2]} color="#8866ff" intensity={1.8} distance={5} decay={2} />
+    </>
+  );
+}
+
 // ─── Invisible world boundary ─────────────────────────────────────
 function Boundary() {
   return (
@@ -2341,6 +3181,24 @@ export function World() {
       }
     }
 
+    // Cottage door entry (field → cottage)
+    if (currentArea === 'field') {
+      for (const door of COTTAGE_DOORS) {
+        if (playerPosition.distanceTo(door.pos) < 1.8) {
+          useGameStore.getState().triggerAreaTransition({ area: door.dest, spawnPos: COTTAGE_SPAWN.clone() });
+          return;
+        }
+      }
+    }
+    // Cottage exit — walk through south doorway back to field
+    if (currentArea === 'cottage1' || currentArea === 'cottage2' || currentArea === 'cottage3') {
+      if (playerPosition.z > 3.8 && Math.abs(playerPosition.x) < 3.0) {
+        const idx = currentArea === 'cottage1' ? 0 : currentArea === 'cottage2' ? 1 : 2;
+        useGameStore.getState().triggerAreaTransition({ area: 'field', spawnPos: COTTAGE_DOORS[idx].fieldReturn.clone() });
+        return;
+      }
+    }
+
     // Shop proximity
     if (currentArea === 'field') {
       useGameStore.getState().setNearShop(playerPosition.distanceTo(SHOP_POS) < 3.5);
@@ -2383,6 +3241,13 @@ export function World() {
       {currentArea === 'void'    && <VoidArea />}
       {currentArea === 'cave'    && <CaveArea />}
       {currentArea === 'home'    && <HomeArea />}
+      {currentArea === 'cottage1' && <Cottage1Area />}
+      {currentArea === 'cottage2' && <Cottage2Area />}
+      {currentArea === 'cottage3' && <Cottage3Area />}
+      {/* Cottage door entrance glows (field only) */}
+      {currentArea === 'field' && COTTAGE_DOORS.map((door, i) => (
+        <CottageEntrance key={`ce-${i}`} pos={door.pos} t={portalTimeRef.current} />
+      ))}
       <AreaGuardian />
       <NPCManager />
     </>

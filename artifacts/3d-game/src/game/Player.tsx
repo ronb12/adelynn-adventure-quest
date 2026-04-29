@@ -917,6 +917,18 @@ export function Player() {
       }
     }
 
+    // Cottage interior wall collision
+    // Rooms: 10 wide (x: -5..5), z: -6..4.5, door gap |x| < 3.0 at z=4.5
+    if (store.currentArea === 'cottage1' || store.currentArea === 'cottage2' || store.currentArea === 'cottage3') {
+      pos.current.x = THREE.MathUtils.clamp(pos.current.x, -4.35, 4.35);
+      pos.current.z = Math.max(pos.current.z, -5.35);
+      const CWALL_Z_IN  = 3.85;
+      const CWALL_Z_OUT = 5.15;
+      if (Math.abs(pos.current.x) > 2.5 && pos.current.z > CWALL_Z_IN && pos.current.z < CWALL_Z_OUT) {
+        pos.current.z = pos.current.z < 4.5 ? CWALL_Z_IN : CWALL_Z_OUT;
+      }
+    }
+
     groupRef.current.position.copy(pos.current);
 
     store.setPlayerPosition(pos.current.clone());

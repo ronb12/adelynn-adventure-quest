@@ -51,6 +51,9 @@ const AREA_NAMES: Record<string, string> = {
   void:    'The Fractured Void',
   cave:    'Crystal Caverns',
   home:    "Adelynn's Home",
+  cottage1: "Baker's Cottage",
+  cottage2: "Craftsman's Cottage",
+  cottage3: "Herbalist's Cottage",
 };
 const AREA_SUBTITLES: Record<string, string> = {
   field:   'Where the journey begins',
@@ -65,6 +68,9 @@ const AREA_SUBTITLES: Record<string, string> = {
   void:    'Reality ends here',
   cave:    'Secrets gleam in the dark',
   home:    'Rest. You have earned it.',
+  cottage1: 'Something smells delicious',
+  cottage2: 'Every craft tells a story',
+  cottage3: 'Nature holds every secret',
 };
 const SHARD_INFO = [
   { area: 'field',  name: 'Shard of Dawn',  color: '#ffe060' },
@@ -881,6 +887,7 @@ function AreaEntryBanner() {
     field: '#ffe090', forest: '#88ff88', desert: '#ff9940', boss: '#ff4444',
     jungle: '#44dd66', ice: '#88eeff', volcano: '#ff5522', sky: '#aabbff',
     crypt: '#bb88ff', void: '#cc44ff', cave: '#bb88ff', home: '#ffcc88',
+    cottage1: '#ffaa55', cottage2: '#cc9944', cottage3: '#88cc99',
   };
   const accent = areaColors[display.area] ?? '#ffffff';
 

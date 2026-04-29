@@ -67,6 +67,9 @@ const AREA_CONFIG: Record<AreaId, {
     { count: 2, maxHp: 5, speed: [1.0, 1.8], body: '#553388', accent: '#8844cc', chaseRange: 8,  meshType: 'wraith', behavior: 'ranged' },
   ],
   home: [],
+  cottage1: [],
+  cottage2: [],
+  cottage3: [],
 };
 
 // ── Visual meshes ────────────────────────────────────────────────

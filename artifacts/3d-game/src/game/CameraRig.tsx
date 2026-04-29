@@ -11,7 +11,7 @@ const INTERIOR_OFFSET = { y: 4.5, z: 8 };
 export function CameraRig() {
   useFrame((state) => {
     const { playerPosition, currentArea } = useGameStore.getState();
-    const isInterior = currentArea === 'home';
+    const isInterior = currentArea === 'home' || currentArea === 'cottage1' || currentArea === 'cottage2' || currentArea === 'cottage3';
     const off = isInterior ? INTERIOR_OFFSET : OUTDOOR_OFFSET;
 
     const targetPos = new THREE.Vector3(

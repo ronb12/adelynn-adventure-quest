@@ -5,7 +5,7 @@ import { NPC_DATA } from './npcData';
 import { saveGame, loadGame, deleteSave, getAreaSpawn, SaveData } from './saveManager';
 
 export type GameState = 'title' | 'playing' | 'paused' | 'gameover' | 'victory';
-export type AreaId = 'field' | 'forest' | 'desert' | 'boss' | 'jungle' | 'ice' | 'volcano' | 'sky' | 'crypt' | 'void' | 'cave' | 'home';
+export type AreaId = 'field' | 'forest' | 'desert' | 'boss' | 'jungle' | 'ice' | 'volcano' | 'sky' | 'crypt' | 'void' | 'cave' | 'home' | 'cottage1' | 'cottage2' | 'cottage3';
 export type SleepPhase = 'none' | 'changing' | 'walking' | 'lying' | 'sleeping' | 'waking' | 'rising';
 
 export type SwordId =
