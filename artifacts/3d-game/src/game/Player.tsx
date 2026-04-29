@@ -705,6 +705,8 @@ export function Player() {
         store.openShop();
       } else if (store.nearFountain) {
         store.useFountain();
+      } else if (store.nearBed) {
+        store.sleep();
       } else if (store.nearNPC) {
         store.startDialogue(store.nearNPC);
       }

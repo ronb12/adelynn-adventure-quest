@@ -59,6 +59,7 @@ const HEART_PIECE_POSITIONS: Record<AreaId, { id: string; pos: [number, number, 
     { id: 'hp-cave-3', pos: [  8,  0.6, -20] },
     { id: 'hp-cave-4', pos: [-12,  0.6, -15] },
   ],
+  home: [],
 };
 
 const RUPEE_POSITIONS: { pos: [number, number, number] }[] = [

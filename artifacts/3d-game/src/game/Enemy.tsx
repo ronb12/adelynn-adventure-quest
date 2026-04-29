@@ -66,6 +66,7 @@ const AREA_CONFIG: Record<AreaId, {
     { count: 3, maxHp: 4, speed: [1.6, 2.6], body: '#4a3366', accent: '#cc88ff', chaseRange: 10, meshType: 'slime' },
     { count: 2, maxHp: 5, speed: [1.0, 1.8], body: '#553388', accent: '#8844cc', chaseRange: 8,  meshType: 'wraith', behavior: 'ranged' },
   ],
+  home: [],
 };
 
 // ── Visual meshes ────────────────────────────────────────────────

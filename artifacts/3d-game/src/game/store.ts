@@ -5,7 +5,7 @@ import { NPC_DATA } from './npcData';
 import { saveGame, loadGame, deleteSave, getAreaSpawn, SaveData } from './saveManager';
 
 export type GameState = 'title' | 'playing' | 'paused' | 'gameover' | 'victory';
-export type AreaId = 'field' | 'forest' | 'desert' | 'boss' | 'jungle' | 'ice' | 'volcano' | 'sky' | 'crypt' | 'void' | 'cave';
+export type AreaId = 'field' | 'forest' | 'desert' | 'boss' | 'jungle' | 'ice' | 'volcano' | 'sky' | 'crypt' | 'void' | 'cave' | 'home';
 
 export type SwordId =
   | 'crystal' | 'flame' | 'thunder' | 'frost' | 'shadow'
@@ -138,6 +138,7 @@ interface GameStore {
   showShop: boolean;
   nearShop: boolean;
   nearFountain: boolean;
+  nearBed: boolean;
   areasVisited: AreaId[];
   eliteKills: number;
   guardianDefeated: AreaId[];
@@ -197,6 +198,8 @@ interface GameStore {
   buyItem: (item: 'arrows' | 'bombs' | 'heart' | 'shurikens' | 'frost' | 'flare' | 'veil' | 'quake' | 'moonbow', cost: number) => boolean;
   setNearFountain: (v: boolean) => void;
   useFountain: () => void;
+  setNearBed: (v: boolean) => void;
+  sleep: () => void;
   setArmorLevel: (level: 0 | 1 | 2) => void;
   resetGame: () => void;
   lastSaveTime: number;
@@ -268,6 +271,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   showShop: false,
   nearShop: false,
   nearFountain: false,
+  nearBed: false,
   areasVisited: ['field' as AreaId],
   eliteKills: 0,
   lastSaveTime: 0,
@@ -554,6 +558,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   setNearFountain: (v) => set({ nearFountain: v }),
   useFountain: () => set((s) => ({ hearts: s.maxHearts })),
+  setNearBed: (v) => set({ nearBed: v }),
+  sleep: () => {
+    const s = get();
+    if (s.gameState !== 'playing') return;
+    set((st) => ({ hearts: st.maxHearts }));
+    get().performSave();
+    set({ itemFanfare: { name: "Sweet Dreams, Adelynn!", icon: '🌙', desc: 'All hearts restored — progress saved.' } });
+  },
   setArmorLevel: (level) => set({ armorLevel: level }),
 
   addKill: (pts) => set((s) => {
@@ -643,6 +655,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     showShop: false,
     nearShop: false,
     nearFountain: false,
+    nearBed: false,
     lastSaveTime: 0,
     score: 0,
     comboCount: 0,
@@ -746,6 +759,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       showShop: false,
       nearShop: false,
       nearFountain: false,
+      nearBed: false,
       bossMaxHP: 20,
       lastSaveTime: 0,
       score: 0,

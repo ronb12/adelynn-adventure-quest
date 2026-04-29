@@ -191,6 +191,8 @@ export const PORTALS: Record<AreaId, PortalDef[]> = {
       destination: { area: 'desert', spawnPos: new THREE.Vector3(-26, 0, 0) }, color: '#ff8822' },
     { pos: [0, 0, 29], rot: [0, Math.PI, 0], label: 'Crystal Caverns',
       destination: { area: 'cave', spawnPos: new THREE.Vector3(0, 0, -24) }, color: '#9944ff' },
+    { pos: [-20, 0, -17], rot: [0, 0, 0], label: "Adelynn's Home",
+      destination: { area: 'home', spawnPos: new THREE.Vector3(0, 0, 6) }, color: '#ffcc44' },
   ],
   forest: [
     { pos: [0, 0, 29], rot: [0, Math.PI, 0], label: 'Sunfield Plains',
@@ -247,6 +249,10 @@ export const PORTALS: Record<AreaId, PortalDef[]> = {
   cave: [
     { pos: [0, 0, 29], rot: [0, Math.PI, 0], label: 'Return to Sunfield Plains',
       destination: { area: 'field', spawnPos: new THREE.Vector3(0, 0, 24) }, color: '#88aaff' },
+  ],
+  home: [
+    { pos: [0, 0, 10], rot: [0, 0, 0], label: 'Return to Sunfield Plains',
+      destination: { area: 'field', spawnPos: new THREE.Vector3(-20, 0, -12) }, color: '#88ddff' },
   ],
 };
 
@@ -699,6 +705,124 @@ function FieldArea() {
 
       {/* Merchant sign near village */}
       <MerchantSign pos={[8, 0, 12]} />
+
+      {/* Adelynn's Cottage exterior */}
+      <group position={[-20, 0, -22]}>
+        {/* Stone foundation */}
+        <mesh position={[0, 0.2, 0]} receiveShadow castShadow>
+          <boxGeometry args={[10.5, 0.4, 8.5]} />
+          <meshStandardMaterial color="#9a8a78" roughness={0.95} />
+        </mesh>
+        {/* Back wall */}
+        <mesh position={[0, 3, -4.2]} receiveShadow castShadow>
+          <boxGeometry args={[10.5, 6, 0.35]} />
+          <meshStandardMaterial color="#c4a882" roughness={0.9} />
+        </mesh>
+        {/* Left wall */}
+        <mesh position={[-5.1, 3, 0]} receiveShadow castShadow>
+          <boxGeometry args={[0.35, 6, 8.5]} />
+          <meshStandardMaterial color="#b89b72" roughness={0.9} />
+        </mesh>
+        {/* Right wall */}
+        <mesh position={[5.1, 3, 0]} receiveShadow castShadow>
+          <boxGeometry args={[0.35, 6, 8.5]} />
+          <meshStandardMaterial color="#b89b72" roughness={0.9} />
+        </mesh>
+        {/* Front wall – left of door */}
+        <mesh position={[-3.0, 3, 4.2]} receiveShadow castShadow>
+          <boxGeometry args={[4.0, 6, 0.35]} />
+          <meshStandardMaterial color="#c4a882" roughness={0.9} />
+        </mesh>
+        {/* Front wall – right of door */}
+        <mesh position={[3.0, 3, 4.2]} receiveShadow castShadow>
+          <boxGeometry args={[4.0, 6, 0.35]} />
+          <meshStandardMaterial color="#c4a882" roughness={0.9} />
+        </mesh>
+        {/* Above door lintel */}
+        <mesh position={[0, 5.3, 4.2]} receiveShadow castShadow>
+          <boxGeometry args={[2.5, 1.4, 0.35]} />
+          <meshStandardMaterial color="#a07850" roughness={0.9} />
+        </mesh>
+        {/* Roof – left slope */}
+        <mesh position={[-2.9, 7.1, 0]} rotation={[0, 0, 0.53]} receiveShadow castShadow>
+          <boxGeometry args={[0.35, 6.2, 8.9]} />
+          <meshStandardMaterial color="#7a4e28" roughness={0.95} />
+        </mesh>
+        {/* Roof – right slope */}
+        <mesh position={[2.9, 7.1, 0]} rotation={[0, 0, -0.53]} receiveShadow castShadow>
+          <boxGeometry args={[0.35, 6.2, 8.9]} />
+          <meshStandardMaterial color="#7a4e28" roughness={0.95} />
+        </mesh>
+        {/* Roof ridge */}
+        <mesh position={[0, 9.0, 0]} castShadow>
+          <boxGeometry args={[0.5, 0.5, 9.2]} />
+          <meshStandardMaterial color="#5c3a1a" roughness={0.95} />
+        </mesh>
+        {/* Roof eave overhang front */}
+        <mesh position={[0, 6.15, 4.9]} castShadow>
+          <boxGeometry args={[10.5, 0.25, 1.0]} />
+          <meshStandardMaterial color="#7a4e28" roughness={0.95} />
+        </mesh>
+        {/* Roof eave overhang back */}
+        <mesh position={[0, 6.15, -4.9]} castShadow>
+          <boxGeometry args={[10.5, 0.25, 1.0]} />
+          <meshStandardMaterial color="#7a4e28" roughness={0.95} />
+        </mesh>
+        {/* Chimney */}
+        <mesh position={[-3.5, 9.5, -3]} castShadow>
+          <boxGeometry args={[1.2, 4.5, 1.2]} />
+          <meshStandardMaterial color="#8a7060" roughness={0.95} />
+        </mesh>
+        <mesh position={[-3.5, 11.9, -3]} castShadow>
+          <boxGeometry args={[1.5, 0.4, 1.5]} />
+          <meshStandardMaterial color="#6a5040" roughness={0.95} />
+        </mesh>
+        {/* Chimney warm glow */}
+        <pointLight position={[-3.5, 12.5, -3]} color="#ff6622" intensity={2} distance={8} decay={2} />
+        {/* Right wall window */}
+        <mesh position={[5.12, 3.2, 0]} castShadow>
+          <boxGeometry args={[0.05, 1.8, 1.8]} />
+          <meshStandardMaterial color="#ffe8b0" emissive="#ffcc44" emissiveIntensity={0.8}
+            transparent opacity={0.7} />
+        </mesh>
+        <mesh position={[5.12, 3.2, 0]} castShadow>
+          <boxGeometry args={[0.2, 2.0, 0.12]} />
+          <meshStandardMaterial color="#7a5030" roughness={0.9} />
+        </mesh>
+        <mesh position={[5.12, 3.2, 0]} castShadow>
+          <boxGeometry args={[0.2, 0.12, 2.0]} />
+          <meshStandardMaterial color="#7a5030" roughness={0.9} />
+        </mesh>
+        {/* Window warm interior glow */}
+        <pointLight position={[4.5, 3.2, 0]} color="#ffaa44" intensity={1.5} distance={8} decay={2} />
+        {/* Garden path stones */}
+        {[-0.6, 0, 0.6].map((ox, i) => (
+          <mesh key={i} position={[ox, 0.22, 5.5 + i * 1.1]} rotation={[-Math.PI/2, 0, ox * 0.3]} receiveShadow>
+            <circleGeometry args={[0.38, 7]} />
+            <meshStandardMaterial color="#aaa090" roughness={0.9} />
+          </mesh>
+        ))}
+        {/* Flower boxes under window */}
+        <mesh position={[5.5, 1.5, 0.5]} castShadow>
+          <boxGeometry args={[0.3, 0.4, 1.4]} />
+          <meshStandardMaterial color="#7a5030" roughness={0.9} />
+        </mesh>
+        {[0, 0.5, 1.0].map((oz, i) => (
+          <mesh key={i} position={[5.55, 1.85, 0.15 + oz - 0.5]}>
+            <sphereGeometry args={[0.18, 7, 7]} />
+            <meshStandardMaterial color={['#ff6688', '#ffaacc', '#ff88aa'][i]} />
+          </mesh>
+        ))}
+        {/* Door frame */}
+        <mesh position={[-1.2, 2.2, 4.23]} castShadow>
+          <boxGeometry args={[0.18, 4.4, 0.28]} />
+          <meshStandardMaterial color="#6a4020" roughness={0.9} />
+        </mesh>
+        <mesh position={[1.2, 2.2, 4.23]} castShadow>
+          <boxGeometry args={[0.18, 4.4, 0.28]} />
+          <meshStandardMaterial color="#6a4020" roughness={0.9} />
+        </mesh>
+      </group>
 
       {/* Boss portal — only visible when all 3 shards collected */}
       {shardsCollected >= 3 && (
@@ -1562,6 +1686,563 @@ function CaveArea() {
   );
 }
 
+// ─── Adelynn's Home interior ─────────────────────────────────────
+function HomeArea() {
+  return (
+    <>
+      <color attach="background" args={['#1a0d06']} />
+      <fog attach="fog" args={['#1a0d06', 18, 36]} />
+
+      {/* Ambient warm glow — cozy evening light */}
+      <ambientLight intensity={0.45} color="#ffbb66" />
+      {/* Main ceiling lantern */}
+      <pointLight position={[0, 4.2, -1]} color="#ffcc88" intensity={3.5} distance={22} decay={1.5} castShadow
+        shadow-camera-near={0.5} shadow-camera-far={25} shadow-mapSize-width={512} shadow-mapSize-height={512} />
+      {/* Fireplace ember glow */}
+      <pointLight position={[-6, 1.2, -10.2]} color="#ff6622" intensity={4.5} distance={12} decay={2} />
+      {/* Candle warm pools */}
+      <pointLight position={[3, 1.8, 2]} color="#ffaa44" intensity={1.8} distance={6} decay={2} />
+      <pointLight position={[-4.5, 2.5, -6]} color="#ffbb55" intensity={1.2} distance={5} decay={2} />
+      <directionalLight position={[0, 10, 5]} intensity={0.2} color="#ffd8aa" />
+
+      {/* ── Wooden floor ────────────────────────────────────── */}
+      <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+        <planeGeometry args={[18, 24]} />
+        <meshStandardMaterial color="#7a4e28" roughness={0.85} />
+      </mesh>
+      {/* Floor plank lines */}
+      {Array.from({ length: 9 }).map((_, i) => (
+        <mesh key={i} rotation={[-Math.PI/2, 0, 0]} position={[i * 2 - 8, 0.005, 0]} receiveShadow>
+          <planeGeometry args={[0.05, 24]} />
+          <meshStandardMaterial color="#5a3615" roughness={0.9} />
+        </mesh>
+      ))}
+
+      {/* ── Walls ─────────────────────────────────────────── */}
+      {/* Back wall */}
+      <mesh position={[0, 2.8, -12]} receiveShadow castShadow>
+        <boxGeometry args={[18, 5.6, 0.3]} />
+        <meshStandardMaterial color="#c4a882" roughness={0.9} />
+      </mesh>
+      {/* Left wall */}
+      <mesh position={[-9, 2.8, 0]} receiveShadow castShadow>
+        <boxGeometry args={[0.3, 5.6, 24]} />
+        <meshStandardMaterial color="#b89b72" roughness={0.9} />
+      </mesh>
+      {/* Right wall */}
+      <mesh position={[9, 2.8, 0]} receiveShadow castShadow>
+        <boxGeometry args={[0.3, 5.6, 24]} />
+        <meshStandardMaterial color="#b89b72" roughness={0.9} />
+      </mesh>
+      {/* Front wall – left half */}
+      <mesh position={[-4.5, 2.8, 12]} receiveShadow castShadow>
+        <boxGeometry args={[8.6, 5.6, 0.3]} />
+        <meshStandardMaterial color="#c4a882" roughness={0.9} />
+      </mesh>
+      {/* Front wall – right half */}
+      <mesh position={[4.5, 2.8, 12]} receiveShadow castShadow>
+        <boxGeometry args={[8.6, 5.6, 0.3]} />
+        <meshStandardMaterial color="#c4a882" roughness={0.9} />
+      </mesh>
+      {/* Above door */}
+      <mesh position={[0, 4.8, 12]} receiveShadow castShadow>
+        <boxGeometry args={[3.0, 1.2, 0.3]} />
+        <meshStandardMaterial color="#a07850" roughness={0.9} />
+      </mesh>
+      {/* Ceiling */}
+      <mesh position={[0, 5.6, 0]} receiveShadow>
+        <boxGeometry args={[18, 0.25, 24]} />
+        <meshStandardMaterial color="#8B5E3C" roughness={0.9} />
+      </mesh>
+      {/* Ceiling beams */}
+      {[-6, 0, 6].map((bx, i) => (
+        <mesh key={i} position={[bx, 5.35, 0]} castShadow>
+          <boxGeometry args={[0.4, 0.4, 24]} />
+          <meshStandardMaterial color="#5c3a1a" roughness={0.95} />
+        </mesh>
+      ))}
+
+      {/* ── Fireplace ──────────────────────────────────────── */}
+      <group position={[-7.5, 0, -10.5]}>
+        {/* Stone mantle surround */}
+        <mesh position={[0, 2.2, 0.15]} castShadow>
+          <boxGeometry args={[3.4, 4.4, 0.6]} />
+          <meshStandardMaterial color="#8a7060" roughness={0.95} />
+        </mesh>
+        {/* Firebox cutout visual (darker rect) */}
+        <mesh position={[0, 1.1, 0.45]}>
+          <boxGeometry args={[2.0, 2.2, 0.05]} />
+          <meshStandardMaterial color="#1a0800" />
+        </mesh>
+        {/* Mantle shelf */}
+        <mesh position={[0, 4.6, 0.5]} castShadow>
+          <boxGeometry args={[3.8, 0.22, 0.9]} />
+          <meshStandardMaterial color="#7a5030" roughness={0.85} />
+        </mesh>
+        {/* Ember/fire glow block */}
+        <mesh position={[0, 0.3, 0.38]}>
+          <boxGeometry args={[1.6, 0.45, 0.3]} />
+          <meshStandardMaterial color="#ff5500" emissive="#ff4400" emissiveIntensity={3}
+            transparent opacity={0.9} />
+        </mesh>
+        <mesh position={[0, 0.6, 0.35]}>
+          <boxGeometry args={[1.1, 0.4, 0.2]} />
+          <meshStandardMaterial color="#ff8800" emissive="#ff7700" emissiveIntensity={4}
+            transparent opacity={0.85} />
+        </mesh>
+        {/* Log on fire */}
+        <mesh position={[-0.4, 0.16, 0.4]} rotation={[0, 0.4, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.14, 0.14, 1.6, 7]} />
+          <meshStandardMaterial color="#3a1a0a" roughness={0.95} />
+        </mesh>
+        <mesh position={[0.3, 0.16, 0.42]} rotation={[0, -0.3, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.12, 0.12, 1.4, 7]} />
+          <meshStandardMaterial color="#2a1206" roughness={0.95} />
+        </mesh>
+        {/* Mantle decorations */}
+        <mesh position={[-1.1, 4.85, 0.5]} castShadow>
+          <cylinderGeometry args={[0.08, 0.08, 0.55, 7]} />
+          <meshStandardMaterial color="#e8d5a0" />
+        </mesh>
+        <mesh position={[-1.1, 5.13, 0.5]}>
+          <sphereGeometry args={[0.1, 7, 6]} />
+          <meshStandardMaterial color="#ffcc44" emissive="#ffaa00" emissiveIntensity={2} />
+        </mesh>
+        <mesh position={[0.9, 4.85, 0.5]} castShadow>
+          <cylinderGeometry args={[0.07, 0.07, 0.45, 7]} />
+          <meshStandardMaterial color="#e8d5a0" />
+        </mesh>
+        <mesh position={[0.9, 5.1, 0.5]}>
+          <sphereGeometry args={[0.09, 7, 6]} />
+          <meshStandardMaterial color="#ffcc44" emissive="#ffaa00" emissiveIntensity={2} />
+        </mesh>
+        {/* Framed portrait on mantle */}
+        <mesh position={[0, 4.85, 0.52]} castShadow>
+          <boxGeometry args={[0.7, 0.55, 0.05]} />
+          <meshStandardMaterial color="#5c3a1a" roughness={0.85} />
+        </mesh>
+        <mesh position={[0, 4.85, 0.55]}>
+          <boxGeometry args={[0.56, 0.42, 0.02]} />
+          <meshStandardMaterial color="#c8a476" />
+        </mesh>
+      </group>
+
+      {/* ── Bed (Adelynn's) ──────────────────────────────────── */}
+      <group position={[-5, 0, -7]}>
+        {/* Bed frame / platform */}
+        <mesh position={[0, 0.22, 0]} castShadow receiveShadow>
+          <boxGeometry args={[3.2, 0.44, 5.2]} />
+          <meshStandardMaterial color="#6a3a18" roughness={0.85} metalness={0.05} />
+        </mesh>
+        {/* Mattress */}
+        <mesh position={[0, 0.58, 0.1]} castShadow receiveShadow>
+          <boxGeometry args={[2.8, 0.3, 4.5]} />
+          <meshStandardMaterial color="#f9e8f0" roughness={0.9} />
+        </mesh>
+        {/* Blanket */}
+        <mesh position={[0, 0.75, 0.5]} castShadow receiveShadow>
+          <boxGeometry args={[2.8, 0.14, 3.6]} />
+          <meshStandardMaterial color="#e8a0b8" roughness={0.9} />
+        </mesh>
+        {/* Pillow left */}
+        <mesh position={[-0.68, 0.8, -1.8]} castShadow>
+          <boxGeometry args={[1.0, 0.22, 0.7]} />
+          <meshStandardMaterial color="#fffde7" roughness={0.9} />
+        </mesh>
+        {/* Pillow right */}
+        <mesh position={[0.68, 0.8, -1.8]} castShadow>
+          <boxGeometry args={[1.0, 0.22, 0.7]} />
+          <meshStandardMaterial color="#fff0f8" roughness={0.9} />
+        </mesh>
+        {/* Headboard */}
+        <mesh position={[0, 1.5, -2.55]} castShadow>
+          <boxGeometry args={[3.2, 2.6, 0.22]} />
+          <meshStandardMaterial color="#5a2e0e" roughness={0.85} />
+        </mesh>
+        {/* Headboard carved panel */}
+        <mesh position={[0, 1.55, -2.44]}>
+          <boxGeometry args={[2.5, 1.9, 0.06]} />
+          <meshStandardMaterial color="#7a4a22" roughness={0.8} />
+        </mesh>
+        {/* Heart carving on headboard */}
+        <mesh position={[0, 1.8, -2.38]}>
+          <boxGeometry args={[0.5, 0.42, 0.05]} />
+          <meshStandardMaterial color="#9a5a2a" roughness={0.75} />
+        </mesh>
+        {/* Footboard */}
+        <mesh position={[0, 0.9, 2.62]} castShadow>
+          <boxGeometry args={[3.2, 1.35, 0.22]} />
+          <meshStandardMaterial color="#5a2e0e" roughness={0.85} />
+        </mesh>
+        {/* Canopy posts */}
+        {[[-1.55, -2.55], [1.55, -2.55], [-1.55, 2.55], [1.55, 2.55]].map(([px, pz], i) => (
+          <mesh key={i} position={[px, 2.1, pz]} castShadow>
+            <cylinderGeometry args={[0.09, 0.09, 4.2, 7]} />
+            <meshStandardMaterial color="#5a2e0e" roughness={0.85} />
+          </mesh>
+        ))}
+        {/* Canopy top rails */}
+        <mesh position={[0, 4.2, -2.55]} castShadow>
+          <boxGeometry args={[3.2, 0.1, 0.1]} />
+          <meshStandardMaterial color="#7a4422" roughness={0.85} />
+        </mesh>
+        <mesh position={[0, 4.2, 2.55]} castShadow>
+          <boxGeometry args={[3.2, 0.1, 0.1]} />
+          <meshStandardMaterial color="#7a4422" roughness={0.85} />
+        </mesh>
+        <mesh position={[-1.55, 4.2, 0]} castShadow>
+          <boxGeometry args={[0.1, 0.1, 5.1]} />
+          <meshStandardMaterial color="#7a4422" roughness={0.85} />
+        </mesh>
+        <mesh position={[1.55, 4.2, 0]} castShadow>
+          <boxGeometry args={[0.1, 0.1, 5.1]} />
+          <meshStandardMaterial color="#7a4422" roughness={0.85} />
+        </mesh>
+        {/* Canopy fabric panels */}
+        <mesh position={[-1.55, 2.6, 0]}>
+          <boxGeometry args={[0.04, 3.2, 5.0]} />
+          <meshStandardMaterial color="#f8c8d8" transparent opacity={0.55} side={2} />
+        </mesh>
+        <mesh position={[1.55, 2.6, 0]}>
+          <boxGeometry args={[0.04, 3.2, 5.0]} />
+          <meshStandardMaterial color="#f8c8d8" transparent opacity={0.55} side={2} />
+        </mesh>
+        <mesh position={[0, 2.6, 2.55]}>
+          <boxGeometry args={[3.0, 3.2, 0.04]} />
+          <meshStandardMaterial color="#f8c8d8" transparent opacity={0.42} side={2} />
+        </mesh>
+        {/* Canopy top fabric */}
+        <mesh position={[0, 4.22, 0]}>
+          <boxGeometry args={[3.0, 0.04, 5.0]} />
+          <meshStandardMaterial color="#f0b8cc" transparent opacity={0.7} side={2} />
+        </mesh>
+        {/* Bed glow (soft) */}
+        <pointLight position={[0, 1.5, 0]} color="#ffccdd" intensity={0.8} distance={4} decay={2} />
+      </group>
+
+      {/* ── Rug ─────────────────────────────────────────────── */}
+      <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, 0.008, -1]}>
+        <planeGeometry args={[9, 12]} />
+        <meshStandardMaterial color="#8B2222" roughness={0.95} />
+      </mesh>
+      {/* Rug border pattern */}
+      <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, 0.009, -1]}>
+        <planeGeometry args={[7.8, 10.8]} />
+        <meshStandardMaterial color="#992828" roughness={0.95} />
+      </mesh>
+      <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, 0.01, -1]}>
+        <planeGeometry args={[6.2, 9.2]} />
+        <meshStandardMaterial color="#cc4444" roughness={0.9} />
+      </mesh>
+      {/* Rug center diamond */}
+      <mesh rotation={[-Math.PI/2, Math.PI/4, 0]} position={[0, 0.011, -1]}>
+        <planeGeometry args={[3.2, 3.2]} />
+        <meshStandardMaterial color="#e8c050" roughness={0.9} />
+      </mesh>
+
+      {/* ── Bookshelf ────────────────────────────────────────── */}
+      <group position={[6.8, 0, -8]}>
+        {/* Shelf unit back */}
+        <mesh position={[0.1, 2.4, 0]} castShadow>
+          <boxGeometry args={[0.22, 4.8, 3.2]} />
+          <meshStandardMaterial color="#6a4020" roughness={0.9} />
+        </mesh>
+        {/* Shelf boards */}
+        {[0.5, 1.5, 2.5, 3.5].map((sy, i) => (
+          <mesh key={i} position={[0, sy, 0]} castShadow>
+            <boxGeometry args={[0.7, 0.12, 3.2]} />
+            <meshStandardMaterial color="#7a5030" roughness={0.85} />
+          </mesh>
+        ))}
+        {/* Books – row 1 */}
+        {['#cc4444','#4488cc','#44aa66','#cc9922','#885588','#dd6633','#338866'].map((col, i) => (
+          <mesh key={i} position={[-0.1, 0.9, i * 0.42 - 1.26]} castShadow>
+            <boxGeometry args={[0.6, 0.72, 0.33]} />
+            <meshStandardMaterial color={col} roughness={0.8} />
+          </mesh>
+        ))}
+        {/* Books – row 2 */}
+        {['#6644aa','#cc5522','#4499cc','#88aa22','#cc2266','#557700'].map((col, i) => (
+          <mesh key={i} position={[-0.1, 1.9, i * 0.46 - 1.15]} castShadow>
+            <boxGeometry args={[0.6, 0.68, 0.36]} />
+            <meshStandardMaterial color={col} roughness={0.8} />
+          </mesh>
+        ))}
+        {/* Books – row 3 */}
+        {['#225588','#99cc44','#aa3344','#66aacc','#cc8833'].map((col, i) => (
+          <mesh key={i} position={[-0.1, 2.9, i * 0.52 - 1.04]} castShadow>
+            <boxGeometry args={[0.6, 0.62, 0.41]} />
+            <meshStandardMaterial color={col} roughness={0.8} />
+          </mesh>
+        ))}
+        {/* Decorative items on top */}
+        <mesh position={[-0.1, 4.9, -1]}>
+          <sphereGeometry args={[0.2, 10, 8]} />
+          <meshStandardMaterial color="#44ccff" emissive="#22aadd" emissiveIntensity={1.2}
+            transparent opacity={0.85} />
+        </mesh>
+        <mesh position={[-0.1, 4.85, 0.5]} castShadow>
+          <boxGeometry args={[0.18, 0.6, 0.22]} />
+          <meshStandardMaterial color="#c8a060" metalness={0.5} roughness={0.4} />
+        </mesh>
+        <mesh position={[-0.1, 4.9, 1]}>
+          <coneGeometry args={[0.16, 0.45, 5]} />
+          <meshStandardMaterial color="#ff88aa" />
+        </mesh>
+      </group>
+
+      {/* ── Dining table + chairs ────────────────────────────── */}
+      <group position={[3, 0, 2]}>
+        {/* Table top */}
+        <mesh position={[0, 1.1, 0]} castShadow>
+          <cylinderGeometry args={[1.3, 1.3, 0.1, 14]} />
+          <meshStandardMaterial color="#8B5E3C" roughness={0.8} />
+        </mesh>
+        {/* Table pedestal */}
+        <mesh position={[0, 0.55, 0]} castShadow>
+          <cylinderGeometry args={[0.12, 0.22, 1.0, 8]} />
+          <meshStandardMaterial color="#6a3e20" roughness={0.9} />
+        </mesh>
+        {/* Table base */}
+        <mesh position={[0, 0.08, 0]} castShadow>
+          <cylinderGeometry args={[0.55, 0.55, 0.12, 8]} />
+          <meshStandardMaterial color="#6a3e20" roughness={0.9} />
+        </mesh>
+        {/* Chairs */}
+        {[0, Math.PI].map((angle, i) => (
+          <group key={i} position={[Math.sin(angle) * 1.8, 0, Math.cos(angle) * 1.8]}
+            rotation={[0, angle + Math.PI, 0]}>
+            {/* Seat */}
+            <mesh position={[0, 0.7, 0]} castShadow>
+              <boxGeometry args={[0.7, 0.1, 0.7]} />
+              <meshStandardMaterial color="#7a5030" roughness={0.85} />
+            </mesh>
+            {/* Legs */}
+            {[[-0.28,-0.28],[0.28,-0.28],[-0.28,0.28],[0.28,0.28]].map(([lx,lz],j) => (
+              <mesh key={j} position={[lx, 0.35, lz]} castShadow>
+                <boxGeometry args={[0.07, 0.7, 0.07]} />
+                <meshStandardMaterial color="#6a4020" roughness={0.9} />
+              </mesh>
+            ))}
+            {/* Backrest */}
+            <mesh position={[0, 1.2, -0.31]} castShadow>
+              <boxGeometry args={[0.7, 0.9, 0.07]} />
+              <meshStandardMaterial color="#7a5030" roughness={0.85} />
+            </mesh>
+          </group>
+        ))}
+        {/* Candle on table */}
+        <mesh position={[0, 1.17, 0]} castShadow>
+          <cylinderGeometry args={[0.055, 0.055, 0.3, 7]} />
+          <meshStandardMaterial color="#fffde0" roughness={0.9} />
+        </mesh>
+        <mesh position={[0, 1.33, 0]}>
+          <coneGeometry args={[0.03, 0.15, 5]} />
+          <meshStandardMaterial color="#ff9900" emissive="#ff6600" emissiveIntensity={4}
+            transparent opacity={0.9} />
+        </mesh>
+        <mesh position={[0, 1.2, 0]} castShadow>
+          <cylinderGeometry args={[0.12, 0.12, 0.05, 8]} />
+          <meshStandardMaterial color="#b09050" metalness={0.6} roughness={0.3} />
+        </mesh>
+        {/* Place settings */}
+        {[0, Math.PI].map((angle, i) => (
+          <mesh key={i} position={[Math.sin(angle) * 0.8, 1.16, Math.cos(angle) * 0.8]}
+            rotation={[-Math.PI/2, 0, 0]}>
+            <circleGeometry args={[0.28, 10]} />
+            <meshStandardMaterial color="#e8d0b0" roughness={0.9} />
+          </mesh>
+        ))}
+      </group>
+
+      {/* ── Vanity / writing desk ────────────────────────────── */}
+      <group position={[7.2, 0, 0]}>
+        {/* Desk surface */}
+        <mesh position={[-0.1, 1.08, 0]} castShadow>
+          <boxGeometry args={[0.65, 0.1, 2.0]} />
+          <meshStandardMaterial color="#7a5030" roughness={0.85} />
+        </mesh>
+        {/* Desk legs */}
+        {[[-0.22, -0.85],[-0.22, 0.85]].map(([lx,lz],i) => (
+          <mesh key={i} position={[lx, 0.54, lz]} castShadow>
+            <boxGeometry args={[0.08, 1.08, 0.08]} />
+            <meshStandardMaterial color="#6a4020" roughness={0.9} />
+          </mesh>
+        ))}
+        {/* Mirror */}
+        <mesh position={[0.15, 2.1, 0]} castShadow>
+          <boxGeometry args={[0.1, 1.2, 0.8]} />
+          <meshStandardMaterial color="#6a4020" roughness={0.85} />
+        </mesh>
+        <mesh position={[0.2, 2.1, 0]}>
+          <boxGeometry args={[0.04, 1.0, 0.64]} />
+          <meshStandardMaterial color="#ccddee" metalness={0.8} roughness={0.1}
+            envMapIntensity={1.0} />
+        </mesh>
+        {/* Small items on desk */}
+        <mesh position={[-0.15, 1.16, -0.55]}>
+          <cylinderGeometry args={[0.07, 0.07, 0.28, 7]} />
+          <meshStandardMaterial color="#fffde0" roughness={0.9} />
+        </mesh>
+        <mesh position={[-0.15, 1.3, -0.55]}>
+          <coneGeometry args={[0.025, 0.12, 5]} />
+          <meshStandardMaterial color="#ff9900" emissive="#ff6600" emissiveIntensity={3} transparent opacity={0.9} />
+        </mesh>
+        {/* Candle plate */}
+        <mesh position={[-0.15, 1.14, -0.55]}>
+          <cylinderGeometry args={[0.1, 0.1, 0.04, 8]} />
+          <meshStandardMaterial color="#c8a050" metalness={0.6} roughness={0.3} />
+        </mesh>
+        {/* Ink + quill */}
+        <mesh position={[-0.15, 1.14, 0]}>
+          <boxGeometry args={[0.14, 0.18, 0.14]} />
+          <meshStandardMaterial color="#1a1a2e" roughness={0.8} />
+        </mesh>
+        <mesh position={[0.02, 1.25, 0.15]} rotation={[0.2, 0, 0.5]} castShadow>
+          <cylinderGeometry args={[0.012, 0.004, 0.5, 5]} />
+          <meshStandardMaterial color="#f4e8c8" roughness={0.9} />
+        </mesh>
+      </group>
+
+      {/* ── Sword display rack on right wall ──────────────── */}
+      <group position={[8.7, 2.4, -3.5]}>
+        {/* Rack bar */}
+        <mesh rotation={[0, 0, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.06, 0.06, 2.4, 7]} />
+          <meshStandardMaterial color="#5c3a1a" roughness={0.85} />
+        </mesh>
+        {/* Display sword */}
+        <mesh position={[0, -0.5, 0]} rotation={[0, 0, 0.15]} castShadow>
+          <boxGeometry args={[0.06, 1.6, 0.04]} />
+          <meshStandardMaterial color="#f4c2d8" emissive="#ff80c0" emissiveIntensity={0.6}
+            metalness={0.7} roughness={0.2} />
+        </mesh>
+        <mesh position={[0, -0.24, 0]} rotation={[0, 0, 0.15]} castShadow>
+          <boxGeometry args={[0.5, 0.08, 0.06]} />
+          <meshStandardMaterial color="#b0bec5" metalness={0.8} roughness={0.25} />
+        </mesh>
+      </group>
+
+      {/* ── Right-wall window ────────────────────────────────── */}
+      <group position={[8.85, 3.0, 4]}>
+        {/* Frame */}
+        <mesh castShadow>
+          <boxGeometry args={[0.14, 2.2, 0.14]} />
+          <meshStandardMaterial color="#7a5030" roughness={0.9} />
+        </mesh>
+        <mesh position={[0, 0, 0]}>
+          <boxGeometry args={[0.06, 1.8, 1.8]} />
+          <meshStandardMaterial color="#ffe8b0" emissive="#ffcc44" emissiveIntensity={0.7}
+            transparent opacity={0.65} side={2} />
+        </mesh>
+        <mesh castShadow>
+          <boxGeometry args={[0.1, 0.1, 1.9]} />
+          <meshStandardMaterial color="#7a5030" roughness={0.9} />
+        </mesh>
+      </group>
+
+      {/* ── Back-wall window with star/moon view ────────────── */}
+      <group position={[3.5, 3.0, -11.87]}>
+        <mesh castShadow>
+          <boxGeometry args={[1.8, 2.0, 0.14]} />
+          <meshStandardMaterial color="#7a5030" roughness={0.9} />
+        </mesh>
+        <mesh>
+          <boxGeometry args={[1.5, 1.7, 0.06]} />
+          <meshStandardMaterial color="#112244" emissive="#1a2244" emissiveIntensity={0.8}
+            transparent opacity={0.82} side={2} />
+        </mesh>
+        {/* Stars in the window */}
+        {[[0.3,0.4],[-0.4,0.2],[0.1,-0.5],[-0.3,-0.2],[0.5,-0.1]].map(([sx,sy],i) => (
+          <mesh key={i} position={[sx, sy, 0.04]}>
+            <sphereGeometry args={[0.04, 5, 5]} />
+            <meshStandardMaterial color="#ffffcc" emissive="#ffffaa" emissiveIntensity={4} />
+          </mesh>
+        ))}
+        {/* Moon */}
+        <mesh position={[-0.45, 0.48, 0.04]}>
+          <sphereGeometry args={[0.2, 10, 8]} />
+          <meshStandardMaterial color="#fffde0" emissive="#eee8a0" emissiveIntensity={1.5} />
+        </mesh>
+        <mesh position={[-0.3, 0.54, 0.06]}>
+          <sphereGeometry args={[0.14, 8, 6]} />
+          <meshStandardMaterial color="#112244" />
+        </mesh>
+      </group>
+
+      {/* ── Potted plant near bookshelf ──────────────────────── */}
+      <group position={[5.5, 0, -5]}>
+        <mesh position={[0, 0.4, 0]} castShadow>
+          <cylinderGeometry args={[0.28, 0.22, 0.8, 8]} />
+          <meshStandardMaterial color="#7a4422" roughness={0.9} />
+        </mesh>
+        <mesh position={[0, 0.3, 0]}>
+          <cylinderGeometry args={[0.2, 0.16, 0.44, 8]} />
+          <meshStandardMaterial color="#6a5a3a" roughness={0.95} />
+        </mesh>
+        {[0,1.1,2.2,3.3,4.4,5.5].map((a, i) => (
+          <group key={i} position={[Math.cos(a)*0.22, 0.85, Math.sin(a)*0.22]}
+            rotation={[0.3, a, 0.4]}>
+            <mesh castShadow>
+              <boxGeometry args={[0.07, 0.55, 0.04]} />
+              <meshStandardMaterial color="#2a6a28" roughness={0.85} />
+            </mesh>
+          </group>
+        ))}
+        {[0,2.0,4.0].map((a, i) => (
+          <mesh key={i} position={[Math.cos(a)*0.3, 1.35, Math.sin(a)*0.3]}>
+            <sphereGeometry args={[0.1, 7, 7]} />
+            <meshStandardMaterial color="#ff88aa" />
+          </mesh>
+        ))}
+      </group>
+
+      {/* ── Small chest under bed-side ───────────────────────── */}
+      <group position={[-2.4, 0, -5.5]}>
+        <mesh position={[0, 0.3, 0]} castShadow>
+          <boxGeometry args={[0.7, 0.55, 0.55]} />
+          <meshStandardMaterial color="#5a3a18" roughness={0.85} />
+        </mesh>
+        <mesh position={[0, 0.48, 0]} castShadow>
+          <boxGeometry args={[0.72, 0.22, 0.57]} />
+          <meshStandardMaterial color="#4a2e10" roughness={0.85} />
+        </mesh>
+        <mesh position={[0, 0.42, 0.29]}>
+          <boxGeometry args={[0.14, 0.1, 0.06]} />
+          <meshStandardMaterial color="#d4a840" metalness={0.7} roughness={0.25} />
+        </mesh>
+        <pointLight position={[0, 0.9, 0]} color="#ffcc44" intensity={0.6} distance={2.5} decay={2} />
+      </group>
+
+      {/* ── Framed picture near door ──────────────────────────── */}
+      <group position={[-7.8, 3.5, 5]}>
+        <mesh castShadow>
+          <boxGeometry args={[0.1, 1.1, 0.9]} />
+          <meshStandardMaterial color="#5c3a1a" roughness={0.85} />
+        </mesh>
+        <mesh position={[0.08, 0, 0]}>
+          <boxGeometry args={[0.04, 0.9, 0.7]} />
+          <meshStandardMaterial color="#c4a882" roughness={0.85} />
+        </mesh>
+      </group>
+
+      {/* ── Area boundary (small room) ───────────────────────── */}
+      <group>
+        {([
+          [[0, 3, -12.1], [18, 6, 0.3]],
+          [[-9.1, 3, 0],  [0.3, 6, 24]],
+          [[9.1, 3, 0],   [0.3, 6, 24]],
+        ] as [number, number, number][][]).map(([p, s], i) => (
+          <mesh key={i} position={p as [number, number, number]}>
+            <boxGeometry args={s as [number, number, number]} />
+            <meshStandardMaterial transparent opacity={0} />
+          </mesh>
+        ))}
+      </group>
+    </>
+  );
+}
+
 // ─── Invisible world boundary ─────────────────────────────────────
 function Boundary() {
   return (
@@ -1632,6 +2313,14 @@ export function World() {
     } else {
       useGameStore.getState().setNearFountain(false);
     }
+
+    // Bed proximity (only inside home)
+    if (currentArea === 'home') {
+      const bedPos = new THREE.Vector3(-5, 0, -7);
+      useGameStore.getState().setNearBed(playerPosition.distanceTo(bedPos) < 3.0);
+    } else {
+      useGameStore.getState().setNearBed(false);
+    }
   });
 
   return (
@@ -1651,6 +2340,7 @@ export function World() {
       {currentArea === 'crypt'   && <CryptArea />}
       {currentArea === 'void'    && <VoidArea />}
       {currentArea === 'cave'    && <CaveArea />}
+      {currentArea === 'home'    && <HomeArea />}
       <AreaGuardian />
       <NPCManager />
     </>

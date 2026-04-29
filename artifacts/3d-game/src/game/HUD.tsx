@@ -49,6 +49,7 @@ const AREA_NAMES: Record<string, string> = {
   crypt:   'Shadowed Crypts',
   void:    'The Fractured Void',
   cave:    'Crystal Caverns',
+  home:    "Adelynn's Home",
 };
 const AREA_SUBTITLES: Record<string, string> = {
   field:   'Where the journey begins',
@@ -62,6 +63,7 @@ const AREA_SUBTITLES: Record<string, string> = {
   crypt:   'The dead remember everything',
   void:    'Reality ends here',
   cave:    'Secrets gleam in the dark',
+  home:    'Rest. You have earned it.',
 };
 const SHARD_INFO = [
   { area: 'field',  name: 'Shard of Dawn',  color: '#ffe060' },
@@ -877,7 +879,7 @@ function AreaEntryBanner() {
   const areaColors: Record<string, string> = {
     field: '#ffe090', forest: '#88ff88', desert: '#ff9940', boss: '#ff4444',
     jungle: '#44dd66', ice: '#88eeff', volcano: '#ff5522', sky: '#aabbff',
-    crypt: '#bb88ff', void: '#cc44ff', cave: '#bb88ff',
+    crypt: '#bb88ff', void: '#cc44ff', cave: '#bb88ff', home: '#ffcc88',
   };
   const accent = areaColors[display.area] ?? '#ffffff';
 
@@ -983,7 +985,7 @@ function LorePopup() {
 export function HUD() {
   const {
     gameState, rupees, currentArea, nearChest, nearNPC, activeDialogue,
-    isBlocking, armorLevel, nearShop, showShop, nearFountain, shardsCollected, nearLore,
+    isBlocking, armorLevel, nearShop, showShop, nearFountain, shardsCollected, nearLore, nearBed,
   } = useGameStore();
 
   const shardInfo = SHARD_INFO.find(s => s.area === currentArea);
@@ -1074,6 +1076,17 @@ export function HUD() {
             style={{ background: 'rgba(10,5,25,0.85)' }}>
             <span className="text-amber-300 font-bold text-sm">🏪 Merchant's Shop</span>
             <span className="text-white/50 text-xs">Press E to shop</span>
+          </div>
+        </div>
+      )}
+
+      {/* Bed/sleep hint */}
+      {nearBed && !nearChest && !activeDialogue && !nearShop && (
+        <div className="absolute top-[44%] left-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="flex flex-col items-center gap-1 px-4 py-2 rounded-xl border border-amber-400/60 animate-pulse"
+            style={{ background: 'rgba(20,10,0,0.88)' }}>
+            <span className="text-amber-300 font-bold text-sm">🌙 Adelynn's Bed</span>
+            <span className="text-white/50 text-xs">Press E to sleep & save</span>
           </div>
         </div>
       )}
