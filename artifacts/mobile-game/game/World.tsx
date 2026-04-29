@@ -195,6 +195,69 @@ function SwordChest({ chestKey, x, z }: { chestKey: string; x: number; z: number
   );
 }
 
+// Sacred Grove altar — Holy Blade, unlocks when shardsCollected >= 3
+function SacredGroveAltar() {
+  const shardsCollected = useGameStore(s => s.shardsCollected);
+  const chestsOpened = useGameStore(s => s.chestsOpened);
+  const gameState = useGameStore(s => s.gameState);
+  const isGranted = chestsOpened.includes("sacred-grove");
+  const isReady = shardsCollected >= 3;
+  const cooldownRef = useRef(0);
+  const glowRef = useRef<THREE.PointLight>(null!);
+  const x = -8, z = -16;
+
+  useFrame((_, delta) => {
+    cooldownRef.current -= delta;
+    if (glowRef.current) {
+      const t = Date.now() * 0.003;
+      glowRef.current.intensity = isGranted ? 0 : (isReady ? 8 + Math.sin(t) * 3 : 1.5);
+    }
+    if (isGranted || gameState !== "playing" || cooldownRef.current > 0) return;
+    const dx = playerState.x - x;
+    const dz = playerState.z - z;
+    if (Math.sqrt(dx * dx + dz * dz) < 1.6) {
+      cooldownRef.current = 1.5;
+      useGameStore.getState().openChest("sacred-grove");
+    }
+  });
+
+  return (
+    <group position={[x, 0, z]}>
+      {/* Outer ring of mossy stones */}
+      {[0, 1, 2, 3, 4, 5].map(i => {
+        const angle = (i / 6) * Math.PI * 2;
+        return (
+          <mesh key={i} position={[Math.cos(angle) * 1.1, 0.15, Math.sin(angle) * 1.1]}>
+            <boxGeometry args={[0.22, 0.3, 0.22]} />
+            <meshStandardMaterial color={isReady ? "#3a2a6a" : "#2a2a3a"} />
+          </mesh>
+        );
+      })}
+      {/* Stone base */}
+      <mesh position={[0, 0.18, 0]}><cylinderGeometry args={[0.65, 0.8, 0.36, 8]} /><meshStandardMaterial color="#4a4a5a" /></mesh>
+      {/* Middle plinth */}
+      <mesh position={[0, 0.5, 0]}><cylinderGeometry args={[0.38, 0.55, 0.38, 8]} /><meshStandardMaterial color={isReady ? "#554488" : "#3a3a4a"} /></mesh>
+      {/* Top platform */}
+      <mesh position={[0, 0.72, 0]}><boxGeometry args={[0.55, 0.08, 0.55]} /><meshStandardMaterial color={isReady ? "#7755cc" : "#333344"} emissive={isReady ? "#4422aa" : "#000"} emissiveIntensity={isReady ? 0.6 : 0} /></mesh>
+      {/* Sword in the stone (only when not yet granted) */}
+      {!isGranted && (
+        <group>
+          {/* Blade */}
+          <mesh position={[0, 1.15, 0]}><boxGeometry args={[0.06, 0.7, 0.035]} /><meshStandardMaterial color={isReady ? "#ffe066" : "#778899"} emissive={isReady ? "#ffcc44" : "#000"} emissiveIntensity={isReady ? 1.2 : 0} /></mesh>
+          {/* Cross-guard */}
+          <mesh position={[0, 0.84, 0]}><boxGeometry args={[0.28, 0.05, 0.055]} /><meshStandardMaterial color={isReady ? "#ffcc22" : "#556677"} /></mesh>
+          {/* Handle */}
+          <mesh position={[0, 0.75, 0]}><boxGeometry args={[0.055, 0.16, 0.055]} /><meshStandardMaterial color={isReady ? "#996600" : "#443322"} /></mesh>
+          {/* Pommel */}
+          <mesh position={[0, 0.665, 0]}><sphereGeometry args={[0.045, 6, 6]} /><meshStandardMaterial color={isReady ? "#ffdd44" : "#445566"} /></mesh>
+        </group>
+      )}
+      {/* Glow light */}
+      <pointLight ref={glowRef} position={[0, 1.1, 0]} color={isReady ? "#aa88ff" : "#5566aa"} intensity={isReady ? 8 : 1.5} distance={7} />
+    </group>
+  );
+}
+
 // Weapon altar pedestal
 function WeaponAltar({ pickupKey, x, z, icon, color }: {
   pickupKey: string; x: number; z: number; icon: string; color: string;
@@ -602,6 +665,8 @@ function FieldArea() {
       {fieldWeapons.map(wp => <WeaponAltar key={wp.key} pickupKey={wp.key} x={wp.x} z={wp.z} icon={wp.icon} color={wp.color} />)}
       {/* Lore stones */}
       {LORE_STONES.field.map(s => <LoreStoneObj key={s.id} id={s.id} x={s.x} z={s.z} />)}
+      {/* Sacred Grove — Holy Blade altar (Master Sword moment) */}
+      <SacredGroveAltar />
       {/* Fairy Fountain */}
       <Fountain x={-18} z={-18} />
       {/* Archery Range mini-game */}

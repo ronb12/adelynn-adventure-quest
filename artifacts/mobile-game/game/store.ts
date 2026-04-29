@@ -35,33 +35,27 @@ export const SWORD_DEFS: Record<SwordId, SwordDef> = {
 };
 
 // ── Sword chests ─────────────────────────────────────────────────
+// ── Sword progression — LTTP-style milestone gates ──────────────────────────
+// Crystal Sword: start of game (no chest needed)
+// Flame Sword:   Elder Osric's gift chest — first thing in the field
+// Viper Fang:    End of Thornwood Forest exploration
+// Thunder Blade: End of Ashrock Sands exploration
+// Storm Sword:   Sky area — the "Tempered Sword" reward for reaching the heavens
+// Shadow Blade:  Shadow Realm — dark-world equivalent
+// Frost Edge:    Dungeon III: Crystal Spire — dungeon boss area reward
+// Dragon Blade:  Dungeon X: Palace of Darkness — penultimate dungeon reward
+// Cosmos Blade:  Dungeon XI: Malgrath's Fortress — ultimate reward
+// Holy Blade:    Sacred Grove altar in Field — LOCKED until all 3 Shards collected (Master Sword moment)
 export const SWORD_CHESTS: { key: string; x: number; z: number; area: AreaId; swordId: SwordId }[] = [
-  { key: "sword-flame",   x: 15,  z: -14, area: "field",  swordId: "flame"   },
-  { key: "sword-viper",   x: -15, z: 14,  area: "field",  swordId: "viper"   },
-  { key: "sword-thunder", x: 14,  z: -14, area: "desert", swordId: "thunder" },
-  { key: "sword-storm",   x: -14, z: 14,  area: "desert", swordId: "storm"   },
-  { key: "sword-frost",   x: -14, z: -14, area: "forest", swordId: "frost"   },
-  { key: "sword-shadow",  x: 14,  z: -14, area: "forest", swordId: "shadow"  },
-  { key: "sword-holy",    x: 10,  z: 5,   area: "boss",    swordId: "holy"    },
-  { key: "sword-dragon",  x: -10, z: -5,  area: "boss",    swordId: "dragon"  },
-  { key: "sword-cosmos",  x: 0,   z: -15, area: "boss",    swordId: "cosmos"  },
-  { key: "sword-cave1",   x: 12,  z: 8,   area: "cave",    swordId: "thunder" },
-  { key: "sword-jungle1", x: -14, z: 12,  area: "jungle",  swordId: "viper"   },
-  { key: "sword-ice1",    x: 10,  z: -10, area: "ice",     swordId: "frost"   },
-  { key: "sword-vol1",    x: -10, z: 8,   area: "volcano", swordId: "flame"   },
-  { key: "sword-sky1",    x: 14,  z: -14, area: "sky",     swordId: "storm"   },
-  { key: "sword-shad1",   x: 0,   z: -16, area: "shadow",  swordId: "shadow"  },
-  { key: "sword-d1",      x: 0,   z: -18, area: "dungeon1", swordId: "holy"    },
-  { key: "sword-d2",      x: 0,   z: -18, area: "dungeon2", swordId: "cosmos"  },
-  { key: "sword-d3",      x: 0,   z: -18, area: "dungeon3", swordId: "dragon"  },
-  { key: "sword-d4",      x: 10,  z: -10, area: "dungeon4", swordId: "storm"   },
-  { key: "sword-d5",      x: -10, z: -10, area: "dungeon5", swordId: "flame"   },
-  { key: "sword-d6",      x: 10,  z: 10,  area: "dungeon6", swordId: "viper"   },
-  { key: "sword-d7",      x: -10, z: 10,  area: "dungeon7", swordId: "frost"   },
-  { key: "sword-d8",      x: 0,   z: -16, area: "dungeon8", swordId: "shadow"  },
-  { key: "sword-d9",      x: 0,   z: -16, area: "dungeon9", swordId: "thunder" },
-  { key: "sword-d10",     x: 0,   z: -16, area: "dungeon10",swordId: "holy"    },
-  { key: "sword-d11",     x: 0,   z: -16, area: "dungeon11",swordId: "cosmos"  },
+  { key: "sword-elder-gift",    x: 4,   z: 2,   area: "field",    swordId: "flame"   },
+  { key: "sword-forest-end",    x: 0,   z: -18, area: "forest",   swordId: "viper"   },
+  { key: "sword-desert-end",    x: 0,   z: -18, area: "desert",   swordId: "thunder" },
+  { key: "sword-sky-reward",    x: 14,  z: -14, area: "sky",      swordId: "storm"   },
+  { key: "sword-shadow-reward", x: 0,   z: -14, area: "shadow",   swordId: "shadow"  },
+  { key: "sword-frost",         x: 0,   z: -18, area: "dungeon3", swordId: "frost"   },
+  { key: "sword-dragon",        x: 0,   z: -16, area: "dungeon10",swordId: "dragon"  },
+  { key: "sword-cosmos",        x: 4,   z: 0,   area: "dungeon11",swordId: "cosmos"  },
+  // Holy Blade is NOT here — it is unlocked via the Sacred Grove altar (shardsCollected >= 3)
 ];
 
 // ── Weapon pickups ────────────────────────────────────────────────
@@ -627,6 +621,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
   openChest: (key) => set((st) => {
     if (st.chestsOpened.includes(key)) return {};
     const newOpened = [...st.chestsOpened, key];
+
+    // Sacred Grove altar — Holy Blade, gated by shardsCollected >= 3
+    if (key === "sacred-grove") {
+      if (st.shardsCollected < 3) {
+        return {
+          itemFanfare: {
+            name: "Sacred Grove — Sealed",
+            icon: "🔒",
+            desc: `${st.shardsCollected}/3 Crystal Shards collected. The altar does not stir.`,
+          },
+        };
+      }
+      if (st.chestsOpened.includes("sacred-grove")) return {};
+      const def = SWORD_DEFS["holy"];
+      return {
+        chestsOpened: newOpened,
+        unlockedSwords: st.unlockedSwords.includes("holy") ? st.unlockedSwords : [...st.unlockedSwords, "holy"],
+        activeSword: "holy",
+        itemFanfare: { name: def.name, icon: def.icon, desc: "The Sacred Blade rises from the altar! All three shards resonate as one." },
+      };
+    }
 
     // Armor chest
     if (key === "boss-armor") {
