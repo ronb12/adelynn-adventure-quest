@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from "react";
 import { useFrame } from "@react-three/fiber/native";
 import * as THREE from "three";
 import { useGameStore, AreaId, SWORD_DEFS } from "./store";
-import { playerState, pendingPickupSpawns } from "./controls";
+import { playerState, pendingPickupSpawns, weaponHitZones, weaponEffects } from "./controls";
 
 export type EnemyType = "slime" | "goblin" | "briarwolf" | "thornspitter" | "emberscorpion" | "voidwraith" | "boss";
 
@@ -29,6 +29,7 @@ interface EnemyData {
   iframes: number; hurtFlash: number;
   chargeTimer: number; isCharging: boolean; chargeDx: number; chargeDz: number;
   rangedTimer: number;
+  frozenTimer: number;
 }
 
 interface Projectile {
@@ -61,6 +62,7 @@ function spawnEnemies(area: AreaId, bossDefeated: boolean): EnemyData[] {
         chargeTimer: (def.chargeInterval ?? 2) + Math.random() * 1.5,
         isCharging: false, chargeDx: 0, chargeDz: 0,
         rangedTimer: (def.rangedInterval ?? 2) + Math.random(),
+        frozenTimer: 0,
       });
     }
   }
@@ -80,7 +82,10 @@ function EnemyMesh({ data }: { data: EnemyData }) {
     groupRef.current.position.set(data.x, 0, data.z);
     if (meshRef.current) {
       const mat = meshRef.current.material as THREE.MeshStandardMaterial;
-      if (data.hurtFlash > 0) {
+      if (data.frozenTimer > 0) {
+        mat.color.setHex(0x88ccff);
+        mat.emissiveIntensity = 2;
+      } else if (data.hurtFlash > 0) {
         mat.color.setHex(0xffffff);
         mat.emissiveIntensity = 4;
       } else {
@@ -182,18 +187,43 @@ export default function Enemies() {
   useFrame((_, delta) => {
     if (storeRef.current.gameState !== "playing") return;
     const dt = Math.min(delta, 0.05);
-    const store = storeRef.current;
     let anyDied = false;
+    const now = Date.now();
+    const isFrozen = now < weaponEffects.freezeUntil;
+    const isStunned = now < weaponEffects.stunUntil;
 
     for (const e of enemiesRef.current) {
       if (e.iframes > 0) e.iframes -= dt;
       if (e.hurtFlash > 0) e.hurtFlash -= dt;
+      if (e.frozenTimer > 0) e.frozenTimer -= dt;
+
+      // Apply weapon hit zones
+      for (const hz of weaponHitZones) {
+        if (e.iframes > 0) continue;
+        const dx2 = hz.x - e.x;
+        const dz2 = hz.z - e.z;
+        if (Math.sqrt(dx2 * dx2 + dz2 * dz2) < hz.radius + ENEMY_DEFS[e.type].size) {
+          e.hp -= hz.damage;
+          e.iframes = 0.4;
+          e.hurtFlash = 0.18;
+          if (hz.type === "frost") e.frozenTimer = 1.5;
+          if (e.type === "boss") useGameStore.getState().damageBoss(hz.damage);
+          if (e.hp <= 0) {
+            const r = Math.random();
+            if (r < 0.3) pendingPickupSpawns.push({ type: "heart", x: e.x, z: e.z });
+            else if (r < 0.7) pendingPickupSpawns.push({ type: "rupee", x: e.x, z: e.z });
+            useGameStore.getState().addKill(ENEMY_DEFS[e.type].pts);
+            anyDied = true;
+          }
+        }
+      }
 
       const def = ENEMY_DEFS[e.type];
       const dx = playerState.x - e.x;
       const dz = playerState.z - e.z;
       const dist = Math.sqrt(dx * dx + dz * dz);
 
+      // Sword hit
       if (playerState.swordActive && e.iframes <= 0) {
         const sdx = playerState.swordX - e.x;
         const sdz = playerState.swordZ - e.z;
@@ -202,9 +232,7 @@ export default function Enemies() {
           e.hp -= dmg;
           e.iframes = 0.4;
           e.hurtFlash = 0.18;
-          if (e.type === "boss") {
-            useGameStore.getState().damageBoss(dmg);
-          }
+          if (e.type === "boss") useGameStore.getState().damageBoss(dmg);
           if (e.hp <= 0) {
             const r = Math.random();
             if (r < 0.3) pendingPickupSpawns.push({ type: "heart", x: e.x, z: e.z });
@@ -218,8 +246,12 @@ export default function Enemies() {
 
       if (e.hp <= 0) continue;
 
+      // Frozen / stunned — don't move or shoot
+      if (isFrozen || e.frozenTimer > 0) continue;
+      const speedMult = isStunned ? 0.3 : 1.0;
+
       if (def.behavior === "chase") {
-        if (dist > 0.01) { e.x += (dx / dist) * def.speed * dt; e.z += (dz / dist) * def.speed * dt; }
+        if (dist > 0.01) { e.x += (dx / dist) * def.speed * speedMult * dt; e.z += (dz / dist) * def.speed * speedMult * dt; }
         if (dist < def.size + 0.75) useGameStore.getState().damagePlayer(def.contactDamage);
 
       } else if (def.behavior === "charge") {
@@ -231,12 +263,12 @@ export default function Enemies() {
           e.chargeTimer = def.chargeDuration ?? 0.5;
         }
         if (e.isCharging) {
-          e.x += e.chargeDx * def.speed * 2.2 * dt;
-          e.z += e.chargeDz * def.speed * 2.2 * dt;
+          e.x += e.chargeDx * def.speed * 2.2 * speedMult * dt;
+          e.z += e.chargeDz * def.speed * 2.2 * speedMult * dt;
           e.chargeTimer -= dt;
           if (e.chargeTimer <= 0) { e.isCharging = false; e.chargeTimer = (def.chargeInterval ?? 2) + Math.random() * 1.5; }
         } else {
-          if (dist > 2 && dist > 0.01) { e.x += (dx / dist) * def.speed * 0.35 * dt; e.z += (dz / dist) * def.speed * 0.35 * dt; }
+          if (dist > 2 && dist > 0.01) { e.x += (dx / dist) * def.speed * 0.35 * speedMult * dt; e.z += (dz / dist) * def.speed * 0.35 * speedMult * dt; }
         }
         if (dist < def.size + 0.75) useGameStore.getState().damagePlayer(def.contactDamage);
         if (e.type === "boss" && def.rangedInterval) {
@@ -258,8 +290,8 @@ export default function Enemies() {
 
       } else if (def.behavior === "ranged") {
         const keepDist = 9;
-        if (dist < keepDist && dist > 0.01) { e.x -= (dx / dist) * def.speed * dt; e.z -= (dz / dist) * def.speed * dt; }
-        else if (dist > keepDist + 4 && dist > 0.01) { e.x += (dx / dist) * def.speed * 0.5 * dt; e.z += (dz / dist) * def.speed * 0.5 * dt; }
+        if (dist < keepDist && dist > 0.01) { e.x -= (dx / dist) * def.speed * speedMult * dt; e.z -= (dz / dist) * def.speed * speedMult * dt; }
+        else if (dist > keepDist + 4 && dist > 0.01) { e.x += (dx / dist) * def.speed * 0.5 * speedMult * dt; e.z += (dz / dist) * def.speed * 0.5 * speedMult * dt; }
         e.rangedTimer -= dt;
         if (e.rangedTimer <= 0 && dist < 18 && projectilesRef.current.length < 18) {
           e.rangedTimer = (def.rangedInterval ?? 2) + Math.random() * 0.8;

@@ -54,6 +54,18 @@ export interface PickupSpawn {
 
 export const pendingPickupSpawns: PickupSpawn[] = [];
 
+// Weapon hit zones — written by Weapons.tsx, read by Enemy.tsx
+export interface WeaponHitZone {
+  id: string; x: number; z: number; radius: number; damage: number; type: string;
+}
+export const weaponHitZones: WeaponHitZone[] = [];
+
+// Freeze / stun state broadcast by weapons (veil, quake)
+export const weaponEffects = {
+  freezeUntil: 0,    // ms timestamp — enemies frozen
+  stunUntil: 0,      // ms timestamp — enemies stunned (slow)
+};
+
 export const WEAPONS = [
   "sword", "bow", "wand", "bomb", "boomerang",
   "frost", "shuriken", "flare", "moonbow",
