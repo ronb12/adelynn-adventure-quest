@@ -1102,7 +1102,7 @@ export function Player() {
 
   useGameStore.subscribe((state, prev) => {
     if (state.hearts < prev.hearts && state.hearts > 0) {
-      invulnTime.current = 1.5;
+      invulnTime.current = 2.5;
     }
   });
 

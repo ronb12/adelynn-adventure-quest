@@ -251,8 +251,8 @@ interface GameStore {
 
 export const useGameStore = create<GameStore>((set, get) => ({
   gameState: 'title',
-  hearts: 5,
-  maxHearts: 5,
+  hearts: 8,
+  maxHearts: 8,
   rupees: 0,
   arrows: 10,
   bombs: 5,
@@ -408,8 +408,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const blockReduction = s.isBlocking ? 0.25 : 1.0;
     const finalAmount = amount * reduction * blockReduction;
     const newHearts = Math.max(0, s.hearts - finalAmount);
-    if (newHearts === 0) return { hearts: 0, gameState: 'gameover' as GameState, hurtCooldownEnd: now + 1500 };
-    return { hearts: newHearts, hurtCooldownEnd: now + 1500 };
+    if (newHearts === 0) return { hearts: 0, gameState: 'gameover' as GameState, hurtCooldownEnd: now + 2500 };
+    return { hearts: newHearts, hurtCooldownEnd: now + 2500 };
   }),
   healPlayer: (amount) => set((s) => ({ hearts: Math.min(s.maxHearts, s.hearts + amount) })),
   fullHeal: () => set((s) => ({ hearts: s.maxHearts })),
@@ -679,8 +679,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   resetGame: () => set({
     gameState: 'playing',
-    hearts: 5,
-    maxHearts: 5,
+    hearts: 8,
+    maxHearts: 8,
     rupees: 0,
     arrows: 10,
     bombs: 5,

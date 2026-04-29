@@ -1138,7 +1138,7 @@ export function Enemies() {
             slot.dir.copy(playerPosition).sub(enemy.pos).setY(0).normalize();
             slot.speed = 5.5 + Math.random() * 1.5;
             slot.life = 4.5;
-            slot.damage = 0.5;
+            slot.damage = 0.35;
             slot.color = enemy.projColor;
           }
           enemy.rangedTimer = 2.2 + Math.random() * 1.5;
@@ -1346,7 +1346,7 @@ export function Enemies() {
       // Player melee
       const dist2d = new THREE.Vector2(enemy.pos.x-playerPosition.x, enemy.pos.z-playerPosition.z).length();
       if (dist2d < 1.25 && !enemy.isHit && !enemy.dead && enemy.stunTimer <= 0) {
-        damagePlayer(0.5);
+        damagePlayer(0.35);
         enemy.dir.multiplyScalar(-1);
         enemy.pos.addScaledVector(enemy.dir, 0.5);
       }
@@ -1493,7 +1493,7 @@ export function BossEnemy() {
         // Bolt hits player
         if (bolt.pos.distanceTo(playerPosition) < 1.0) {
           bolt.active = false; child.visible = false;
-          store.damagePlayer(1.0);
+          store.damagePlayer(0.5);
         }
       });
     }
@@ -1584,7 +1584,7 @@ export function BossEnemy() {
 
     // Boss melee damage
     if (bossPos.current.distanceTo(playerPosition) < 1.8) {
-      store.damagePlayer(0.5);
+      store.damagePlayer(0.35);
     }
   });
 
@@ -1954,7 +1954,7 @@ function GuardianInner({ cfg, area }: { cfg: GuardianCfg; area: AreaId }) {
       child.position.copy(bolt.pos);
       if (bolt.pos.distanceTo(playerPosition) < 1.0) {
         bolt.active = false; child.visible = false;
-        store.damagePlayer(0.75);
+        store.damagePlayer(0.5);
       }
     });
 
