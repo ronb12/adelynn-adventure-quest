@@ -103,7 +103,7 @@ const AREA_SPAWNS: Record<string, THREE.Vector3> = {
   crypt:   new THREE.Vector3(0, 0, 5),
   void:    new THREE.Vector3(0, 0, 5),
   cave:    new THREE.Vector3(0, 0, 22),
-  home:    new THREE.Vector3(0, 0, 6),
+  home:    new THREE.Vector3(0, 0, 0),
 };
 
 export function getAreaSpawn(area: string): THREE.Vector3 {

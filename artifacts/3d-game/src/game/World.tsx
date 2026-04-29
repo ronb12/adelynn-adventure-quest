@@ -192,7 +192,7 @@ export const PORTALS: Record<AreaId, PortalDef[]> = {
     { pos: [0, 0, 29], rot: [0, Math.PI, 0], label: 'Crystal Caverns',
       destination: { area: 'cave', spawnPos: new THREE.Vector3(0, 0, -24) }, color: '#9944ff' },
     { pos: [-20, 0, -17], rot: [0, 0, 0], label: "Adelynn's Home",
-      destination: { area: 'home', spawnPos: new THREE.Vector3(0, 0, 6) }, color: '#ffcc44' },
+      destination: { area: 'home', spawnPos: new THREE.Vector3(0, 0, 0) }, color: '#ffcc44' },
   ],
   forest: [
     { pos: [0, 0, 29], rot: [0, Math.PI, 0], label: 'Sunfield Plains',
@@ -251,8 +251,8 @@ export const PORTALS: Record<AreaId, PortalDef[]> = {
       destination: { area: 'field', spawnPos: new THREE.Vector3(0, 0, 24) }, color: '#88aaff' },
   ],
   home: [
-    { pos: [0, 0, 10], rot: [0, 0, 0], label: 'Return to Sunfield Plains',
-      destination: { area: 'field', spawnPos: new THREE.Vector3(-20, 0, -12) }, color: '#88ddff' },
+    { pos: [0, 0, 9], rot: [0, Math.PI, 0], label: 'Return to Sunfield Plains',
+      destination: { area: 'field', spawnPos: new THREE.Vector3(-20, 0, -12) }, color: '#ffdd88' },
   ],
 };
 
@@ -1687,80 +1687,93 @@ function CaveArea() {
 }
 
 // ─── Adelynn's Home interior ─────────────────────────────────────
+// Room opens toward +Z (camera sits at player.z + 15 looking inward).
+// No solid south wall so the camera has a clear view of the interior.
+// Player spawns at z=0; back wall is at z=-12; furniture in -z zone.
 function HomeArea() {
   return (
     <>
-      <color attach="background" args={['#1a0d06']} />
-      <fog attach="fog" args={['#1a0d06', 18, 36]} />
+      <color attach="background" args={['#2a1608']} />
+      <fog attach="fog" args={['#2a1608', 22, 40]} />
 
-      {/* Ambient warm glow — cozy evening light */}
-      <ambientLight intensity={0.45} color="#ffbb66" />
-      {/* Main ceiling lantern */}
-      <pointLight position={[0, 4.2, -1]} color="#ffcc88" intensity={3.5} distance={22} decay={1.5} castShadow
-        shadow-camera-near={0.5} shadow-camera-far={25} shadow-mapSize-width={512} shadow-mapSize-height={512} />
+      {/* Strong ambient so everything is visible through the open doorway */}
+      <ambientLight intensity={1.4} color="#ffcc99" />
+      {/* Main overhead fill */}
+      <pointLight position={[0, 8, -2]} color="#ffcc88" intensity={6} distance={30} decay={1.2} />
       {/* Fireplace ember glow */}
-      <pointLight position={[-6, 1.2, -10.2]} color="#ff6622" intensity={4.5} distance={12} decay={2} />
-      {/* Candle warm pools */}
-      <pointLight position={[3, 1.8, 2]} color="#ffaa44" intensity={1.8} distance={6} decay={2} />
-      <pointLight position={[-4.5, 2.5, -6]} color="#ffbb55" intensity={1.2} distance={5} decay={2} />
-      <directionalLight position={[0, 10, 5]} intensity={0.2} color="#ffd8aa" />
+      <pointLight position={[-6, 1.2, -10.2]} color="#ff6622" intensity={5} distance={14} decay={1.8} />
+      {/* Warm candle pools */}
+      <pointLight position={[3, 2.0, 2]}   color="#ffaa44" intensity={2.5} distance={8}  decay={1.8} />
+      <pointLight position={[-4, 2.5, -5]} color="#ffbb55" intensity={2.0} distance={7}  decay={1.8} />
+      {/* Sky fill from open doorway */}
+      <directionalLight position={[0, 12, 10]} intensity={0.9} color="#ffe8cc" />
 
-      {/* ── Wooden floor ────────────────────────────────────── */}
-      <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-        <planeGeometry args={[18, 24]} />
+      {/* ── Wooden floor (16 wide × 22 deep; room z: -12 to +10) ─── */}
+      <mesh rotation={[-Math.PI/2, 0, 0]} position={[0, 0, -1]} receiveShadow>
+        <planeGeometry args={[16, 22]} />
         <meshStandardMaterial color="#7a4e28" roughness={0.85} />
       </mesh>
       {/* Floor plank lines */}
-      {Array.from({ length: 9 }).map((_, i) => (
-        <mesh key={i} rotation={[-Math.PI/2, 0, 0]} position={[i * 2 - 8, 0.005, 0]} receiveShadow>
-          <planeGeometry args={[0.05, 24]} />
+      {Array.from({ length: 8 }).map((_, i) => (
+        <mesh key={i} rotation={[-Math.PI/2, 0, 0]} position={[i * 2 - 7, 0.005, -1]} receiveShadow>
+          <planeGeometry args={[0.05, 22]} />
           <meshStandardMaterial color="#5a3615" roughness={0.9} />
         </mesh>
       ))}
 
-      {/* ── Walls ─────────────────────────────────────────── */}
-      {/* Back wall */}
+      {/* ── Walls (room opens toward +Z — no south wall so camera
+               at player.z+15 has an unobstructed view in) ─────── */}
+      {/* Back wall (north) */}
       <mesh position={[0, 2.8, -12]} receiveShadow castShadow>
-        <boxGeometry args={[18, 5.6, 0.3]} />
+        <boxGeometry args={[16, 5.6, 0.3]} />
         <meshStandardMaterial color="#c4a882" roughness={0.9} />
       </mesh>
       {/* Left wall */}
-      <mesh position={[-9, 2.8, 0]} receiveShadow castShadow>
-        <boxGeometry args={[0.3, 5.6, 24]} />
+      <mesh position={[-8, 2.8, -1]} receiveShadow castShadow>
+        <boxGeometry args={[0.3, 5.6, 22]} />
         <meshStandardMaterial color="#b89b72" roughness={0.9} />
       </mesh>
       {/* Right wall */}
-      <mesh position={[9, 2.8, 0]} receiveShadow castShadow>
-        <boxGeometry args={[0.3, 5.6, 24]} />
+      <mesh position={[8, 2.8, -1]} receiveShadow castShadow>
+        <boxGeometry args={[0.3, 5.6, 22]} />
         <meshStandardMaterial color="#b89b72" roughness={0.9} />
       </mesh>
-      {/* Front wall – left half */}
-      <mesh position={[-4.5, 2.8, 12]} receiveShadow castShadow>
-        <boxGeometry args={[8.6, 5.6, 0.3]} />
+      {/* South side: only a partial stub on each side (narrow wings) so
+          the opening is wide enough for the camera angle but still
+          gives a "doorway" feel */}
+      <mesh position={[-6, 2.8, 10]} receiveShadow castShadow>
+        <boxGeometry args={[4, 5.6, 0.3]} />
         <meshStandardMaterial color="#c4a882" roughness={0.9} />
       </mesh>
-      {/* Front wall – right half */}
-      <mesh position={[4.5, 2.8, 12]} receiveShadow castShadow>
-        <boxGeometry args={[8.6, 5.6, 0.3]} />
+      <mesh position={[6, 2.8, 10]} receiveShadow castShadow>
+        <boxGeometry args={[4, 5.6, 0.3]} />
         <meshStandardMaterial color="#c4a882" roughness={0.9} />
-      </mesh>
-      {/* Above door */}
-      <mesh position={[0, 4.8, 12]} receiveShadow castShadow>
-        <boxGeometry args={[3.0, 1.2, 0.3]} />
-        <meshStandardMaterial color="#a07850" roughness={0.9} />
       </mesh>
       {/* Ceiling */}
-      <mesh position={[0, 5.6, 0]} receiveShadow>
-        <boxGeometry args={[18, 0.25, 24]} />
+      <mesh position={[0, 5.6, -1]} receiveShadow>
+        <boxGeometry args={[16, 0.25, 22]} />
         <meshStandardMaterial color="#8B5E3C" roughness={0.9} />
       </mesh>
       {/* Ceiling beams */}
       {[-6, 0, 6].map((bx, i) => (
-        <mesh key={i} position={[bx, 5.35, 0]} castShadow>
-          <boxGeometry args={[0.4, 0.4, 24]} />
+        <mesh key={i} position={[bx, 5.35, -1]} castShadow>
+          <boxGeometry args={[0.4, 0.4, 22]} />
           <meshStandardMaterial color="#5c3a1a" roughness={0.95} />
         </mesh>
       ))}
+      {/* Door frame at z=9 — two pillars + lintel around portal */}
+      <mesh position={[-2.1, 2.8, 9]} castShadow>
+        <boxGeometry args={[0.35, 5.6, 0.35]} />
+        <meshStandardMaterial color="#7a5030" roughness={0.8} />
+      </mesh>
+      <mesh position={[2.1, 2.8, 9]} castShadow>
+        <boxGeometry args={[0.35, 5.6, 0.35]} />
+        <meshStandardMaterial color="#7a5030" roughness={0.8} />
+      </mesh>
+      <mesh position={[0, 5.0, 9]} castShadow>
+        <boxGeometry args={[4.6, 0.4, 0.35]} />
+        <meshStandardMaterial color="#7a5030" roughness={0.8} />
+      </mesh>
 
       {/* ── Fireplace ──────────────────────────────────────── */}
       <group position={[-7.5, 0, -10.5]}>
@@ -2105,7 +2118,7 @@ function HomeArea() {
       </group>
 
       {/* ── Sword display rack on right wall ──────────────── */}
-      <group position={[8.7, 2.4, -3.5]}>
+      <group position={[7.6, 2.4, -3.5]}>
         {/* Rack bar */}
         <mesh rotation={[0, 0, Math.PI/2]} castShadow>
           <cylinderGeometry args={[0.06, 0.06, 2.4, 7]} />
@@ -2124,7 +2137,7 @@ function HomeArea() {
       </group>
 
       {/* ── Right-wall window ────────────────────────────────── */}
-      <group position={[8.85, 3.0, 4]}>
+      <group position={[7.85, 3.0, 4]}>
         {/* Frame */}
         <mesh castShadow>
           <boxGeometry args={[0.14, 2.2, 0.14]} />
@@ -2226,12 +2239,13 @@ function HomeArea() {
         </mesh>
       </group>
 
-      {/* ── Area boundary (small room) ───────────────────────── */}
+      {/* ── Area boundary (room: x -8..8, z -12..10) ────────── */}
       <group>
         {([
-          [[0, 3, -12.1], [18, 6, 0.3]],
-          [[-9.1, 3, 0],  [0.3, 6, 24]],
-          [[9.1, 3, 0],   [0.3, 6, 24]],
+          [[0,  3, -12.15], [16, 6, 0.3]],
+          [[-8.15, 3, -1],  [0.3, 6, 22]],
+          [[8.15, 3, -1],   [0.3, 6, 22]],
+          [[0, 3, 10.15],   [16, 6, 0.3]],
         ] as [number, number, number][][]).map(([p, s], i) => (
           <mesh key={i} position={p as [number, number, number]}>
             <boxGeometry args={s as [number, number, number]} />
