@@ -95,9 +95,9 @@ function HeroTorso({ armorLevel }: { armorLevel: number }) {
   );
 }
 
-function HeroArm({ side, children }: { side: -1 | 1; children?: React.ReactNode }) {
-  return (
-    <group position={[side * 0.44, 1.0, 0]}>
+const HeroArm = React.forwardRef<THREE.Group, { side: -1 | 1; children?: React.ReactNode }>(
+  ({ side, children }, ref) => (
+    <group ref={ref} position={[side * 0.44, 1.0, 0]}>
       <mesh><sphereGeometry args={[0.15, 10, 8]} /><meshStandardMaterial color={C.tunic} roughness={0.7} /></mesh>
       <mesh position={[0, -0.22, 0]}><cylinderGeometry args={[0.11, 0.1, 0.32, 9]} /><meshStandardMaterial color={C.tunic} roughness={0.7} /></mesh>
       <mesh position={[0, -0.4, 0]}><sphereGeometry args={[0.1, 9, 7]} /><meshStandardMaterial color={C.skin} /></mesh>
@@ -105,12 +105,13 @@ function HeroArm({ side, children }: { side: -1 | 1; children?: React.ReactNode 
       <mesh position={[0, -0.72, 0]}><sphereGeometry args={[0.1, 9, 7]} /><meshStandardMaterial color={C.skin} /></mesh>
       {children}
     </group>
-  );
-}
+  )
+);
+HeroArm.displayName = "HeroArm";
 
-function HeroLeg({ side }: { side: -1 | 1 }) {
-  return (
-    <group position={[side * 0.17, 0.33, 0]}>
+const HeroLeg = React.forwardRef<THREE.Group, { side: -1 | 1 }>(
+  ({ side }, ref) => (
+    <group ref={ref} position={[side * 0.17, 0.33, 0]}>
       {/* Upper leg */}
       <mesh><sphereGeometry args={[0.13, 10, 8]} /><meshStandardMaterial color="#f0c8a8" roughness={0.88} /></mesh>
       <mesh position={[0, -0.18, 0]}><cylinderGeometry args={[0.115, 0.105, 0.28, 10]} /><meshStandardMaterial color="#f0c8a8" roughness={0.88} /></mesh>
@@ -126,8 +127,9 @@ function HeroLeg({ side }: { side: -1 | 1 }) {
       <mesh position={[0, -0.8, 0.1]} rotation={[-0.22, 0, 0]}><boxGeometry args={[0.18, 0.13, 0.32]} /><meshStandardMaterial color={C.boot} roughness={0.78} /></mesh>
       <mesh position={[0, -0.8, 0.24]} rotation={[-0.22, 0, 0]}><sphereGeometry args={[0.1, 10, 8]} /><meshStandardMaterial color={C.bootToe} roughness={0.75} /></mesh>
     </group>
-  );
-}
+  )
+);
+HeroLeg.displayName = "HeroLeg";
 
 function SwordMesh({ swordId }: { swordId: SwordId }) {
   const def = SWORD_DEFS[swordId];
@@ -207,6 +209,10 @@ export default function Player() {
   const groupRef    = useRef<THREE.Group>(null!);
   const bodyBobRef  = useRef<THREE.Group>(null!);
   const swordRef    = useRef<THREE.Group>(null!);
+  const leftArmRef  = useRef<THREE.Group>(null!);
+  const rightArmRef = useRef<THREE.Group>(null!);
+  const leftLegRef  = useRef<THREE.Group>(null!);
+  const rightLegRef = useRef<THREE.Group>(null!);
 
   const posRef         = useRef(new THREE.Vector3(0, 0, 0));
   const facingRef      = useRef(new THREE.Vector3(0, 0, -1));
@@ -364,12 +370,50 @@ export default function Player() {
       : Math.atan2(facingRef.current.x, facingRef.current.z);
 
     // ── Bob body ──────────────────────────────────────────────────
+    const isMoving = jLen > 0.08;
     if (bodyBobRef.current) {
-      bodyBobRef.current.position.y = Math.sin(walkTimeRef.current) * (jLen > 0.08 ? 0.06 : 0.012);
+      bodyBobRef.current.position.y = Math.sin(walkTimeRef.current) * (isMoving ? 0.06 : 0.012);
+    }
+
+    // ── Limb animation ────────────────────────────────────────────
+    const isSwordActive = swordTimerRef.current > 0 || isSpinning;
+    const wt = walkTimeRef.current;
+    const legSwing  = isMoving ? Math.sin(wt) * 0.55 : 0;
+    const armSwing  = isMoving ? Math.sin(wt) * 0.42 : 0;
+    const idleBreath = isMoving ? 0 : Math.sin(Date.now() * 0.0008) * 0.04;
+
+    // Legs — opposite phase
+    if (leftLegRef.current) {
+      leftLegRef.current.rotation.x = THREE.MathUtils.lerp(
+        leftLegRef.current.rotation.x, legSwing + idleBreath, 0.35
+      );
+    }
+    if (rightLegRef.current) {
+      rightLegRef.current.rotation.x = THREE.MathUtils.lerp(
+        rightLegRef.current.rotation.x, -legSwing + idleBreath, 0.35
+      );
+    }
+
+    // Arms — opposite to legs; right arm takes over during attack
+    if (leftArmRef.current) {
+      const target = -armSwing - idleBreath;
+      leftArmRef.current.rotation.x = THREE.MathUtils.lerp(leftArmRef.current.rotation.x, target, 0.3);
+      leftArmRef.current.rotation.z = THREE.MathUtils.lerp(leftArmRef.current.rotation.z, 0.08, 0.15);
+    }
+    if (rightArmRef.current) {
+      let target: number;
+      if (isSwordActive) {
+        // Swing arm forward on attack, return when done
+        const progress = swordTimerRef.current / SWORD_DURATION;
+        target = isSpinning ? -0.5 : -0.85 * Math.sin(Math.max(progress, 0) * Math.PI);
+      } else {
+        target = armSwing - idleBreath;
+      }
+      rightArmRef.current.rotation.x = THREE.MathUtils.lerp(rightArmRef.current.rotation.x, target, 0.35);
+      rightArmRef.current.rotation.z = THREE.MathUtils.lerp(rightArmRef.current.rotation.z, -0.08, 0.15);
     }
 
     // ── Sword visibility + spin attack ───────────────────────────
-    const isSwordActive = swordTimerRef.current > 0 || isSpinning;
     const swordExtend = isSpinning ? 0 : 1.4;
 
     // ── Stamina drain / regen ─────────────────────────────────────
@@ -441,15 +485,15 @@ export default function Player() {
       <group ref={bodyBobRef}>
         <HeroHead />
         <HeroTorso armorLevel={armorLevel} />
-        <HeroArm side={-1} />
-        <HeroArm side={1}>
+        <HeroArm ref={leftArmRef}  side={-1} />
+        <HeroArm ref={rightArmRef} side={1}>
           {/* Sword held in right arm */}
           <group ref={swordRef} visible={false} position={[0, -0.9, -0.4]} rotation={[-0.4, 0, 0]}>
             <SwordMesh swordId={activeSword} />
           </group>
         </HeroArm>
-        <HeroLeg side={-1} />
-        <HeroLeg side={1} />
+        <HeroLeg ref={leftLegRef}  side={-1} />
+        <HeroLeg ref={rightLegRef} side={1} />
         {/* Sword glow light */}
         <pointLight position={[0.3, 0.8, -0.5]} color={swordDef.light} intensity={2} distance={3} decay={2} />
       </group>
