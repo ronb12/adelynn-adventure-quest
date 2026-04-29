@@ -24,6 +24,7 @@
   "submit": {
     "production": {
       "ios": {
+        "appleTeamId": "4SQJ3AH62S",
         "ascAppId": "6764447633",
         "bundleIdentifier": "com.adelynn.adventurequest"
       }

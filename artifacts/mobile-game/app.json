@@ -16,7 +16,8 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.adelynn.adventurequest",
-      "buildNumber": "1"
+      "buildNumber": "1",
+      "appleTeamId": "4SQJ3AH62S"
     },
     "android": {},
     "web": {
