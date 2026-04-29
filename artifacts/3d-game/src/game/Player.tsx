@@ -889,6 +889,34 @@ export function Player() {
     // World clamp
     pos.current.x = THREE.MathUtils.clamp(pos.current.x, -29, 29);
     pos.current.z = THREE.MathUtils.clamp(pos.current.z, -29, 29);
+
+    // Home area wall collision
+    // Room: 16 wide × 22 deep, floor x:[-8,8] z:[-12,10]
+    // Door opening at |x| < 4 on south side (z ≈ 10)
+    if (store.currentArea === 'home') {
+      const R = 0.5; // player collision radius
+
+      // Full-length side walls (x = ±8, thickness 0.3)
+      pos.current.x = THREE.MathUtils.clamp(pos.current.x, -7.65, 7.65);
+
+      // North (back) wall (z = -12, thickness 0.3)
+      pos.current.z = Math.max(pos.current.z, -11.65);
+
+      // South partial walls — two stubs, each 4 units wide, centred at x=±6
+      // Left stub  covers x ∈ [-8, -4]; right stub covers x ∈ [4, 8]
+      // Door gap is x ∈ [-4, 4]; player (R=0.5) needs centre in (-3.5, 3.5)
+      const WALL_Z_IN  = 9.35;  // inner face of expanded wall (9.85 - R)
+      const WALL_Z_OUT = 10.65; // outer face              (10.15 + R)
+      // Left stub zone: player centre x < -3.5
+      if (pos.current.x < -3.5 && pos.current.z > WALL_Z_IN && pos.current.z < WALL_Z_OUT) {
+        pos.current.z = pos.current.z < 10.0 ? WALL_Z_IN : WALL_Z_OUT;
+      }
+      // Right stub zone: player centre x > 3.5
+      if (pos.current.x > 3.5 && pos.current.z > WALL_Z_IN && pos.current.z < WALL_Z_OUT) {
+        pos.current.z = pos.current.z < 10.0 ? WALL_Z_IN : WALL_Z_OUT;
+      }
+    }
+
     groupRef.current.position.copy(pos.current);
 
     store.setPlayerPosition(pos.current.clone());
