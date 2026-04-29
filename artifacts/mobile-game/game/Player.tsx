@@ -360,7 +360,7 @@ export default function Player() {
     groupRef.current.position.lerp(posRef.current, 0.4);
     groupRef.current.rotation.y = isSpinning
       ? spinAngleRef.current
-      : Math.atan2(-facingRef.current.x, -facingRef.current.z);
+      : Math.atan2(facingRef.current.x, facingRef.current.z);
 
     // ── Bob body ──────────────────────────────────────────────────
     if (bodyBobRef.current) {
