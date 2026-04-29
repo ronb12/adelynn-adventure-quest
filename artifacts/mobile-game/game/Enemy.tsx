@@ -7,7 +7,17 @@ import { playerState, pendingPickupSpawns, weaponHitZones, weaponEffects } from 
 export type EnemyType =
   | "slime" | "goblin" | "briarwolf" | "thornspitter" | "emberscorpion" | "voidwraith" | "boss" | "bat" | "knight"
   | "skeleton" | "lizardman" | "rockgolem" | "icewolf" | "lavabeast" | "crystalspider"
-  | "thunderbird" | "shadowslime" | "cavedemon" | "jungletroll" | "frostphantom" | "volcanodemon";
+  | "thunderbird" | "shadowslime" | "cavedemon" | "jungletroll" | "frostphantom" | "volcanodemon"
+  // 30 new regular enemy types
+  | "zombie" | "mummy" | "watersprite" | "fishman" | "crab"
+  | "darkelf" | "shadowknight" | "firedrake" | "pyrogolem" | "treeant"
+  | "mossgolem" | "bandit" | "assassin" | "roguearcher" | "crystalgolem"
+  | "gemwyrm" | "stormeagle" | "thunderserpent" | "icesprite" | "glaciergolem"
+  | "sandworm" | "duneserpent" | "swampghost" | "swampcrawler" | "skullarcher"
+  | "phantomblade" | "thiefscout" | "ironguard" | "mirecrawler" | "bonedragon"
+  // 8 dungeon boss types
+  | "swampguardian" | "skulllord" | "thiefking" | "icepalaceguardian"
+  | "mirebeast" | "dragonoverlord" | "shadowlord" | "malgrathtrue";
 
 interface EnemyDef {
   hp: number; speed: number; contactDamage: number; pts: number; size: number;
@@ -26,7 +36,7 @@ const ENEMY_DEFS: Record<EnemyType, EnemyDef> = {
   bat:           { hp: 2, speed: 4.0, contactDamage: 0.5,  pts: 25,  size: 0.42, color: "#4a235a", emissive: "#220033", behavior: "chase" },
   knight:        { hp: 4, speed: 1.4, contactDamage: 0.75, pts: 45,  size: 0.5,  color: "#a04020", emissive: "#502010", behavior: "charge", chargeInterval: 2.2, chargeDuration: 0.55 },
   boss:          { hp: 20,speed: 3.5, contactDamage: 1.0,  pts: 500, size: 1.8,  color: "#550033", emissive: "#220011", behavior: "charge", chargeInterval: 2.0, chargeDuration: 0.8, rangedInterval: 1.5, projectileSpeed: 12, projectileDamage: 0.75 },
-  // New 12 enemy types
+  // Expanded 12 enemy types
   skeleton:      { hp: 2, speed: 2.2, contactDamage: 0.5,  pts: 22,  size: 0.48, color: "#d4caa8", emissive: "#886655", behavior: "chase" },
   lizardman:     { hp: 3, speed: 4.2, contactDamage: 0.75, pts: 35,  size: 0.52, color: "#228833", emissive: "#114411", behavior: "charge", chargeInterval: 2.0, chargeDuration: 0.45 },
   rockgolem:     { hp: 6, speed: 1.2, contactDamage: 1.0,  pts: 55,  size: 0.75, color: "#7a8877", emissive: "#334433", behavior: "chase" },
@@ -39,6 +49,46 @@ const ENEMY_DEFS: Record<EnemyType, EnemyDef> = {
   jungletroll:   { hp: 5, speed: 1.6, contactDamage: 1.0,  pts: 52,  size: 0.70, color: "#225522", emissive: "#112211", behavior: "charge", chargeInterval: 3.0, chargeDuration: 0.7 },
   frostphantom:  { hp: 3, speed: 2.5, contactDamage: 0.5,  pts: 42,  size: 0.50, color: "#aaddff", emissive: "#4488cc", behavior: "ranged", rangedInterval: 2.0, projectileSpeed: 8, projectileDamage: 0.75 },
   volcanodemon:  { hp: 6, speed: 1.8, contactDamage: 1.0,  pts: 60,  size: 0.70, color: "#882200", emissive: "#ff4400", behavior: "ranged", rangedInterval: 1.4, projectileSpeed: 11, projectileDamage: 0.75 },
+  // 30 new regular enemy types
+  zombie:        { hp: 2, speed: 1.5, contactDamage: 0.5,  pts: 18,  size: 0.48, color: "#5a7a4a", emissive: "#2a3a1a", behavior: "chase" },
+  mummy:         { hp: 3, speed: 1.8, contactDamage: 0.5,  pts: 28,  size: 0.50, color: "#c8b97a", emissive: "#6a5a30", behavior: "ranged", rangedInterval: 2.5, projectileSpeed: 7,  projectileDamage: 0.5 },
+  watersprite:   { hp: 1, speed: 4.5, contactDamage: 0.25, pts: 15,  size: 0.38, color: "#00bcd4", emissive: "#006677", behavior: "chase" },
+  fishman:       { hp: 3, speed: 4.8, contactDamage: 0.75, pts: 38,  size: 0.52, color: "#1a6688", emissive: "#0a3344", behavior: "charge", chargeInterval: 1.8, chargeDuration: 0.4 },
+  crab:          { hp: 2, speed: 2.8, contactDamage: 0.5,  pts: 22,  size: 0.48, color: "#e64a19", emissive: "#7a2000", behavior: "charge", chargeInterval: 2.2, chargeDuration: 0.5 },
+  darkelf:       { hp: 2, speed: 5.5, contactDamage: 0.5,  pts: 32,  size: 0.46, color: "#4a148c", emissive: "#1a0030", behavior: "ranged", rangedInterval: 1.8, projectileSpeed: 10, projectileDamage: 0.5 },
+  shadowknight:  { hp: 5, speed: 2.5, contactDamage: 0.75, pts: 55,  size: 0.55, color: "#1a0030", emissive: "#0a0018", behavior: "charge", chargeInterval: 1.5, chargeDuration: 0.45 },
+  firedrake:     { hp: 3, speed: 3.8, contactDamage: 0.75, pts: 42,  size: 0.55, color: "#e53935", emissive: "#7a0000", behavior: "ranged", rangedInterval: 2.0, projectileSpeed: 10, projectileDamage: 0.75 },
+  pyrogolem:     { hp: 6, speed: 1.5, contactDamage: 1.0,  pts: 58,  size: 0.72, color: "#ff6d00", emissive: "#992200", behavior: "ranged", rangedInterval: 1.6, projectileSpeed: 9,  projectileDamage: 0.75 },
+  treeant:       { hp: 7, speed: 1.0, contactDamage: 1.0,  pts: 62,  size: 0.80, color: "#3e5c1a", emissive: "#1a2a08", behavior: "chase" },
+  mossgolem:     { hp: 5, speed: 1.3, contactDamage: 0.75, pts: 48,  size: 0.70, color: "#2d5a27", emissive: "#112211", behavior: "charge", chargeInterval: 3.0, chargeDuration: 0.8 },
+  bandit:        { hp: 2, speed: 4.0, contactDamage: 0.5,  pts: 30,  size: 0.48, color: "#795548", emissive: "#3e2723", behavior: "charge", chargeInterval: 2.0, chargeDuration: 0.4 },
+  assassin:      { hp: 2, speed: 7.0, contactDamage: 0.75, pts: 38,  size: 0.44, color: "#212121", emissive: "#0a0a0a", behavior: "charge", chargeInterval: 1.2, chargeDuration: 0.3 },
+  roguearcher:   { hp: 2, speed: 3.0, contactDamage: 0.5,  pts: 32,  size: 0.46, color: "#5d4037", emissive: "#2a1a0a", behavior: "ranged", rangedInterval: 1.8, projectileSpeed: 11, projectileDamage: 0.5 },
+  crystalgolem:  { hp: 7, speed: 1.0, contactDamage: 1.0,  pts: 65,  size: 0.78, color: "#aa66ff", emissive: "#551188", behavior: "chase" },
+  gemwyrm:       { hp: 4, speed: 3.0, contactDamage: 0.75, pts: 48,  size: 0.58, color: "#cc44ee", emissive: "#660088", behavior: "ranged", rangedInterval: 1.8, projectileSpeed: 10, projectileDamage: 0.75 },
+  stormeagle:    { hp: 3, speed: 6.0, contactDamage: 0.75, pts: 44,  size: 0.52, color: "#78909c", emissive: "#37474f", behavior: "charge", chargeInterval: 1.5, chargeDuration: 0.3 },
+  thunderserpent:{ hp: 4, speed: 3.5, contactDamage: 0.75, pts: 50,  size: 0.55, color: "#ffee22", emissive: "#886600", behavior: "ranged", rangedInterval: 1.6, projectileSpeed: 12, projectileDamage: 0.75 },
+  icesprite:     { hp: 1, speed: 5.0, contactDamage: 0.25, pts: 18,  size: 0.36, color: "#b3e5fc", emissive: "#4488aa", behavior: "chase" },
+  glaciergolem:  { hp: 8, speed: 0.9, contactDamage: 1.0,  pts: 70,  size: 0.85, color: "#e3f2fd", emissive: "#4488bb", behavior: "charge", chargeInterval: 4.0, chargeDuration: 1.0 },
+  sandworm:      { hp: 4, speed: 2.8, contactDamage: 0.75, pts: 45,  size: 0.60, color: "#c4a35a", emissive: "#7a5a20", behavior: "charge", chargeInterval: 2.5, chargeDuration: 0.6 },
+  duneserpent:   { hp: 3, speed: 4.5, contactDamage: 0.5,  pts: 38,  size: 0.52, color: "#d4a22a", emissive: "#8a5500", behavior: "ranged", rangedInterval: 2.0, projectileSpeed: 9,  projectileDamage: 0.5 },
+  swampghost:    { hp: 2, speed: 3.2, contactDamage: 0.5,  pts: 35,  size: 0.46, color: "#80cbc4", emissive: "#004d40", behavior: "chase" },
+  swampcrawler:  { hp: 3, speed: 2.2, contactDamage: 0.75, pts: 40,  size: 0.55, color: "#558b2f", emissive: "#1b5e20", behavior: "charge", chargeInterval: 2.5, chargeDuration: 0.55 },
+  skullarcher:   { hp: 2, speed: 2.0, contactDamage: 0.5,  pts: 30,  size: 0.46, color: "#d4caa8", emissive: "#886655", behavior: "ranged", rangedInterval: 1.8, projectileSpeed: 9,  projectileDamage: 0.5 },
+  phantomblade:  { hp: 3, speed: 4.0, contactDamage: 0.75, pts: 45,  size: 0.50, color: "#b0bec5", emissive: "#546e7a", behavior: "charge", chargeInterval: 1.6, chargeDuration: 0.35 },
+  thiefscout:    { hp: 2, speed: 6.5, contactDamage: 0.5,  pts: 35,  size: 0.44, color: "#4a148c", emissive: "#1a0030", behavior: "charge", chargeInterval: 1.5, chargeDuration: 0.3 },
+  ironguard:     { hp: 5, speed: 1.8, contactDamage: 0.75, pts: 50,  size: 0.56, color: "#546e7a", emissive: "#1c313a", behavior: "charge", chargeInterval: 2.5, chargeDuration: 0.6 },
+  mirecrawler:   { hp: 3, speed: 2.5, contactDamage: 0.5,  pts: 36,  size: 0.52, color: "#827717", emissive: "#4a4000", behavior: "chase" },
+  bonedragon:    { hp: 12,speed: 2.2, contactDamage: 1.0,  pts: 150, size: 1.2,  color: "#d4caa8", emissive: "#886655", behavior: "ranged", rangedInterval: 1.2, projectileSpeed: 12, projectileDamage: 1.0 },
+  // 8 dungeon boss types
+  swampguardian:     { hp: 25, speed: 2.8, contactDamage: 1.0, pts: 600, size: 2.0, color: "#1a5c1a", emissive: "#0a2a0a", behavior: "charge", chargeInterval: 1.8, chargeDuration: 0.7, rangedInterval: 1.6, projectileSpeed: 10, projectileDamage: 0.75 },
+  skulllord:         { hp: 28, speed: 3.0, contactDamage: 1.0, pts: 650, size: 2.0, color: "#c8c0a0", emissive: "#665540", behavior: "ranged", rangedInterval: 1.2, projectileSpeed: 11, projectileDamage: 0.75, chargeInterval: 2.5, chargeDuration: 0.8 },
+  thiefking:         { hp: 22, speed: 4.5, contactDamage: 1.0, pts: 600, size: 1.7, color: "#4a148c", emissive: "#1a0030", behavior: "charge", chargeInterval: 1.2, chargeDuration: 0.5, rangedInterval: 2.0, projectileSpeed: 12, projectileDamage: 0.75 },
+  icepalaceguardian: { hp: 30, speed: 2.5, contactDamage: 1.0, pts: 700, size: 2.2, color: "#b3e5fc", emissive: "#2244aa", behavior: "ranged", rangedInterval: 1.2, projectileSpeed: 11, projectileDamage: 1.0, chargeInterval: 2.0, chargeDuration: 0.9 },
+  mirebeast:         { hp: 28, speed: 2.2, contactDamage: 1.0, pts: 650, size: 2.1, color: "#558b2f", emissive: "#1b5e20", behavior: "charge", chargeInterval: 2.0, chargeDuration: 0.8, rangedInterval: 2.0, projectileSpeed: 9,  projectileDamage: 0.75 },
+  dragonoverlord:    { hp: 35, speed: 3.2, contactDamage: 1.5, pts: 800, size: 2.5, color: "#880000", emissive: "#ff3300", behavior: "ranged", rangedInterval: 1.0, projectileSpeed: 13, projectileDamage: 1.0, chargeInterval: 1.5, chargeDuration: 0.7 },
+  shadowlord:        { hp: 30, speed: 3.5, contactDamage: 1.0, pts: 750, size: 2.0, color: "#0a0018", emissive: "#7c4dff", behavior: "ranged", rangedInterval: 1.0, projectileSpeed: 13, projectileDamage: 1.0, chargeInterval: 1.5, chargeDuration: 0.6 },
+  malgrathtrue:      { hp: 50, speed: 4.0, contactDamage: 1.5, pts: 1000,size: 2.8, color: "#220033", emissive: "#cc00ff", behavior: "charge", chargeInterval: 1.0, chargeDuration: 0.6, rangedInterval: 0.8, projectileSpeed: 15, projectileDamage: 1.25 },
 };
 
 interface EnemyData {
@@ -66,9 +116,17 @@ const AREA_CONFIGS: Record<AreaId, Array<{ type: EnemyType; count: number; radiu
   volcano:  [{ type: "lavabeast",    count: 5,  radius: 13 }, { type: "volcanodemon", count: 3, radius: 16 }, { type: "emberscorpion",count:4, radius: 11 }],
   sky:      [{ type: "thunderbird",  count: 7,  radius: 14 }, { type: "bat",          count: 5, radius: 12 }, { type: "voidwraith",  count: 3, radius: 16 }],
   shadow:   [{ type: "shadowslime",  count: 8,  radius: 13 }, { type: "voidwraith",   count: 5, radius: 15 }, { type: "cavedemon",   count: 3, radius: 11 }],
-  dungeon1: [{ type: "crystalspider",count: 8,  radius: 12 }, { type: "skeleton",     count: 6, radius: 14 }, { type: "bat",         count: 5, radius: 10 }],
-  dungeon2: [{ type: "volcanodemon", count: 4,  radius: 13 }, { type: "lavabeast",    count: 5, radius: 15 }, { type: "emberscorpion",count:4, radius: 11 }],
-  dungeon3: [{ type: "frostphantom", count: 5,  radius: 13 }, { type: "icewolf",      count: 6, radius: 15 }, { type: "crystalspider",count:4, radius: 11 }],
+  dungeon1:  [{ type: "crystalspider",count: 6, radius: 12 }, { type: "skeleton",        count: 5, radius: 14 }, { type: "bat",             count: 4, radius: 10 }, { type: "crystalgolem",  count: 2, radius: 11 }],
+  dungeon2:  [{ type: "volcanodemon", count: 4, radius: 13 }, { type: "lavabeast",       count: 4, radius: 15 }, { type: "emberscorpion",  count: 3, radius: 11 }, { type: "firedrake",     count: 3, radius: 13 }],
+  dungeon3:  [{ type: "frostphantom", count: 4, radius: 13 }, { type: "icewolf",         count: 5, radius: 15 }, { type: "crystalspider",  count: 3, radius: 11 }, { type: "icesprite",     count: 4, radius: 12 }],
+  dungeon4:  [{ type: "swampguardian",count: 1, radius: 0  }, { type: "fishman",         count: 6, radius: 12 }, { type: "watersprite",    count: 5, radius: 10 }, { type: "swampcrawler",  count: 4, radius: 14 }, { type: "crab",          count: 4, radius: 11 }],
+  dungeon5:  [{ type: "skulllord",    count: 1, radius: 0  }, { type: "zombie",          count: 6, radius: 12 }, { type: "skeleton",       count: 5, radius: 14 }, { type: "skullarcher",   count: 4, radius: 13 }, { type: "mummy",         count: 3, radius: 10 }],
+  dungeon6:  [{ type: "thiefking",    count: 1, radius: 0  }, { type: "bandit",          count: 6, radius: 12 }, { type: "assassin",       count: 4, radius: 14 }, { type: "roguearcher",   count: 4, radius: 13 }, { type: "thiefscout",    count: 5, radius: 11 }],
+  dungeon7:  [{ type: "icepalaceguardian",count:1,radius: 0}, { type: "icesprite",       count: 6, radius: 12 }, { type: "glaciergolem",   count: 2, radius: 15 }, { type: "icewolf",       count: 5, radius: 13 }, { type: "frostphantom",  count: 3, radius: 11 }],
+  dungeon8:  [{ type: "mirebeast",    count: 1, radius: 0  }, { type: "mirecrawler",     count: 6, radius: 12 }, { type: "swampghost",     count: 5, radius: 14 }, { type: "mossgolem",     count: 2, radius: 15 }, { type: "watersprite",   count: 4, radius: 10 }],
+  dungeon9:  [{ type: "dragonoverlord",count:1, radius: 0  }, { type: "firedrake",       count: 5, radius: 12 }, { type: "pyrogolem",      count: 3, radius: 14 }, { type: "lavabeast",     count: 4, radius: 13 }, { type: "bonedragon",    count: 1, radius: 16 }],
+  dungeon10: [{ type: "shadowlord",   count: 1, radius: 0  }, { type: "darkelf",         count: 5, radius: 12 }, { type: "shadowknight",   count: 4, radius: 14 }, { type: "phantomblade",  count: 5, radius: 13 }, { type: "shadowslime",   count: 6, radius: 10 }],
+  dungeon11: [{ type: "malgrathtrue", count: 1, radius: 0  }, { type: "shadowknight",    count: 4, radius: 12 }, { type: "bonedragon",     count: 2, radius: 15 }, { type: "voidwraith",    count: 5, radius: 13 }, { type: "darkelf",       count: 4, radius: 11 }],
 };
 
 function spawnEnemies(area: AreaId, bossDefeated: boolean): EnemyData[] {

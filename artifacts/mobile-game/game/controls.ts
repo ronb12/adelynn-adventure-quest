@@ -81,6 +81,7 @@ export const WEAPONS = [
   "sword", "bow", "wand", "bomb", "boomerang",
   "frost", "shuriken", "flare", "moonbow",
   "veil", "quake", "aura", "shadow", "chain",
+  "firerod", "icerod", "hammer", "net", "cape", "bombos", "ether", "dipsgram",
 ] as const;
 export type WeaponId = typeof WEAPONS[number];
 
@@ -88,9 +89,13 @@ export const WEAPON_ICONS: Record<WeaponId, string> = {
   sword: "⚔️", bow: "🏹", wand: "🪄", bomb: "🧪", boomerang: "🌑",
   frost: "❄️", shuriken: "⭐", flare: "☀️", moonbow: "🌙",
   veil: "💠", quake: "🪨", aura: "💫", shadow: "🌑", chain: "⛓️",
+  firerod: "🔥", icerod: "🧊", hammer: "🔨", net: "🕸️",
+  cape: "🧣", bombos: "💣", ether: "🌀", dipsgram: "⚡",
 };
 export const WEAPON_LABELS: Record<WeaponId, string> = {
   sword: "Sword", bow: "Bow", wand: "Wand", bomb: "Vial", boomerang: "Rang",
   frost: "Frost", shuriken: "Stars", flare: "Flare", moonbow: "Moon",
   veil: "Veil", quake: "Quake", aura: "Aura", shadow: "Shadow", chain: "Chain",
+  firerod: "Fire Rod", icerod: "Ice Rod", hammer: "Hammer", net: "Bug Net",
+  cape: "Magic Cape", bombos: "Bombos", ether: "Ether", dipsgram: "Dipsgram",
 };

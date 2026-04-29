@@ -72,14 +72,22 @@ function ScorePanel() {
 function WeaponDisplay() {
   const selectedWeapon = useGameStore(s => s.selectedWeapon);
   const unlockedWeapons = useGameStore(s => s.unlockedWeapons);
-  const arrows = useGameStore(s => s.arrows);
-  const bombs = useGameStore(s => s.bombs);
-  const shurikens = useGameStore(s => s.shurikens);
-  const frostCharges = useGameStore(s => s.frostCharges);
-  const flareCharges = useGameStore(s => s.flareCharges);
-  const veilCrystals = useGameStore(s => s.veilCrystals);
-  const quakeRunes = useGameStore(s => s.quakeRunes);
-  const moonbowAmmo = useGameStore(s => s.moonbowAmmo);
+  const arrows         = useGameStore(s => s.arrows);
+  const bombs          = useGameStore(s => s.bombs);
+  const shurikens      = useGameStore(s => s.shurikens);
+  const frostCharges   = useGameStore(s => s.frostCharges);
+  const flareCharges   = useGameStore(s => s.flareCharges);
+  const veilCrystals   = useGameStore(s => s.veilCrystals);
+  const quakeRunes     = useGameStore(s => s.quakeRunes);
+  const moonbowAmmo    = useGameStore(s => s.moonbowAmmo);
+  const fireRodCharges = useGameStore(s => s.fireRodCharges);
+  const iceRodCharges  = useGameStore(s => s.iceRodCharges);
+  const hammerCharges  = useGameStore(s => s.hammerCharges);
+  const netCharges     = useGameStore(s => s.netCharges);
+  const capeCharges    = useGameStore(s => s.capeCharges);
+  const bombosCharges  = useGameStore(s => s.bombosCharges);
+  const etherCharges   = useGameStore(s => s.etherCharges);
+  const dipCharges     = useGameStore(s => s.dipCharges);
   const insets = useSafeAreaInsets();
 
   if (unlockedWeapons.length <= 1 && selectedWeapon === "sword") return null;
@@ -88,16 +96,33 @@ function WeaponDisplay() {
     sword: null, bow: arrows, wand: null, bomb: bombs, boomerang: null,
     frost: frostCharges, shuriken: shurikens, flare: flareCharges, moonbow: moonbowAmmo,
     veil: veilCrystals, quake: quakeRunes, aura: null, shadow: null, chain: null,
+    firerod: fireRodCharges, icerod: iceRodCharges, hammer: hammerCharges, net: netCharges,
+    cape: capeCharges, bombos: bombosCharges, ether: etherCharges, dipsgram: dipCharges,
   };
 
   const ammo = ammoMap[selectedWeapon];
+
+  // color accent per weapon type
+  const accentMap: Partial<Record<WeaponId, string>> = {
+    firerod: "#ff6622", icerod: "#66ccff", hammer: "#ccaa44",
+    net: "#88dd66", cape: "#cc88ff", bombos: "#ff4444",
+    ether: "#88ffee", dipsgram: "#ffdd44",
+    frost: "#99ccff", flare: "#ff8833", veil: "#bb99ff",
+    quake: "#cc8822", moonbow: "#aaddff",
+  };
+  const accent = accentMap[selectedWeapon] ?? "#ffffff";
 
   return (
     <View style={[styles.weaponDisplay, { top: insets.top + 80 }]}>
       <Text style={styles.weaponIcon}>{WEAPON_ICONS[selectedWeapon]}</Text>
       <View>
         <Text style={styles.weaponName}>{WEAPON_LABELS[selectedWeapon]}</Text>
-        {ammo !== null && <Text style={styles.weaponAmmo}>x{ammo}</Text>}
+        {ammo !== null && (
+          <View style={styles.weaponAmmoRow}>
+            <View style={[styles.weaponAmmoBar, { width: Math.min(ammo * 5, 60), backgroundColor: accent }]} />
+            <Text style={[styles.weaponAmmo, { color: accent }]}>×{ammo}</Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -578,9 +603,17 @@ const AREA_INFO: Record<AreaId, { name: string; subtitle: string; color: string 
   volcano:  { name: "Ashrock Caldera",      subtitle: "Chapter VII — Heart of Fire",      color: "#ff6622" },
   sky:      { name: "Celestial Skylands",   subtitle: "Chapter VIII — Above the Clouds",  color: "#4488ff" },
   shadow:   { name: "Shadow Realm",         subtitle: "Chapter IX — Mirror of Darkness",  color: "#aa44ff" },
-  dungeon1: { name: "Shadowmere Crypt",     subtitle: "Dungeon I — The Walking Dead",     color: "#9966ff" },
-  dungeon2: { name: "Ashrock Forge",        subtitle: "Dungeon II — Forged in Flame",     color: "#ff4400" },
-  dungeon3: { name: "Crystal Spire",        subtitle: "Dungeon III — The Frozen Summit",  color: "#aaddff" },
+  dungeon1:  { name: "Shadowmere Crypt",    subtitle: "Dungeon I — The Walking Dead",      color: "#9966ff" },
+  dungeon2:  { name: "Ashrock Forge",       subtitle: "Dungeon II — Forged in Flame",      color: "#ff4400" },
+  dungeon3:  { name: "Crystal Spire",       subtitle: "Dungeon III — The Frozen Summit",   color: "#aaddff" },
+  dungeon4:  { name: "Swamp Temple",        subtitle: "Dungeon IV — Beneath the Murk",     color: "#33bb66" },
+  dungeon5:  { name: "Skull Woods",         subtitle: "Dungeon V — Kingdom of the Dead",   color: "#ccbb88" },
+  dungeon6:  { name: "Thieves' Lair",       subtitle: "Dungeon VI — The Phantom Guild",    color: "#9933cc" },
+  dungeon7:  { name: "Ice Palace",          subtitle: "Dungeon VII — Glacira's Prison",    color: "#88ddff" },
+  dungeon8:  { name: "Misery Mire",         subtitle: "Dungeon VIII — The Shapeless Dark", color: "#88aa33" },
+  dungeon9:  { name: "Turtle Rock",         subtitle: "Dungeon IX — The Dragon's Bones",   color: "#ff5511" },
+  dungeon10: { name: "Palace of Darkness",  subtitle: "Dungeon X — Crystallised Despair",  color: "#6600cc" },
+  dungeon11: { name: "Malgrath's Fortress", subtitle: "Dungeon XI — End of All Shadows",   color: "#cc00ff" },
 };
 
 function AreaChapterCard() {
@@ -612,6 +645,210 @@ function AreaChapterCard() {
       <Text style={[styles.chapterSubtitle, { color: info.color }]}>{info.subtitle}</Text>
       <Text style={styles.chapterName}>{info.name}</Text>
     </Animated.View>
+  );
+}
+
+// ── Archery Range Mini-Game ───────────────────────────────────────
+function ArcheryRange() {
+  const showArchery     = useGameStore(s => s.showArchery);
+  const nearArchery     = useGameStore(s => s.nearArchery);
+  const openArchery     = useGameStore(s => s.openArchery);
+  const closeArchery    = useGameStore(s => s.closeArchery);
+  const recordArcheryScore = useGameStore(s => s.recordArcheryScore);
+  const archeryBestScore   = useGameStore(s => s.archeryBestScore);
+  const gameState          = useGameStore(s => s.gameState);
+
+  const [phase, setPhase] = React.useState<"idle"|"playing"|"done">("idle");
+  const [score, setScore] = React.useState(0);
+  const [timeLeft, setTimeLeft] = React.useState(20);
+  const [targets, setTargets] = React.useState<{id:number;hit:boolean;x:number;y:number}[]>([]);
+  const timerRef = React.useRef<ReturnType<typeof setInterval>|null>(null);
+  const targetIdRef = React.useRef(0);
+
+  const spawnTarget = React.useCallback(() => {
+    const id = ++targetIdRef.current;
+    const x = 15 + Math.random() * 230;
+    const y = 30 + Math.random() * 160;
+    setTargets(prev => [...prev.filter(t => !t.hit).slice(-4), { id, hit: false, x, y }]);
+    setTimeout(() => setTargets(prev => prev.filter(t => t.id !== id)), 1800);
+  }, []);
+
+  const startGame = React.useCallback(() => {
+    setScore(0); setTimeLeft(20); setTargets([]); targetIdRef.current = 0;
+    setPhase("playing");
+    timerRef.current = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) {
+          clearInterval(timerRef.current!);
+          setPhase("done");
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    const spawnLoop = () => {
+      spawnTarget();
+      if (targetIdRef.current < 25) setTimeout(spawnLoop, 700 + Math.random() * 400);
+    };
+    spawnLoop();
+  }, [spawnTarget]);
+
+  const hitTarget = (id: number) => {
+    setTargets(prev => prev.map(t => t.id === id ? { ...t, hit: true } : t));
+    setScore(s => s + 1);
+  };
+
+  const finish = () => {
+    recordArcheryScore(score);
+    setPhase("idle");
+  };
+
+  if (!showArchery && !nearArchery) return null;
+  if (gameState !== "playing") return null;
+
+  if (!showArchery) {
+    return (
+      <View style={styles.miniGamePrompt}>
+        <Text style={styles.miniGamePromptText}>🏹 Archery Range</Text>
+        <TouchableOpacity style={styles.miniGameBtn} onPress={openArchery}>
+          <Text style={styles.miniGameBtnText}>Play</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.miniGameOverlay}>
+      <View style={styles.miniGamePanel}>
+        <Text style={styles.miniGameTitle}>🏹 Archery Range</Text>
+        {phase === "idle" && (
+          <>
+            <Text style={styles.miniGameDesc}>Tap targets as they appear! Best: {archeryBestScore}</Text>
+            <TouchableOpacity style={styles.miniGamePlayBtn} onPress={startGame}>
+              <Text style={styles.miniGamePlayText}>START</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={closeArchery}><Text style={styles.miniGameClose}>✕ Leave</Text></TouchableOpacity>
+          </>
+        )}
+        {phase === "playing" && (
+          <View style={styles.archeryField}>
+            <Text style={styles.miniGameScore}>Score: {score}  ⏱ {timeLeft}s</Text>
+            {targets.filter(t => !t.hit).map(t => (
+              <TouchableOpacity key={t.id} style={[styles.archeryTarget, { left: t.x, top: t.y }]} onPress={() => hitTarget(t.id)}>
+                <Text style={{ fontSize: 28 }}>🎯</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+        {phase === "done" && (
+          <>
+            <Text style={styles.miniGameDesc}>You hit {score} targets!</Text>
+            <Text style={styles.miniGameDesc}>{score >= 15 ? "🏆 Perfect!" : score >= 8 ? "⭐ Great!" : "Keep practising!"}</Text>
+            <TouchableOpacity style={styles.miniGamePlayBtn} onPress={finish}>
+              <Text style={styles.miniGamePlayText}>Claim Prize</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+    </View>
+  );
+}
+
+// ── Fishing Pond Mini-Game ────────────────────────────────────────
+function FishingPond() {
+  const showFishing      = useGameStore(s => s.showFishing);
+  const nearFishing      = useGameStore(s => s.nearFishing);
+  const openFishing      = useGameStore(s => s.openFishing);
+  const closeFishing     = useGameStore(s => s.closeFishing);
+  const recordFishingScore = useGameStore(s => s.recordFishingScore);
+  const fishingBestScore   = useGameStore(s => s.fishingBestScore);
+  const gameState          = useGameStore(s => s.gameState);
+
+  const [phase, setPhase] = React.useState<"idle"|"waiting"|"bite"|"miss"|"done">("idle");
+  const [casts, setCasts] = React.useState(0);
+  const [caught, setCaught] = React.useState(0);
+  const biteTimeout = React.useRef<ReturnType<typeof setTimeout>|null>(null);
+  const biteWindow  = React.useRef<ReturnType<typeof setTimeout>|null>(null);
+
+  const MAX_CASTS = 5;
+
+  const nextCast = React.useCallback((currentCasts: number, currentCaught: number) => {
+    if (currentCasts >= MAX_CASTS) { setPhase("done"); return; }
+    setPhase("waiting");
+    const delay = 1500 + Math.random() * 2000;
+    biteTimeout.current = setTimeout(() => {
+      setPhase("bite");
+      biteWindow.current = setTimeout(() => {
+        setPhase("miss");
+        setTimeout(() => nextCast(currentCasts + 1, currentCaught), 800);
+        setCasts(c => c + 1);
+      }, 900);
+    }, delay);
+  }, []);
+
+  const cast = () => { setCasts(0); setCaught(0); nextCast(0, 0); };
+
+  const reel = () => {
+    if (phase !== "bite") return;
+    clearTimeout(biteTimeout.current!);
+    clearTimeout(biteWindow.current!);
+    const c = caught + 1;
+    setCaught(c);
+    const nc = casts + 1;
+    setCasts(nc);
+    setPhase("idle");
+    setTimeout(() => nextCast(nc, c), 600);
+  };
+
+  const finish = () => { recordFishingScore(caught); setPhase("idle"); };
+
+  if (!showFishing && !nearFishing) return null;
+  if (gameState !== "playing") return null;
+
+  if (!showFishing) {
+    return (
+      <View style={[styles.miniGamePrompt, { bottom: 200 }]}>
+        <Text style={styles.miniGamePromptText}>🎣 Fishing Pond</Text>
+        <TouchableOpacity style={styles.miniGameBtn} onPress={openFishing}>
+          <Text style={styles.miniGameBtnText}>Fish</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const fishIcon = phase === "bite" ? "🐟" : phase === "miss" ? "💨" : "🌊";
+  const fishMsg  = phase === "bite" ? "BITE! TAP NOW!" : phase === "miss" ? "Too slow!" : phase === "waiting" ? "Waiting..." : "";
+
+  return (
+    <View style={styles.miniGameOverlay}>
+      <View style={styles.miniGamePanel}>
+        <Text style={styles.miniGameTitle}>🎣 Fishing Pond</Text>
+        {phase === "idle" && casts === 0 && (
+          <>
+            <Text style={styles.miniGameDesc}>Tap when you see 🐟! Best: {fishingBestScore} fish</Text>
+            <TouchableOpacity style={styles.miniGamePlayBtn} onPress={cast}>
+              <Text style={styles.miniGamePlayText}>CAST LINE</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={closeFishing}><Text style={styles.miniGameClose}>✕ Leave</Text></TouchableOpacity>
+          </>
+        )}
+        {(phase === "waiting" || phase === "bite" || phase === "miss") && (
+          <TouchableOpacity style={styles.fishingTapArea} onPress={reel} activeOpacity={0.7}>
+            <Text style={[styles.fishingBobber, phase === "bite" && { color: "#ffdd00" }]}>{fishIcon}</Text>
+            <Text style={[styles.fishingMsg, phase === "bite" && { color: "#ffdd00" }]}>{fishMsg}</Text>
+            <Text style={styles.miniGameScore}>Cast {casts + 1}/{MAX_CASTS} — Caught: {caught}</Text>
+          </TouchableOpacity>
+        )}
+        {phase === "done" && (
+          <>
+            <Text style={styles.miniGameDesc}>Caught {caught} fish! {caught >= 4 ? "🏆" : caught >= 2 ? "⭐" : "🎣"}</Text>
+            <TouchableOpacity style={styles.miniGamePlayBtn} onPress={finish}>
+              <Text style={styles.miniGamePlayText}>Claim Prize</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+    </View>
   );
 }
 
@@ -667,6 +904,8 @@ export default function HUD() {
       <ShopUI />
       <LorePopup />
       <BossHealthBar />
+      <ArcheryRange />
+      <FishingPond />
       <PauseMenu />
       <GameOverScreen />
       <VictoryScreen />
@@ -724,6 +963,8 @@ const styles = StyleSheet.create({
   weaponIcon: { fontSize: 22 },
   weaponName: { color: "#e8e0f8", fontSize: 12, fontFamily: "Inter_600SemiBold" },
   weaponAmmo: { color: "#a0a0cc", fontSize: 11, fontFamily: "Inter_400Regular" },
+  weaponAmmoRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
+  weaponAmmoBar: { height: 3, borderRadius: 2, opacity: 0.7 },
   comboPopup: {
     position: "absolute",
     top: "30%",
@@ -1072,5 +1313,125 @@ const styles = StyleSheet.create({
     color: "#e8e0d4",
     fontSize: 10,
     fontFamily: "Inter_600SemiBold",
+  },
+  // Mini-game styles
+  miniGamePrompt: {
+    position: "absolute",
+    bottom: 160,
+    left: "50%",
+    transform: [{ translateX: -80 }],
+    alignItems: "center",
+    backgroundColor: "rgba(10,10,20,0.88)",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,200,50,0.5)",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    flexDirection: "row",
+    gap: 10,
+  },
+  miniGamePromptText: {
+    color: "#ffd700",
+    fontSize: 13,
+    fontFamily: "Inter_700Bold",
+  },
+  miniGameBtn: {
+    backgroundColor: "#ffd700",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  miniGameBtnText: {
+    color: "#1a1200",
+    fontSize: 12,
+    fontFamily: "Inter_700Bold",
+  },
+  miniGameOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.85)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 50,
+  },
+  miniGamePanel: {
+    backgroundColor: "#12101e",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(255,200,50,0.4)",
+    padding: 24,
+    width: 300,
+    alignItems: "center",
+    gap: 14,
+  },
+  miniGameTitle: {
+    color: "#ffd700",
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 1,
+  },
+  miniGameDesc: {
+    color: "#c8c0a0",
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    textAlign: "center",
+  },
+  miniGameScore: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
+    textAlign: "center",
+    marginBottom: 6,
+  },
+  miniGamePlayBtn: {
+    backgroundColor: "#ffd700",
+    borderRadius: 10,
+    paddingHorizontal: 28,
+    paddingVertical: 10,
+  },
+  miniGamePlayText: {
+    color: "#1a1200",
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 1,
+  },
+  miniGameClose: {
+    color: "#888",
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    marginTop: 4,
+  },
+  archeryField: {
+    width: 260,
+    height: 220,
+    backgroundColor: "rgba(0,40,0,0.5)",
+    borderRadius: 12,
+    position: "relative",
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(100,200,100,0.3)",
+  },
+  archeryTarget: {
+    position: "absolute",
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  fishingTapArea: {
+    width: 200,
+    height: 160,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  fishingBobber: {
+    fontSize: 52,
+    color: "#ffffff",
+  },
+  fishingMsg: {
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
+    color: "#aaaaaa",
+    letterSpacing: 1,
   },
 });

@@ -6,7 +6,9 @@ export type GameState = "title" | "playing" | "paused" | "gameover" | "victory";
 export type AreaId =
   | "field" | "forest" | "desert" | "boss"
   | "cave" | "jungle" | "ice" | "volcano" | "sky"
-  | "shadow" | "dungeon1" | "dungeon2" | "dungeon3";
+  | "shadow" | "dungeon1" | "dungeon2" | "dungeon3"
+  | "dungeon4" | "dungeon5" | "dungeon6" | "dungeon7"
+  | "dungeon8" | "dungeon9" | "dungeon10" | "dungeon11";
 
 // ── Sword definitions ────────────────────────────────────────────
 export type SwordId =
@@ -49,9 +51,17 @@ export const SWORD_CHESTS: { key: string; x: number; z: number; area: AreaId; sw
   { key: "sword-vol1",    x: -10, z: 8,   area: "volcano", swordId: "flame"   },
   { key: "sword-sky1",    x: 14,  z: -14, area: "sky",     swordId: "storm"   },
   { key: "sword-shad1",   x: 0,   z: -16, area: "shadow",  swordId: "shadow"  },
-  { key: "sword-d1",      x: 0,   z: -18, area: "dungeon1",swordId: "holy"    },
-  { key: "sword-d2",      x: 0,   z: -18, area: "dungeon2",swordId: "cosmos"  },
-  { key: "sword-d3",      x: 0,   z: -18, area: "dungeon3",swordId: "dragon"  },
+  { key: "sword-d1",      x: 0,   z: -18, area: "dungeon1", swordId: "holy"    },
+  { key: "sword-d2",      x: 0,   z: -18, area: "dungeon2", swordId: "cosmos"  },
+  { key: "sword-d3",      x: 0,   z: -18, area: "dungeon3", swordId: "dragon"  },
+  { key: "sword-d4",      x: 10,  z: -10, area: "dungeon4", swordId: "storm"   },
+  { key: "sword-d5",      x: -10, z: -10, area: "dungeon5", swordId: "flame"   },
+  { key: "sword-d6",      x: 10,  z: 10,  area: "dungeon6", swordId: "viper"   },
+  { key: "sword-d7",      x: -10, z: 10,  area: "dungeon7", swordId: "frost"   },
+  { key: "sword-d8",      x: 0,   z: -16, area: "dungeon8", swordId: "shadow"  },
+  { key: "sword-d9",      x: 0,   z: -16, area: "dungeon9", swordId: "thunder" },
+  { key: "sword-d10",     x: 0,   z: -16, area: "dungeon10",swordId: "holy"    },
+  { key: "sword-d11",     x: 0,   z: -16, area: "dungeon11",swordId: "cosmos"  },
 ];
 
 // ── Weapon pickups ────────────────────────────────────────────────
@@ -59,7 +69,7 @@ export interface WeaponPickupDef {
   key: string; weaponId: WeaponId; area: AreaId;
   x: number; z: number;
   label: string; icon: string; color: string; desc: string;
-  starterAmmo?: Partial<Record<"arrows"|"bombs"|"shurikens"|"frostCharges"|"flareCharges"|"veilCrystals"|"quakeRunes"|"moonbowAmmo", number>>;
+  starterAmmo?: Partial<Record<"arrows"|"bombs"|"shurikens"|"frostCharges"|"flareCharges"|"veilCrystals"|"quakeRunes"|"moonbowAmmo"|"fireRodCharges"|"iceRodCharges"|"hammerCharges"|"netCharges"|"capeCharges"|"bombosCharges"|"etherCharges"|"dipCharges", number>>;
 }
 
 export const WEAPON_PICKUPS: WeaponPickupDef[] = [
@@ -75,7 +85,15 @@ export const WEAPON_PICKUPS: WeaponPickupDef[] = [
   { key: "weapon-veil",      weaponId: "veil",      area: "boss",   x: 16,  z: -6,  label: "Glacira's Veil", icon: "💠", color: "#00aaff", desc: "Instantly freeze all nearby enemies.",   starterAmmo: { veilCrystals: 3 } },
   { key: "weapon-quake",     weaponId: "quake",     area: "boss",   x: 12,  z: 12,  label: "Cragus Strike",  icon: "🪨", color: "#aa8844", desc: "Ground slam stuns all on-screen foes.", starterAmmo: { quakeRunes: 3 } },
   { key: "weapon-aura",      weaponId: "aura",      area: "boss",   x: -12, z: 12,  label: "Aura Ring",      icon: "💫", color: "#ffff44", desc: "Orbiting crystal shield for 4 seconds." },
-  { key: "weapon-chain",     weaponId: "chain",     area: "boss",   x: 0,   z: 12,  label: "Chain Anchor",   icon: "⛓️", color: "#8888aa", desc: "Grapple and stun with a chain throw." },
+  { key: "weapon-chain",     weaponId: "chain",     area: "boss",      x: 0,   z: 12,  label: "Chain Anchor",     icon: "⛓️", color: "#8888aa", desc: "Grapple and stun with a chain throw." },
+  { key: "weapon-firerod",   weaponId: "firerod",   area: "dungeon5",  x: -12, z: 8,   label: "Fire Rod",         icon: "🔥", color: "#ff5500", desc: "Launches a beam of fire. Burns all in its path.",     starterAmmo: {} },
+  { key: "weapon-icerod",    weaponId: "icerod",    area: "dungeon7",  x: 12,  z: 8,   label: "Ice Rod",          icon: "🧊", color: "#88ddff", desc: "Crystallises enemies solid. Frozen foes shatter.",    starterAmmo: {} },
+  { key: "weapon-hammer",    weaponId: "hammer",    area: "dungeon2",  x: 12,  z: -8,  label: "Magic Hammer",     icon: "🔨", color: "#ffcc44", desc: "Smashes ground in an area. Breaks stone blocks.",     starterAmmo: {} },
+  { key: "weapon-net",       weaponId: "net",       area: "dungeon6",  x: -12, z: 8,   label: "Bug-catching Net", icon: "🕸️", color: "#ddbbff", desc: "Captures small enemies and stuns all others.",        starterAmmo: {} },
+  { key: "weapon-cape",      weaponId: "cape",      area: "sky",       x: 14,  z: 14,  label: "Magic Cape",       icon: "🧣", color: "#ddddff", desc: "Grants brief invincibility. Malgrath despises this.", starterAmmo: {} },
+  { key: "weapon-bombos",    weaponId: "bombos",    area: "dungeon9",  x: -12, z: -8,  label: "Bombos Medallion", icon: "💣", color: "#ff4400", desc: "Explosive ring — hits all enemies on screen.",        starterAmmo: {} },
+  { key: "weapon-ether",     weaponId: "ether",     area: "dungeon8",  x: 12,  z: -8,  label: "Ether Medallion",  icon: "🌀", color: "#88aaff", desc: "Freezes every enemy on screen simultaneously.",      starterAmmo: {} },
+  { key: "weapon-dipsgram",  weaponId: "dipsgram",  area: "dungeon10", x: -12, z: -8,  label: "Dipsgram Medal",   icon: "⚡", color: "#cc44ff", desc: "Lightning strikes all enemies at once.",              starterAmmo: {} },
 ];
 
 // ── Lore stones ───────────────────────────────────────────────────
@@ -145,6 +163,46 @@ export const LORE_STONES: Record<AreaId, Array<{ id: string; text: string; x: nu
     { id: "d3-2", text: "\"Frost Phantoms here are at their strongest. They draw power from the ice and reform seconds after being struck.\"", x: 8, z: 4 },
     { id: "d3-3", text: "\"The final Crown shard lies at the summit. Destroy the guardian and the path to Malgrath's true sanctum opens.\"", x: 0, z: 10 },
   ],
+  dungeon4: [
+    { id: "d4-1", text: "\"Swamp Temple — built atop a fetid marshland where the earth breathes in slow, wet sighs.\"", x: -8, z: -6 },
+    { id: "d4-2", text: "\"The Swamp Guardian was once a benevolent water spirit. Malgrath's venom warped its mind and bloated its flesh.\"", x: 8, z: 4 },
+    { id: "d4-3", text: "\"The Flippers of the Deep are sealed within — they grant passage through water and flooded passages.\"", x: 0, z: 10 },
+  ],
+  dungeon5: [
+    { id: "d5-1", text: "\"Skull Woods — the ancient burial ground of a civilisation that worshipped death as a doorway, not an ending.\"", x: -8, z: -6 },
+    { id: "d5-2", text: "\"The Skull Lord commands every undead creature in the realm. Sever his crown and the skeleton armies will fall.\"", x: 8, z: 4 },
+    { id: "d5-3", text: "\"The Fire Rod was buried here with a great pyromancer who believed death was merely warmth that had departed.\"", x: 0, z: 10 },
+  ],
+  dungeon6: [
+    { id: "d6-1", text: "\"The Thieves' Lair — a vast underground network carved by the Phantom Guild centuries before the Crown War.\"", x: -8, z: -6 },
+    { id: "d6-2", text: "\"The Thief King wears stolen armour from a dozen defeated knights. Each piece absorbs a different type of damage.\"", x: 8, z: 4 },
+    { id: "d6-3", text: "\"The Bug-catching Net of Aldenmere hangs in the vault — used to capture magical creatures for study. Or combat.\"", x: 0, z: 10 },
+  ],
+  dungeon7: [
+    { id: "d7-1", text: "\"Ice Palace — a monument to the Bound Spirit Glacira, now frozen shut and patrolled by her corrupted disciples.\"", x: -8, z: -6 },
+    { id: "d7-2", text: "\"The Ice Palace Guardian is Glacira herself — trapped inside a body of ice armour, screaming to be freed.\"", x: 8, z: 4 },
+    { id: "d7-3", text: "\"The Ice Rod crystallises the air itself. Even lava can be frozen solid with enough channelled cold.\"", x: 0, z: 10 },
+  ],
+  dungeon8: [
+    { id: "d8-1", text: "\"Misery Mire — the marshland at the edge of the Shadow Realm where light bends and distances lie.\"", x: -8, z: -6 },
+    { id: "d8-2", text: "\"The Mire Beast has no fixed form. It takes the shape of whatever entered its marsh and never left.\"", x: 8, z: 4 },
+    { id: "d8-3", text: "\"Ether Medallion: crystallised breath of the sky. Activating it calls down a blizzard of razor-edged snowflakes.\"", x: 0, z: 10 },
+  ],
+  dungeon9: [
+    { id: "d9-1", text: "\"Turtle Rock — the body of an ancient stone dragon that died defending the realm from the first Shadow incursion.\"", x: -8, z: -6 },
+    { id: "d9-2", text: "\"The Dragon Overlord hatched from an egg hidden inside the dragon's skull. It has fed on stone and lava for centuries.\"", x: 8, z: 4 },
+    { id: "d9-3", text: "\"Bombos Medallion: raw explosive force of the deep earth. It ignites the very air in a ring of destruction.\"", x: 0, z: 10 },
+  ],
+  dungeon10: [
+    { id: "d10-1", text: "\"Palace of Darkness — a fortress built in the heart of the Shadow Realm. Every stone was laid by enslaved shadow spirits.\"", x: -8, z: -6 },
+    { id: "d10-2", text: "\"The Shadow Lord was Malgrath's first experiment — a man dissolved into pure darkness and given a crown.\"", x: 8, z: 4 },
+    { id: "d10-3", text: "\"Dipsgram Medallion: lightning given form and will. Strikes all enemies simultaneously. Malgrath fears this one.\"", x: 0, z: 10 },
+  ],
+  dungeon11: [
+    { id: "d11-1", text: "\"Malgrath's Fortress — the final sanctum, built where the seven caged Bound Spirits' cries are loudest.\"", x: -8, z: -6 },
+    { id: "d11-2", text: "\"He has consumed fragments of all three Crown shards. His true form is the Crown itself — and the Crown is dying.\"", x: 8, z: 4 },
+    { id: "d11-3", text: "\"The Bound Spirits whisper to you through the wall: 'Do not mourn for us. Free the world. That is enough.'\"", x: 0, z: 10 },
+  ],
 };
 
 // ── Item fanfare ──────────────────────────────────────────────────
@@ -191,6 +249,22 @@ interface GameStore {
   auraEndTime: number;
   shadowEndTime: number;
   chainCooldownEnd: number;
+  fireRodCharges: number;
+  iceRodCharges: number;
+  hammerCharges: number;
+  netCharges: number;
+  capeCharges: number;
+  bombosCharges: number;
+  etherCharges: number;
+  dipCharges: number;
+  hasFlippers: boolean;
+  // Mini-games
+  nearArchery: boolean;
+  showArchery: boolean;
+  archeryBestScore: number;
+  nearFishing: boolean;
+  showFishing: boolean;
+  fishingBestScore: number;
 
   // Progression
   chestsOpened: string[];
@@ -252,6 +326,14 @@ interface GameStore {
   addVeilCrystals: (n: number) => void;
   addQuakeRunes: (n: number) => void;
   addMoonbowAmmo: (n: number) => void;
+  addFireRodCharges: (n: number) => void;
+  addIceRodCharges: (n: number) => void;
+  addHammerCharges: (n: number) => void;
+  addNetCharges: (n: number) => void;
+  addCapeCharges: (n: number) => void;
+  addBombosCharges: (n: number) => void;
+  addEtherCharges: (n: number) => void;
+  addDipCharges: (n: number) => void;
   useArrow: () => boolean;
   useBomb: () => boolean;
   useShuriken: () => boolean;
@@ -260,6 +342,23 @@ interface GameStore {
   useVeilCrystal: () => boolean;
   useQuakeRune: () => boolean;
   useMoonbowAmmo: () => boolean;
+  useFireRod: () => boolean;
+  useIceRod: () => boolean;
+  useHammer: () => boolean;
+  useNet: () => boolean;
+  useCape: () => boolean;
+  useBombos: () => boolean;
+  useEther: () => boolean;
+  useDip: () => boolean;
+  unlockFlippers: () => void;
+  setNearArchery: (v: boolean) => void;
+  openArchery: () => void;
+  closeArchery: () => void;
+  recordArcheryScore: (score: number) => void;
+  setNearFishing: (v: boolean) => void;
+  openFishing: () => void;
+  closeFishing: () => void;
+  recordFishingScore: (score: number) => void;
   activateAura: () => void;
   activateShadow: () => void;
   activateChain: () => void;
@@ -328,6 +427,21 @@ const INITIAL_STATE = {
   auraEndTime: 0,
   shadowEndTime: 0,
   chainCooldownEnd: 0,
+  fireRodCharges: 0,
+  iceRodCharges: 0,
+  hammerCharges: 0,
+  netCharges: 0,
+  capeCharges: 0,
+  bombosCharges: 0,
+  etherCharges: 0,
+  dipCharges: 0,
+  hasFlippers: false,
+  nearArchery: false,
+  showArchery: false,
+  archeryBestScore: 0,
+  nearFishing: false,
+  showFishing: false,
+  fishingBestScore: 0,
   chestsOpened: [] as string[],
   shardsCollected: 0,
   heartPiecesCollected: [] as string[],
@@ -428,6 +542,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   addVeilCrystals: (n) => set((st) => ({ veilCrystals: Math.min(st.veilCrystals + n, 10) })),
   addQuakeRunes: (n) => set((st) => ({ quakeRunes: Math.min(st.quakeRunes + n, 8) })),
   addMoonbowAmmo: (n) => set((st) => ({ moonbowAmmo: Math.min(st.moonbowAmmo + n, 60) })),
+  addFireRodCharges: (n) => set((st) => ({ fireRodCharges: Math.min(st.fireRodCharges + n, 15) })),
+  addIceRodCharges: (n) => set((st) => ({ iceRodCharges: Math.min(st.iceRodCharges + n, 15) })),
+  addHammerCharges: (n) => set((st) => ({ hammerCharges: Math.min(st.hammerCharges + n, 10) })),
+  addNetCharges: (n) => set((st) => ({ netCharges: Math.min(st.netCharges + n, 10) })),
+  addCapeCharges: (n) => set((st) => ({ capeCharges: Math.min(st.capeCharges + n, 5) })),
+  addBombosCharges: (n) => set((st) => ({ bombosCharges: Math.min(st.bombosCharges + n, 5) })),
+  addEtherCharges: (n) => set((st) => ({ etherCharges: Math.min(st.etherCharges + n, 5) })),
+  addDipCharges: (n) => set((st) => ({ dipCharges: Math.min(st.dipCharges + n, 5) })),
 
   useArrow: () => { const n = get().arrows; if (n <= 0) return false; set({ arrows: n - 1 }); return true; },
   useBomb: () => { const n = get().bombs; if (n <= 0) return false; set({ bombs: n - 1 }); return true; },
@@ -437,6 +559,43 @@ export const useGameStore = create<GameStore>((set, get) => ({
   useVeilCrystal: () => { const n = get().veilCrystals; if (n <= 0) return false; set({ veilCrystals: n - 1 }); return true; },
   useQuakeRune: () => { const n = get().quakeRunes; if (n <= 0) return false; set({ quakeRunes: n - 1 }); return true; },
   useMoonbowAmmo: () => { const n = get().moonbowAmmo; if (n <= 0) return false; set({ moonbowAmmo: n - 1 }); return true; },
+  useFireRod: () => { const n = get().fireRodCharges; if (n <= 0) return false; set({ fireRodCharges: n - 1 }); return true; },
+  useIceRod: () => { const n = get().iceRodCharges; if (n <= 0) return false; set({ iceRodCharges: n - 1 }); return true; },
+  useHammer: () => { const n = get().hammerCharges; if (n <= 0) return false; set({ hammerCharges: n - 1 }); return true; },
+  useNet: () => { const n = get().netCharges; if (n <= 0) return false; set({ netCharges: n - 1 }); return true; },
+  useCape: () => { const n = get().capeCharges; if (n <= 0) return false; set({ capeCharges: n - 1 }); return true; },
+  useBombos: () => { const n = get().bombosCharges; if (n <= 0) return false; set({ bombosCharges: n - 1 }); return true; },
+  useEther: () => { const n = get().etherCharges; if (n <= 0) return false; set({ etherCharges: n - 1 }); return true; },
+  useDip: () => { const n = get().dipCharges; if (n <= 0) return false; set({ dipCharges: n - 1 }); return true; },
+  unlockFlippers: () => set({ hasFlippers: true, itemFanfare: { name: "Flippers of the Deep", icon: "🌊", desc: "You can now swim through flooded passages!" } }),
+  setNearArchery: (v) => set({ nearArchery: v }),
+  openArchery: () => set({ showArchery: true }),
+  closeArchery: () => set({ showArchery: false }),
+  recordArcheryScore: (score) => set((st) => {
+    const isNew = score > st.archeryBestScore;
+    const prize = score >= 5 ? 30 : score >= 3 ? 15 : 5;
+    return {
+      archeryBestScore: isNew ? score : st.archeryBestScore,
+      rupees: st.rupees + prize,
+      arrows: Math.min(st.arrows + Math.floor(score / 2), 99),
+      showArchery: false,
+      itemFanfare: { name: `Archery: ${score}/5!`, icon: "🏹", desc: `+${prize} Rupees` + (isNew ? " — New Best!" : "") },
+    };
+  }),
+  setNearFishing: (v) => set({ nearFishing: v }),
+  openFishing: () => set({ showFishing: true }),
+  closeFishing: () => set({ showFishing: false }),
+  recordFishingScore: (score) => set((st) => {
+    const isNew = score > st.fishingBestScore;
+    const prize = score * 10;
+    return {
+      fishingBestScore: isNew ? score : st.fishingBestScore,
+      rupees: st.rupees + prize,
+      hearts: Math.min(st.hearts + (score >= 3 ? 1 : 0), st.maxHearts),
+      showFishing: false,
+      itemFanfare: { name: `Caught ${score} fish!`, icon: "🐟", desc: `+${prize} Rupees` + (score >= 3 ? " +1 Heart!" : "") },
+    };
+  }),
 
   activateAura: () => set({ auraEndTime: Date.now() + 4000 }),
   activateShadow: () => set({ shadowEndTime: Date.now() + 2500 }),
@@ -519,14 +678,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
       chestsOpened: [...st.chestsOpened, pickupKey],
       unlockedWeapons: st.unlockedWeapons.includes(weaponId) ? st.unlockedWeapons : [...st.unlockedWeapons, weaponId],
       selectedWeapon: weaponId,
-      arrows:       ammo.arrows       ? Math.min(st.arrows       + ammo.arrows,       99) : st.arrows,
-      bombs:        ammo.bombs        ? Math.min(st.bombs        + ammo.bombs,        20) : st.bombs,
-      shurikens:    ammo.shurikens    ? Math.min(st.shurikens    + ammo.shurikens,    60) : st.shurikens,
-      frostCharges: ammo.frostCharges ? Math.min(st.frostCharges + ammo.frostCharges, 20) : st.frostCharges,
-      flareCharges: ammo.flareCharges ? Math.min(st.flareCharges + ammo.flareCharges, 10) : st.flareCharges,
-      veilCrystals: ammo.veilCrystals ? Math.min(st.veilCrystals + ammo.veilCrystals, 10) : st.veilCrystals,
-      quakeRunes:   ammo.quakeRunes   ? Math.min(st.quakeRunes   + ammo.quakeRunes,    8) : st.quakeRunes,
-      moonbowAmmo:  ammo.moonbowAmmo  ? Math.min(st.moonbowAmmo  + ammo.moonbowAmmo,  60) : st.moonbowAmmo,
+      arrows:          ammo.arrows          ? Math.min(st.arrows          + ammo.arrows,          99) : st.arrows,
+      bombs:           ammo.bombs           ? Math.min(st.bombs           + ammo.bombs,           20) : st.bombs,
+      shurikens:       ammo.shurikens       ? Math.min(st.shurikens       + ammo.shurikens,       60) : st.shurikens,
+      frostCharges:    ammo.frostCharges    ? Math.min(st.frostCharges    + ammo.frostCharges,    20) : st.frostCharges,
+      flareCharges:    ammo.flareCharges    ? Math.min(st.flareCharges    + ammo.flareCharges,    10) : st.flareCharges,
+      veilCrystals:    ammo.veilCrystals    ? Math.min(st.veilCrystals    + ammo.veilCrystals,    10) : st.veilCrystals,
+      quakeRunes:      ammo.quakeRunes      ? Math.min(st.quakeRunes      + ammo.quakeRunes,       8) : st.quakeRunes,
+      moonbowAmmo:     ammo.moonbowAmmo     ? Math.min(st.moonbowAmmo     + ammo.moonbowAmmo,     60) : st.moonbowAmmo,
+      fireRodCharges:  ammo.fireRodCharges  ? Math.min(st.fireRodCharges  + ammo.fireRodCharges,  15) : (weaponId === "firerod"  ? 10 : st.fireRodCharges),
+      iceRodCharges:   ammo.iceRodCharges   ? Math.min(st.iceRodCharges   + ammo.iceRodCharges,   15) : (weaponId === "icerod"   ? 10 : st.iceRodCharges),
+      hammerCharges:   ammo.hammerCharges   ? Math.min(st.hammerCharges   + ammo.hammerCharges,   10) : (weaponId === "hammer"   ?  8 : st.hammerCharges),
+      netCharges:      ammo.netCharges      ? Math.min(st.netCharges      + ammo.netCharges,      10) : (weaponId === "net"      ?  8 : st.netCharges),
+      capeCharges:     ammo.capeCharges     ? Math.min(st.capeCharges     + ammo.capeCharges,      5) : (weaponId === "cape"     ?  3 : st.capeCharges),
+      bombosCharges:   ammo.bombosCharges   ? Math.min(st.bombosCharges   + ammo.bombosCharges,    5) : (weaponId === "bombos"   ?  3 : st.bombosCharges),
+      etherCharges:    ammo.etherCharges    ? Math.min(st.etherCharges    + ammo.etherCharges,     5) : (weaponId === "ether"    ?  3 : st.etherCharges),
+      dipCharges:      ammo.dipCharges      ? Math.min(st.dipCharges      + ammo.dipCharges,       5) : (weaponId === "dipsgram" ?  3 : st.dipCharges),
       itemFanfare: pickup ? { name: pickup.label, icon: pickup.icon, desc: pickup.desc } : null,
     };
   }),
