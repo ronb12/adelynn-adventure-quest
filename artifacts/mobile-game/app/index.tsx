@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  Animated, Easing,
+  Animated, Easing, ImageBackground,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -9,36 +9,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useGameStore } from "../game/store";
 import { loadBestRecord, BestRecord } from "../game/saveManager";
 
+const BG_IMAGE = require("../assets/title-bg.png");
+
 const SHARDS = [
   { name: "Shard of Dawn",  place: "Sunfield Plains", color: "#ffe060" },
   { name: "Shard of Dusk",  place: "Whisper Woods",   color: "#b084ff" },
   { name: "Shard of Ember", place: "Ashrock Summit",  color: "#ff8844" },
 ];
-
-function StarField() {
-  const stars = React.useMemo(() =>
-    Array.from({ length: 55 }).map((_, i) => ({
-      left:    `${(i * 37 + 11) % 100}%`,
-      top:     `${(i * 53 + 7) % 100}%`,
-      size:    i % 5 === 0 ? 3 : i % 3 === 0 ? 2 : 1.5,
-      opacity: 0.2 + (i % 7) * 0.08,
-    })), []
-  );
-  return (
-    <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-      {stars.map((s, i) => (
-        <View key={i} style={{
-          position: "absolute",
-          left: s.left as any, top: s.top as any,
-          width: s.size, height: s.size,
-          borderRadius: s.size / 2,
-          backgroundColor: i % 8 === 0 ? "#ffe08880" : "#ffffffcc",
-          opacity: s.opacity,
-        }} />
-      ))}
-    </View>
-  );
-}
 
 export default function MenuScreen() {
   const insets = useSafeAreaInsets();
@@ -69,18 +46,23 @@ export default function MenuScreen() {
   };
 
   return (
-    <View style={styles.root}>
-      {/* Background gradient — matches web's dark purple/black */}
+    <ImageBackground
+      source={BG_IMAGE}
+      style={styles.root}
+      resizeMode="cover"
+      imageStyle={styles.bgImage}
+    >
+      {/* Same gradient overlay as the web version — dark at top, darker at bottom */}
       <LinearGradient
-        colors={["#080418", "#120830", "#0c0520", "#050308"]}
-        locations={[0, 0.3, 0.65, 1]}
+        colors={[
+          "rgba(8,4,24,0.52)",
+          "rgba(8,4,24,0.68)",
+          "rgba(8,4,24,0.88)",
+          "rgba(8,4,24,0.97)",
+        ]}
+        locations={[0, 0.35, 0.7, 1]}
         style={StyleSheet.absoluteFillObject}
       />
-
-      {/* Radial glow behind crown */}
-      <View style={styles.radialGlow} pointerEvents="none" />
-
-      <StarField />
 
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 32, paddingBottom: insets.bottom + 24 }]}
@@ -165,25 +147,13 @@ export default function MenuScreen() {
           4 Areas · 8 Enemy Types · 10 Swords · 13 Weapons
         </Text>
       </View>
-    </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#050308" },
-
-  radialGlow: {
-    position: "absolute",
-    top: "10%", left: "50%",
-    width: 340, height: 340,
-    marginLeft: -170,
-    borderRadius: 170,
-    backgroundColor: "transparent",
-    shadowColor: "#f0c030",
-    shadowOpacity: 0.18,
-    shadowRadius: 90,
-    elevation: 0,
-  },
+  bgImage: {},
 
   scroll: { alignItems: "center" },
   content: { alignItems: "center", width: "100%", paddingHorizontal: 20 },
