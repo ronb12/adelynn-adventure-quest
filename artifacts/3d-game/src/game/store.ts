@@ -6,6 +6,7 @@ import { saveGame, loadGame, deleteSave, getAreaSpawn, SaveData } from './saveMa
 
 export type GameState = 'title' | 'playing' | 'paused' | 'gameover' | 'victory';
 export type AreaId = 'field' | 'forest' | 'desert' | 'boss' | 'jungle' | 'ice' | 'volcano' | 'sky' | 'crypt' | 'void' | 'cave' | 'home';
+export type SleepPhase = 'none' | 'changing' | 'walking' | 'lying' | 'sleeping' | 'waking' | 'rising';
 
 export type SwordId =
   | 'crystal' | 'flame' | 'thunder' | 'frost' | 'shadow'
@@ -198,8 +199,13 @@ interface GameStore {
   buyItem: (item: 'arrows' | 'bombs' | 'heart' | 'shurikens' | 'frost' | 'flare' | 'veil' | 'quake' | 'moonbow', cost: number) => boolean;
   setNearFountain: (v: boolean) => void;
   useFountain: () => void;
+  sleepPhase: SleepPhase;
+  sleepOverlayOpacity: number;
   setNearBed: (v: boolean) => void;
-  sleep: () => void;
+  startSleep: () => void;
+  setSleepPhase: (phase: SleepPhase) => void;
+  finishSleeping: () => void;
+  endSleepSequence: () => void;
   setArmorLevel: (level: 0 | 1 | 2) => void;
   resetGame: () => void;
   lastSaveTime: number;
@@ -272,6 +278,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   nearShop: false,
   nearFountain: false,
   nearBed: false,
+  sleepPhase: 'none' as SleepPhase,
+  sleepOverlayOpacity: 0,
   areasVisited: ['field' as AreaId],
   eliteKills: 0,
   lastSaveTime: 0,
@@ -559,13 +567,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setNearFountain: (v) => set({ nearFountain: v }),
   useFountain: () => set((s) => ({ hearts: s.maxHearts })),
   setNearBed: (v) => set({ nearBed: v }),
-  sleep: () => {
+  startSleep: () => {
     const s = get();
-    if (s.gameState !== 'playing') return;
+    if (s.gameState !== 'playing' || s.sleepPhase !== 'none') return;
+    set({ sleepPhase: 'changing', sleepOverlayOpacity: 0 });
+  },
+  setSleepPhase: (phase) => set({ sleepPhase: phase, sleepOverlayOpacity: phase === 'none' ? 0 : get().sleepOverlayOpacity }),
+  finishSleeping: () => {
     set((st) => ({ hearts: st.maxHearts }));
     get().performSave();
-    set({ itemFanfare: { name: "Sweet Dreams, Adelynn!", icon: '🌙', desc: 'All hearts restored — progress saved.' } });
+    set({ itemFanfare: { name: "Good morning, Adelynn!", icon: '☀️', desc: 'All hearts restored — progress saved.' } });
   },
+  endSleepSequence: () => set({ sleepPhase: 'none', sleepOverlayOpacity: 0 }),
   setArmorLevel: (level) => set({ armorLevel: level }),
 
   addKill: (pts) => set((s) => {
@@ -656,6 +669,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     nearShop: false,
     nearFountain: false,
     nearBed: false,
+    sleepPhase: 'none' as SleepPhase,
+    sleepOverlayOpacity: 0,
     lastSaveTime: 0,
     score: 0,
     comboCount: 0,

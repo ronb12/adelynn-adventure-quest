@@ -991,12 +991,19 @@ export function HUD() {
   const shardInfo = SHARD_INFO.find(s => s.area === currentArea);
   const dialogueNPC = activeDialogue ? NPC_DATA.find(n => n.id === activeDialogue.npcId) : null;
 
+  const sleepOverlayOpacity = useGameStore(s => s.sleepOverlayOpacity);
+
   if (gameState !== 'playing') return null;
 
   const armorColors = ['', '🔵', '🔴'];
 
   return (
     <div className="absolute inset-0 pointer-events-none p-2 flex flex-col justify-between select-none">
+      {/* Sleep overlay — full-screen dark curtain driven by state machine */}
+      {sleepOverlayOpacity > 0 && (
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: '#000', opacity: sleepOverlayOpacity, zIndex: 19000 }} />
+      )}
 
       {/* Save Toast */}
       <SaveToast />

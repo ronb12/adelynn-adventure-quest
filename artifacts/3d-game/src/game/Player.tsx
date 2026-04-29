@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { useKeyboardControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { Controls } from './controls';
-import { useGameStore, SWORD_DEFS, SWORD_CHESTS, WEAPON_PICKUPS, SwordId } from './store';
+import { useGameStore, SWORD_DEFS, SWORD_CHESTS, WEAPON_PICKUPS, SwordId, SleepPhase } from './store';
 import { sfxSword, sfxArrow, sfxBomb, sfxBoomerang } from './AudioManager';
 import { mobileInput } from './mobileControls';
 
@@ -58,7 +58,7 @@ const C = {
 
 // ─── Visual sub-components ───────────────────────────────────────
 
-function HeroHead() {
+function HeroHead({ inPajamas = false }: { inPajamas?: boolean }) {
   return (
     <group position={[0, 1.55, 0]}>
       <mesh position={[0, -0.22, 0]} castShadow>
@@ -125,53 +125,69 @@ function HeroHead() {
         <sphereGeometry args={[0.07, 8, 6]} />
         <meshStandardMaterial color={C.hair} roughness={0.8} />
       </mesh>
+      {/* Bow — hidden in pajamas */}
       <mesh position={[0.01, 0.02, -0.34]} rotation={[0, 0, Math.PI / 4]}>
         <boxGeometry args={[0.22, 0.08, 0.05]} />
-        <meshStandardMaterial color="#ff4db8" roughness={0.4} />
+        <meshStandardMaterial color={inPajamas ? C.hair : '#ff4db8'} roughness={0.4} />
       </mesh>
+      {/* Hat brim */}
       <mesh position={[0, 0.26, 0]} castShadow>
         <cylinderGeometry args={[0.42, 0.42, 0.08, 16]} />
-        <meshStandardMaterial color={C.tunic} roughness={0.55} />
+        <meshStandardMaterial color={inPajamas ? '#d8b8ff' : C.tunic} roughness={0.55} />
       </mesh>
+      {/* Hat cone — becomes a soft sleep cap in pajamas */}
       <mesh position={[0, 0.76, -0.04]} rotation={[0.3, 0, 0]} castShadow>
         <coneGeometry args={[0.36, 1.0, 14]} />
-        <meshStandardMaterial color={C.tunic} roughness={0.55} />
+        <meshStandardMaterial color={inPajamas ? '#e8d0ff' : C.tunic} roughness={0.55} />
       </mesh>
+      {/* Hat gem / sleep-cap star */}
       <mesh position={[0, 0.32, 0.38]}>
         <sphereGeometry args={[0.055, 7, 5]} />
-        <meshStandardMaterial color="#ffd6ec" metalness={0.4} roughness={0.2} />
+        <meshStandardMaterial
+          color={inPajamas ? '#ffe8ff' : '#ffd6ec'}
+          emissive={inPajamas ? '#cc88ff' : '#000000'}
+          emissiveIntensity={inPajamas ? 1.2 : 0}
+          metalness={0.4} roughness={0.2} />
       </mesh>
     </group>
   );
 }
 
-function HeroTorso({ armorLevel }: { armorLevel: number }) {
-  const tunicColor = armorLevel >= 2 ? '#c41e1e' : armorLevel >= 1 ? '#1e50c4' : C.tunic;
-  const tunicDk    = armorLevel >= 2 ? '#8b0000' : armorLevel >= 1 ? '#0a2d8b' : C.tunicDk;
+function HeroTorso({ armorLevel, inPajamas = false }: { armorLevel: number; inPajamas?: boolean }) {
+  const tunicColor = inPajamas ? '#f0d8ff' : (armorLevel >= 2 ? '#c41e1e' : armorLevel >= 1 ? '#1e50c4' : C.tunic);
+  const tunicDk    = inPajamas ? '#c8a0f0' : (armorLevel >= 2 ? '#8b0000' : armorLevel >= 1 ? '#0a2d8b' : C.tunicDk);
   return (
     <group position={[0, 0.72, 0]}>
       <mesh castShadow>
         <cylinderGeometry args={[0.3, 0.35, 0.72, 14]} />
-        <meshStandardMaterial color={tunicColor} roughness={0.7} />
+        <meshStandardMaterial color={tunicColor} roughness={inPajamas ? 0.9 : 0.7} />
       </mesh>
       <mesh position={[0, 0.1, 0.28]}>
         <boxGeometry args={[0.38, 0.32, 0.04]} />
-        <meshStandardMaterial color={tunicDk} />
+        <meshStandardMaterial color={inPajamas ? '#e0c8ff' : tunicDk} />
       </mesh>
-      <mesh position={[0, -0.3, 0]} castShadow>
-        <cylinderGeometry args={[0.36, 0.38, 0.1, 14]} />
-        <meshStandardMaterial color={C.belt} roughness={0.8} />
-      </mesh>
-      <mesh position={[0, -0.3, 0.39]}>
-        <boxGeometry args={[0.14, 0.1, 0.04]} />
-        <meshStandardMaterial color={C.gold} metalness={0.5} roughness={0.3} />
-      </mesh>
+      {/* Belt — hidden in pajamas */}
+      {!inPajamas && <>
+        <mesh position={[0, -0.3, 0]} castShadow>
+          <cylinderGeometry args={[0.36, 0.38, 0.1, 14]} />
+          <meshStandardMaterial color={C.belt} roughness={0.8} />
+        </mesh>
+        <mesh position={[0, -0.3, 0.39]}>
+          <boxGeometry args={[0.14, 0.1, 0.04]} />
+          <meshStandardMaterial color={C.gold} metalness={0.5} roughness={0.3} />
+        </mesh>
+      </>}
       <mesh position={[0, -0.52, 0]} castShadow>
         <cylinderGeometry args={[0.48, 0.55, 0.28, 14]} />
         <meshStandardMaterial color={tunicDk} roughness={0.65} />
       </mesh>
-      {/* Shield on left hip */}
-      <group position={[-0.3, -0.12, -0.25]} rotation={[0, -0.4, 0]}>
+      {/* Small moon on pajama top front */}
+      {inPajamas && <mesh position={[0.1, 0.05, 0.31]}>
+        <sphereGeometry args={[0.055, 7, 5]} />
+        <meshStandardMaterial color="#ffe8ff" emissive="#cc88ff" emissiveIntensity={1.0} />
+      </mesh>}
+      {/* Shield on left hip — hidden in pajamas */}
+      {!inPajamas && <group position={[-0.3, -0.12, -0.25]} rotation={[0, -0.4, 0]}>
         <mesh castShadow>
           <cylinderGeometry args={[0.3, 0.25, 0.08, 16]} />
           <meshStandardMaterial color={C.shPink} roughness={0.5} />
@@ -184,7 +200,7 @@ function HeroTorso({ armorLevel }: { armorLevel: number }) {
           <sphereGeometry args={[0.07, 8, 6]} />
           <meshStandardMaterial color="#ff4db8" emissive="#ff4db8" emissiveIntensity={0.3} />
         </mesh>
-      </group>
+      </group>}
     </group>
   );
 }
@@ -193,18 +209,20 @@ interface ArmProps {
   side: -1 | 1;
   armRef?: React.RefObject<THREE.Group>;
   children?: React.ReactNode;
+  inPajamas?: boolean;
 }
-function HeroArm({ side, armRef, children }: ArmProps) {
+function HeroArm({ side, armRef, children, inPajamas = false }: ArmProps) {
   const x = side * 0.44;
+  const sleeveColor = inPajamas ? '#e8d0ff' : C.tunic;
   return (
     <group ref={armRef} position={[x, 1.0, 0]}>
       <mesh castShadow>
         <sphereGeometry args={[0.15, 10, 8]} />
-        <meshStandardMaterial color={C.tunic} roughness={0.7} />
+        <meshStandardMaterial color={sleeveColor} roughness={inPajamas ? 0.9 : 0.7} />
       </mesh>
       <mesh position={[0, -0.22, 0]} castShadow>
         <cylinderGeometry args={[0.11, 0.1, 0.32, 9]} />
-        <meshStandardMaterial color={C.tunic} roughness={0.7} />
+        <meshStandardMaterial color={sleeveColor} roughness={inPajamas ? 0.9 : 0.7} />
       </mesh>
       <mesh position={[0, -0.4, 0]} castShadow>
         <sphereGeometry args={[0.1, 9, 7]} />
@@ -226,76 +244,87 @@ function HeroArm({ side, armRef, children }: ArmProps) {
 interface LegProps {
   side: -1 | 1;
   legRef?: React.RefObject<THREE.Group>;
+  inPajamas?: boolean;
 }
-function HeroLeg({ side, legRef }: LegProps) {
+function HeroLeg({ side, legRef, inPajamas = false }: LegProps) {
   const x = side * 0.17;
-  // Boot colours
-  const bootMain = '#5a0e35';   // deep wine-plum boot shaft
-  const bootCuff = '#7a1a4a';   // slightly lighter cuff band
-  const bootToe  = '#3d0824';   // dark toe/sole
-  const stocking = '#f0c8a8';   // bare-skin upper thigh
+  // Boot colours (normal outfit)
+  const bootMain = '#5a0e35';
+  const bootCuff = '#7a1a4a';
+  const bootToe  = '#3d0824';
+  const stocking = '#f0c8a8';
+  // Pajama colours
+  const pajLeg   = '#e8d0ff';   // lavender pajama pants
+  const pajFoot  = '#fff0f8';   // soft bare-socked foot
 
   return (
     <group ref={legRef} position={[x, 0.33, 0]}>
-      {/* ── UPPER THIGH (skin — visible below tunic skirt) ── */}
+      {/* ── UPPER THIGH ── */}
       <mesh castShadow>
         <sphereGeometry args={[0.13, 10, 8]} />
-        <meshStandardMaterial color={stocking} roughness={0.88} />
+        <meshStandardMaterial color={inPajamas ? pajLeg : stocking} roughness={inPajamas ? 0.9 : 0.88} />
       </mesh>
       <mesh position={[0, -0.18, 0]} castShadow>
         <cylinderGeometry args={[0.115, 0.105, 0.28, 10]} />
-        <meshStandardMaterial color={stocking} roughness={0.88} />
+        <meshStandardMaterial color={inPajamas ? pajLeg : stocking} roughness={inPajamas ? 0.9 : 0.88} />
       </mesh>
 
       {/* ── KNEE JOINT ── */}
       <mesh position={[0, -0.35, 0]} castShadow>
         <sphereGeometry args={[0.105, 10, 8]} />
-        <meshStandardMaterial color={stocking} roughness={0.88} />
+        <meshStandardMaterial color={inPajamas ? pajLeg : stocking} roughness={inPajamas ? 0.9 : 0.88} />
       </mesh>
 
-      {/* ── BOOT CUFF (top fold of knee-high boot) ── */}
-      <mesh position={[0, -0.44, 0]} castShadow>
-        <cylinderGeometry args={[0.115, 0.108, 0.11, 12]} />
-        <meshStandardMaterial color={bootCuff} roughness={0.72} />
-      </mesh>
-      {/* Cuff rim band */}
-      <mesh position={[0, -0.39, 0]} castShadow>
-        <cylinderGeometry args={[0.118, 0.118, 0.03, 12]} />
-        <meshStandardMaterial color={C.gold} metalness={0.55} roughness={0.3} />
-      </mesh>
-
-      {/* ── BOOT SHAFT (lower leg) ── */}
-      <mesh position={[0, -0.6, 0]} castShadow>
-        <cylinderGeometry args={[0.105, 0.115, 0.3, 12]} />
-        <meshStandardMaterial color={bootMain} roughness={0.78} />
-      </mesh>
-
-      {/* ── ANKLE JOINT (smooth rounding into foot) ── */}
-      <mesh position={[0, -0.77, 0]} castShadow>
-        <sphereGeometry args={[0.108, 10, 8]} />
-        <meshStandardMaterial color={bootMain} roughness={0.8} />
-      </mesh>
-
-      {/* ── FOOT / TOE CAP ── */}
-      <mesh position={[0, -0.8, 0.1]} rotation={[-0.22, 0, 0]} castShadow>
-        <boxGeometry args={[0.18, 0.13, 0.32]} />
-        <meshStandardMaterial color={bootMain} roughness={0.78} />
-      </mesh>
-      {/* Rounded toe */}
-      <mesh position={[0, -0.8, 0.24]} rotation={[-0.22, 0, 0]} castShadow>
-        <sphereGeometry args={[0.1, 10, 8]} />
-        <meshStandardMaterial color={bootToe} roughness={0.75} />
-      </mesh>
-      {/* Sole strip */}
-      <mesh position={[0, -0.87, 0.09]} rotation={[-0.22, 0, 0]} castShadow>
-        <boxGeometry args={[0.2, 0.04, 0.34]} />
-        <meshStandardMaterial color={bootToe} roughness={0.95} />
-      </mesh>
-      {/* Heel */}
-      <mesh position={[0, -0.86, -0.1]} rotation={[-0.1, 0, 0]} castShadow>
-        <boxGeometry args={[0.16, 0.08, 0.14]} />
-        <meshStandardMaterial color={bootToe} roughness={0.95} />
-      </mesh>
+      {/* ── LOWER LEG — boots in normal, pajama pant-leg when sleeping ── */}
+      {inPajamas ? <>
+        {/* Pajama lower leg */}
+        <mesh position={[0, -0.55, 0]} castShadow>
+          <cylinderGeometry args={[0.105, 0.1, 0.42, 12]} />
+          <meshStandardMaterial color={pajLeg} roughness={0.9} />
+        </mesh>
+        {/* Soft slipper */}
+        <mesh position={[0, -0.8, 0.08]} rotation={[-0.15, 0, 0]} castShadow>
+          <sphereGeometry args={[0.13, 10, 8]} />
+          <meshStandardMaterial color={pajFoot} roughness={0.85} />
+        </mesh>
+      </> : <>
+        {/* Boot cuff */}
+        <mesh position={[0, -0.44, 0]} castShadow>
+          <cylinderGeometry args={[0.115, 0.108, 0.11, 12]} />
+          <meshStandardMaterial color={bootCuff} roughness={0.72} />
+        </mesh>
+        <mesh position={[0, -0.39, 0]} castShadow>
+          <cylinderGeometry args={[0.118, 0.118, 0.03, 12]} />
+          <meshStandardMaterial color={C.gold} metalness={0.55} roughness={0.3} />
+        </mesh>
+        {/* Boot shaft */}
+        <mesh position={[0, -0.6, 0]} castShadow>
+          <cylinderGeometry args={[0.105, 0.115, 0.3, 12]} />
+          <meshStandardMaterial color={bootMain} roughness={0.78} />
+        </mesh>
+        {/* Ankle */}
+        <mesh position={[0, -0.77, 0]} castShadow>
+          <sphereGeometry args={[0.108, 10, 8]} />
+          <meshStandardMaterial color={bootMain} roughness={0.8} />
+        </mesh>
+        {/* Foot */}
+        <mesh position={[0, -0.8, 0.1]} rotation={[-0.22, 0, 0]} castShadow>
+          <boxGeometry args={[0.18, 0.13, 0.32]} />
+          <meshStandardMaterial color={bootMain} roughness={0.78} />
+        </mesh>
+        <mesh position={[0, -0.8, 0.24]} rotation={[-0.22, 0, 0]} castShadow>
+          <sphereGeometry args={[0.1, 10, 8]} />
+          <meshStandardMaterial color={bootToe} roughness={0.75} />
+        </mesh>
+        <mesh position={[0, -0.87, 0.09]} rotation={[-0.22, 0, 0]} castShadow>
+          <boxGeometry args={[0.2, 0.04, 0.34]} />
+          <meshStandardMaterial color={bootToe} roughness={0.95} />
+        </mesh>
+        <mesh position={[0, -0.86, -0.1]} rotation={[-0.1, 0, 0]} castShadow>
+          <boxGeometry args={[0.16, 0.08, 0.14]} />
+          <meshStandardMaterial color={bootToe} roughness={0.95} />
+        </mesh>
+      </>}
     </group>
   );
 }
@@ -503,6 +532,8 @@ export function Player() {
   const prevSwordCycle = useRef(false);
   const wandCooldown  = useRef(0);
   const stamina       = useRef(STAMINA_MAX);
+  const sleepTimer    = useRef(0);
+  const sleepFinished = useRef(false);
 
   // Track armor level without re-renders
   useGameStore.subscribe((s) => { armorLevel.current = s.armorLevel; });
@@ -539,6 +570,94 @@ export function Player() {
     mobileInput.nextWeapon = false;
     mobileInput.prevWeapon = false;
     mobileInput.swordCycle = false;
+
+    // ── Sleep animation state machine ─────────────────────────────
+    const sleepPhase = store.sleepPhase;
+    if (sleepPhase !== 'none') {
+      const BED_CENTER = new THREE.Vector3(-5, 0, -7);
+      const BED_ENTRY  = new THREE.Vector3(-5, 0, -4.8);   // foot of bed
+      sleepTimer.current += delta;
+      const t = sleepTimer.current;
+
+      switch (sleepPhase as SleepPhase) {
+        case 'changing': {
+          // Stand still while outfit shimmers (1.0 s)
+          if (t >= 1.0) { store.setSleepPhase('walking'); sleepTimer.current = 0; }
+          return;
+        }
+        case 'walking': {
+          const toTarget = BED_ENTRY.clone().sub(pos.current);
+          const dist = toTarget.length();
+          if (dist > 0.12) {
+            toTarget.normalize();
+            pos.current.addScaledVector(toTarget, 4.5 * delta);
+            groupRef.current.position.copy(pos.current);
+            groupRef.current.rotation.y = Math.atan2(toTarget.x, toTarget.z);
+            store.setPlayerPosition(pos.current.clone());
+          } else {
+            pos.current.copy(BED_ENTRY);
+            groupRef.current.position.copy(pos.current);
+            // Face toward headboard (−Z)
+            groupRef.current.rotation.y = Math.PI;
+            store.setSleepPhase('lying');
+            sleepTimer.current = 0;
+          }
+          return;
+        }
+        case 'lying': {
+          const progress = Math.min(t / 1.4, 1.0);
+          const ease = progress * progress * (3 - 2 * progress); // smooth-step
+          // Slide toward bed center along -Z and sink down
+          const slideZ = BED_ENTRY.z + (BED_CENTER.z - BED_ENTRY.z - 1.2) * ease;
+          groupRef.current.position.set(-5, -ease * 0.38, slideZ);
+          groupRef.current.rotation.x = -ease * (Math.PI / 2.1);
+          bodyBobRef.current.position.y = 0.58 + ease * 0.32;
+          // Overlay fades in
+          useGameStore.setState({ sleepOverlayOpacity: ease * 0.55 });
+          if (t >= 1.4) { store.setSleepPhase('sleeping'); sleepTimer.current = 0; }
+          return;
+        }
+        case 'sleeping': {
+          // Full dark fade-in over 0.8 s then hold
+          const op = Math.min(0.55 + (t / 0.8) * 0.45, 1.0);
+          useGameStore.setState({ sleepOverlayOpacity: op });
+          if (!sleepFinished.current && t >= 0.6) {
+            store.finishSleeping();
+            sleepFinished.current = true;
+          }
+          if (t >= 2.2) { store.setSleepPhase('waking'); sleepTimer.current = 0; }
+          return;
+        }
+        case 'waking': {
+          // Fade back from black over 1.8 s
+          const op = Math.max(1.0 - t / 1.8, 0);
+          useGameStore.setState({ sleepOverlayOpacity: op });
+          if (t >= 1.8) { store.setSleepPhase('rising'); sleepTimer.current = 0; }
+          return;
+        }
+        case 'rising': {
+          const progress = Math.min(t / 1.3, 1.0);
+          const ease = progress * progress * (3 - 2 * progress);
+          const slideZ = (BED_CENTER.z - 1.2) + ease * (BED_ENTRY.z - (BED_CENTER.z - 1.2));
+          groupRef.current.position.set(-5, -(1 - ease) * 0.38, slideZ);
+          groupRef.current.rotation.x = -(1 - ease) * (Math.PI / 2.1);
+          bodyBobRef.current.position.y = 0.58 + (1 - ease) * 0.32;
+          useGameStore.setState({ sleepOverlayOpacity: 0 });
+          if (t >= 1.3) {
+            // Clean up — reset all sleep state
+            groupRef.current.rotation.x = 0;
+            groupRef.current.position.set(-5, 0, BED_ENTRY.z);
+            bodyBobRef.current.position.y = 0.58;
+            pos.current.set(-5, 0, BED_ENTRY.z);
+            store.setPlayerPosition(pos.current.clone());
+            sleepFinished.current = false;
+            store.endSleepSequence();
+            sleepTimer.current = 0;
+          }
+          return;
+        }
+      }
+    }
 
     // Shield block
     store.setBlocking(shield);
@@ -706,7 +825,7 @@ export function Player() {
       } else if (store.nearFountain) {
         store.useFountain();
       } else if (store.nearBed) {
-        store.sleep();
+        store.startSleep();
       } else if (store.nearNPC) {
         store.startDialogue(store.nearNPC);
       }
@@ -825,21 +944,23 @@ export function Player() {
     }
   });
 
-  const armorLvl   = useGameStore(s => s.armorLevel);
-  const isBlocking = useGameStore(s => s.isBlocking);
+  const armorLvl    = useGameStore(s => s.armorLevel);
+  const isBlocking  = useGameStore(s => s.isBlocking);
   const activeSword = useGameStore(s => s.activeSword);
+  const curSleepPhase = useGameStore(s => s.sleepPhase);
+  const inPajamas   = curSleepPhase !== 'none';
 
   return (
     <group ref={groupRef}>
       <group ref={bodyBobRef} position={[0, 0.58, 0]}>
-        <HeroLeg side={-1} legRef={leftLegRef} />
-        <HeroLeg side={1}  legRef={rightLegRef} />
-        <HeroTorso armorLevel={armorLvl} />
-        <HeroArm side={-1} armRef={leftArmRef}>
-          {isBlocking && <ShieldRaised />}
+        <HeroLeg side={-1} legRef={leftLegRef}  inPajamas={inPajamas} />
+        <HeroLeg side={1}  legRef={rightLegRef} inPajamas={inPajamas} />
+        <HeroTorso armorLevel={armorLvl} inPajamas={inPajamas} />
+        <HeroArm side={-1} armRef={leftArmRef}  inPajamas={inPajamas}>
+          {isBlocking && !inPajamas && <ShieldRaised />}
         </HeroArm>
-        <HeroArm side={1}  armRef={rightArmRef} />
-        <HeroHead />
+        <HeroArm side={1}  armRef={rightArmRef} inPajamas={inPajamas} />
+        <HeroHead inPajamas={inPajamas} />
       </group>
 
       {/* Sword lives outside the arm so it swings in FRONT of the player */}

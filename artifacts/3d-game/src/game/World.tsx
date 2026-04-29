@@ -1690,6 +1690,37 @@ function CaveArea() {
 // Room opens toward +Z (camera sits at player.z + 15 looking inward).
 // No solid south wall so the camera has a clear view of the interior.
 // Player spawns at z=0; back wall is at z=-12; furniture in -z zone.
+// Blanket that peels back when lying down, covers during sleep, re-folds when rising
+function AnimatedBlanket() {
+  const blanketRef = useRef<THREE.Mesh>(null!);
+  useFrame(() => {
+    if (!blanketRef.current) return;
+    const phase = useGameStore.getState().sleepPhase;
+    // Blanket rests at z=0.5 (foot of bed), centered at bed origin [-5,0,-7]
+    // Peel back: translate +z so foot-end folds away
+    let offsetZ = 0;
+    let scaleZ  = 1;
+    if (phase === 'lying') {
+      offsetZ = 0.7;   // folded toward foot
+      scaleZ  = 0.7;
+    } else if (phase === 'sleeping' || phase === 'waking') {
+      offsetZ = 0;
+      scaleZ  = 1;
+    } else if (phase === 'rising') {
+      offsetZ = 0.4;
+      scaleZ  = 0.85;
+    }
+    blanketRef.current.position.z = THREE.MathUtils.lerp(blanketRef.current.position.z, 0.5 + offsetZ, 0.08);
+    blanketRef.current.scale.z    = THREE.MathUtils.lerp(blanketRef.current.scale.z,    scaleZ,         0.08);
+  });
+  return (
+    <mesh ref={blanketRef} position={[0, 0.75, 0.5]} castShadow receiveShadow>
+      <boxGeometry args={[2.8, 0.14, 3.6]} />
+      <meshStandardMaterial color="#e8a0b8" roughness={0.9} />
+    </mesh>
+  );
+}
+
 function HomeArea() {
   return (
     <>
@@ -1852,11 +1883,8 @@ function HomeArea() {
           <boxGeometry args={[2.8, 0.3, 4.5]} />
           <meshStandardMaterial color="#f9e8f0" roughness={0.9} />
         </mesh>
-        {/* Blanket */}
-        <mesh position={[0, 0.75, 0.5]} castShadow receiveShadow>
-          <boxGeometry args={[2.8, 0.14, 3.6]} />
-          <meshStandardMaterial color="#e8a0b8" roughness={0.9} />
-        </mesh>
+        {/* Blanket — animates during sleep cutscene */}
+        <AnimatedBlanket />
         {/* Pillow left */}
         <mesh position={[-0.68, 0.8, -1.8]} castShadow>
           <boxGeometry args={[1.0, 0.22, 0.7]} />
