@@ -3,7 +3,10 @@ import { WeaponId } from "./controls";
 import { NPC_DATA } from "./npcData";
 
 export type GameState = "title" | "playing" | "paused" | "gameover" | "victory";
-export type AreaId = "field" | "forest" | "desert" | "boss";
+export type AreaId =
+  | "field" | "forest" | "desert" | "boss"
+  | "cave" | "jungle" | "ice" | "volcano" | "sky"
+  | "shadow" | "dungeon1" | "dungeon2" | "dungeon3";
 
 // ── Sword definitions ────────────────────────────────────────────
 export type SwordId =
@@ -37,9 +40,18 @@ export const SWORD_CHESTS: { key: string; x: number; z: number; area: AreaId; sw
   { key: "sword-storm",   x: -14, z: 14,  area: "desert", swordId: "storm"   },
   { key: "sword-frost",   x: -14, z: -14, area: "forest", swordId: "frost"   },
   { key: "sword-shadow",  x: 14,  z: -14, area: "forest", swordId: "shadow"  },
-  { key: "sword-holy",    x: 10,  z: 5,   area: "boss",   swordId: "holy"    },
-  { key: "sword-dragon",  x: -10, z: -5,  area: "boss",   swordId: "dragon"  },
-  { key: "sword-cosmos",  x: 0,   z: -15, area: "boss",   swordId: "cosmos"  },
+  { key: "sword-holy",    x: 10,  z: 5,   area: "boss",    swordId: "holy"    },
+  { key: "sword-dragon",  x: -10, z: -5,  area: "boss",    swordId: "dragon"  },
+  { key: "sword-cosmos",  x: 0,   z: -15, area: "boss",    swordId: "cosmos"  },
+  { key: "sword-cave1",   x: 12,  z: 8,   area: "cave",    swordId: "thunder" },
+  { key: "sword-jungle1", x: -14, z: 12,  area: "jungle",  swordId: "viper"   },
+  { key: "sword-ice1",    x: 10,  z: -10, area: "ice",     swordId: "frost"   },
+  { key: "sword-vol1",    x: -10, z: 8,   area: "volcano", swordId: "flame"   },
+  { key: "sword-sky1",    x: 14,  z: -14, area: "sky",     swordId: "storm"   },
+  { key: "sword-shad1",   x: 0,   z: -16, area: "shadow",  swordId: "shadow"  },
+  { key: "sword-d1",      x: 0,   z: -18, area: "dungeon1",swordId: "holy"    },
+  { key: "sword-d2",      x: 0,   z: -18, area: "dungeon2",swordId: "cosmos"  },
+  { key: "sword-d3",      x: 0,   z: -18, area: "dungeon3",swordId: "dragon"  },
 ];
 
 // ── Weapon pickups ────────────────────────────────────────────────
@@ -87,6 +99,51 @@ export const LORE_STONES: Record<AreaId, Array<{ id: string; text: string; x: nu
     { id: "boss-1", text: "\"This is Malgrath's inner sanctum. Every stone drips with corrupted power. Do not let despair take hold.\"", x: -8, z: 8 },
     { id: "boss-2", text: "\"You have come far, Adelynn. But power alone won't defeat him — you must remember why you fight.\"", x: 8, z: -8 },
     { id: "boss-3", text: "\"The shattered pieces of the Crown long to be reunited. Even Malgrath, deep down, yearns for the light he lost.\"", x: 0, z: 12 },
+  ],
+  cave: [
+    { id: "cave-1", text: "\"The Deepstone Caverns have swallowed whole armies. Their bones now walk the dark passages as skeletons.\"", x: -10, z: -8 },
+    { id: "cave-2", text: "\"A Rockgolem is born when the mountain grows angry. It cannot be hurt from the front — circle behind.\"", x: 12, z: 6 },
+    { id: "cave-3", text: "\"Somewhere in this cave, the Mirror of Worlds was hidden. It shows not what is, but what could be.\"", x: -6, z: 14 },
+  ],
+  jungle: [
+    { id: "jungle-1", text: "\"The Verdant Depths are older than recorded time. The Lizardmen here remember the world before the Crown.\"", x: 10, z: -12 },
+    { id: "jungle-2", text: "\"Jungle Trolls are territorial above all else. Defeat one and its territory is yours to traverse safely.\"", x: -14, z: 8 },
+    { id: "jungle-3", text: "\"In the canopy above lurks the Shadowmere Crypt entrance. The dungeon key lies hidden near the great fern.\"", x: 6, z: 16 },
+  ],
+  ice: [
+    { id: "ice-1", text: "\"Frostpeak Tundra — the glaciers here are ancient as the first winter. Ice Wolves have stalked these fields for centuries.\"", x: -12, z: -10 },
+    { id: "ice-2", text: "\"The Frost Phantom is not truly alive — it is the lingering grief of a warrior who died without purpose.\"", x: 10, z: 8 },
+    { id: "ice-3", text: "\"The Speed Boots of Aldenmere rest frozen in the ice. The warrior who wore them outran even fate itself.\"", x: -8, z: 16 },
+  ],
+  volcano: [
+    { id: "vol-1", text: "\"Ashrock Caldera — the heat here is not merely physical. Malgrath's essence bled into the stone and ignited it.\"", x: 8, z: -12 },
+    { id: "vol-2", text: "\"Lava Beasts cannot be defeated by fire — they absorb it. Use ice, shadow, or holy power.\"", x: -10, z: 6 },
+    { id: "vol-3", text: "\"The Ashrock Forge dungeon lies ahead. Within: the Hookshot of the Ancients, forged from volcanic chain.\"", x: 14, z: 14 },
+  ],
+  sky: [
+    { id: "sky-1", text: "\"The Celestial Skylands float on ancient magic. The Thunder Birds here were once messenger spirits for the gods.\"", x: -10, z: -10 },
+    { id: "sky-2", text: "\"From this height you can see all three shards of the Crown glowing in the world below. They call to each other.\"", x: 12, z: 8 },
+    { id: "sky-3", text: "\"The wind here carries whispers. Malgrath's voice: 'Come to me, Adelynn. You cannot save what is already broken.'\"", x: -8, z: 14 },
+  ],
+  shadow: [
+    { id: "shad-1", text: "\"The Shadow Realm is a dark mirror of the world you know. Everything here is inverted — even kindness becomes cruelty.\"", x: -12, z: -8 },
+    { id: "shad-2", text: "\"Shadow Slimes are pure corruption given form. They were once ordinary slimes before Malgrath's blight reached them.\"", x: 10, z: 6 },
+    { id: "shad-3", text: "\"The Shadow Crown shard pulses here. It is the darkest piece — the one that first broke and fell into the abyss.\"", x: 0, z: -14 },
+  ],
+  dungeon1: [
+    { id: "d1-1", text: "\"Shadowmere Crypt — built as a tomb for the fallen warriors of the Crown War. Now the dead walk its halls.\"", x: -8, z: -6 },
+    { id: "d1-2", text: "\"The Crystal Spiders here spin webs of hardened magic. Their silk can hold even a VoidWraith in place.\"", x: 8, z: 4 },
+    { id: "d1-3", text: "\"The dungeon boss guards the Map of All Shadows. Defeat it to reveal every secret in the world above.\"", x: 0, z: 10 },
+  ],
+  dungeon2: [
+    { id: "d2-1", text: "\"The Ashrock Forge — ancient dwarven craftsmen built weapons here for both sides of the Crown War, caring only for coin.\"", x: -8, z: -6 },
+    { id: "d2-2", text: "\"Volcano Demons are the forge-masters' failed experiments — men who were melted into the machinery and never came out.\"", x: 8, z: 4 },
+    { id: "d2-3", text: "\"The Hookshot is sealed in the innermost forge room. It was meant to be Adelynn's gift — before everything changed.\"", x: 0, z: 10 },
+  ],
+  dungeon3: [
+    { id: "d3-1", text: "\"Crystal Spire — a fortress of frozen magic at the peak of the Ice Mountains. The walls themselves sing in cold winds.\"", x: -8, z: -6 },
+    { id: "d3-2", text: "\"Frost Phantoms here are at their strongest. They draw power from the ice and reform seconds after being struck.\"", x: 8, z: 4 },
+    { id: "d3-3", text: "\"The final Crown shard lies at the summit. Destroy the guardian and the path to Malgrath's true sanctum opens.\"", x: 0, z: 10 },
   ],
 };
 
@@ -167,6 +224,14 @@ interface GameStore {
   parryWindowUntil: number;
   parryCounterActive: boolean;
 
+  // Special items (world-altering)
+  hasMagicMirror: boolean;
+  hasSpeedBoots: boolean;
+  hasHookshot: boolean;
+  smallKeys: number;
+  dungeonMapsFound: string[];
+  storyChaptersSeen: AreaId[];
+
   // Actions
   setGameState: (s: GameState) => void;
   togglePause: () => void;
@@ -226,6 +291,11 @@ interface GameStore {
   completeAreaTransition: () => void;
   visitArea: (area: AreaId) => void;
   setArmorLevel: (level: 0 | 1 | 2) => void;
+  collectSpecialItem: (item: "magicMirror" | "speedBoots" | "hookshot", areaKey?: string) => void;
+  addSmallKeys: (n: number) => void;
+  useSmallKey: () => boolean;
+  markChapterSeen: (area: AreaId) => void;
+  useMagicMirror: () => void;
 }
 
 const INITIAL_STATE = {
@@ -278,6 +348,12 @@ const INITIAL_STATE = {
   isBlocking: false,
   parryWindowUntil: 0,
   parryCounterActive: false,
+  hasMagicMirror: false,
+  hasSpeedBoots: false,
+  hasHookshot: false,
+  smallKeys: 0,
+  dungeonMapsFound: [] as string[],
+  storyChaptersSeen: [] as AreaId[],
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -537,4 +613,49 @@ export const useGameStore = create<GameStore>((set, get) => ({
     areasVisited: st.areasVisited.includes(area) ? st.areasVisited : [...st.areasVisited, area],
   })),
   setArmorLevel: (level) => set({ armorLevel: level }),
+
+  collectSpecialItem: (item, areaKey) => set((st) => {
+    if (areaKey && st.chestsOpened.includes(areaKey)) return {};
+    const names = { magicMirror: "Magic Mirror", speedBoots: "Speed Boots", hookshot: "Hookshot" };
+    const icons = { magicMirror: "🪞", speedBoots: "👟", hookshot: "⛓️" };
+    const descs = {
+      magicMirror: "Reveals the Shadow Realm — a dark mirror of the world!",
+      speedBoots: "Move 35% faster. Outrun anything!",
+      hookshot: "Grapple enemies. Stuns on impact!",
+    };
+    return {
+      hasMagicMirror: item === "magicMirror" ? true : st.hasMagicMirror,
+      hasSpeedBoots: item === "speedBoots" ? true : st.hasSpeedBoots,
+      hasHookshot: item === "hookshot" ? true : st.hasHookshot,
+      chestsOpened: areaKey ? [...st.chestsOpened, areaKey] : st.chestsOpened,
+      itemFanfare: { name: names[item], icon: icons[item], desc: descs[item] },
+    };
+  }),
+  addSmallKeys: (n) => set((st) => ({ smallKeys: st.smallKeys + n })),
+  useSmallKey: () => {
+    const { smallKeys } = get();
+    if (smallKeys <= 0) return false;
+    set({ smallKeys: smallKeys - 1 });
+    return true;
+  },
+  markChapterSeen: (area) => set((st) => ({
+    storyChaptersSeen: st.storyChaptersSeen.includes(area) ? st.storyChaptersSeen : [...st.storyChaptersSeen, area],
+  })),
+  useMagicMirror: () => {
+    const { currentArea, hasMagicMirror, triggerAreaTransition } = get();
+    if (!hasMagicMirror) return;
+    const mirrorMap: Partial<Record<AreaId, { area: AreaId; spawnX: number; spawnZ: number }>> = {
+      field:  { area: "shadow", spawnX: 0, spawnZ: 0 },
+      shadow: { area: "field",  spawnX: 0, spawnZ: 0 },
+      forest: { area: "jungle", spawnX: 0, spawnZ: 0 },
+      jungle: { area: "forest", spawnX: 0, spawnZ: 0 },
+      desert: { area: "volcano",spawnX: 0, spawnZ: 0 },
+      volcano:{ area: "desert", spawnX: 0, spawnZ: 0 },
+      cave:   { area: "ice",    spawnX: 0, spawnZ: 0 },
+      ice:    { area: "cave",   spawnX: 0, spawnZ: 0 },
+      sky:    { area: "shadow", spawnX: 0, spawnZ: 0 },
+    };
+    const dest = mirrorMap[currentArea];
+    if (dest) triggerAreaTransition(dest);
+  },
 }));

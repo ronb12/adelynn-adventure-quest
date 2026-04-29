@@ -347,7 +347,8 @@ export default function Player() {
     }
 
     const isDashing = dashTimerRef.current > 0;
-    const speed = isDashing ? DASH_SPEED : PLAYER_SPEED * Math.min(jLen, 1);
+    const bootsMultiplier = useGameStore.getState().hasSpeedBoots ? 1.35 : 1.0;
+    const speed = isDashing ? DASH_SPEED : PLAYER_SPEED * bootsMultiplier * Math.min(jLen, 1);
 
     if (jLen > 0.08 || isDashing) {
       const fx = isDashing ? facingRef.current.x : jx;

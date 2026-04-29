@@ -4,7 +4,10 @@ import * as THREE from "three";
 import { useGameStore, AreaId, SWORD_DEFS } from "./store";
 import { playerState, pendingPickupSpawns, weaponHitZones, weaponEffects } from "./controls";
 
-export type EnemyType = "slime" | "goblin" | "briarwolf" | "thornspitter" | "emberscorpion" | "voidwraith" | "boss" | "bat" | "knight";
+export type EnemyType =
+  | "slime" | "goblin" | "briarwolf" | "thornspitter" | "emberscorpion" | "voidwraith" | "boss" | "bat" | "knight"
+  | "skeleton" | "lizardman" | "rockgolem" | "icewolf" | "lavabeast" | "crystalspider"
+  | "thunderbird" | "shadowslime" | "cavedemon" | "jungletroll" | "frostphantom" | "volcanodemon";
 
 interface EnemyDef {
   hp: number; speed: number; contactDamage: number; pts: number; size: number;
@@ -23,6 +26,19 @@ const ENEMY_DEFS: Record<EnemyType, EnemyDef> = {
   bat:           { hp: 2, speed: 4.0, contactDamage: 0.5,  pts: 25,  size: 0.42, color: "#4a235a", emissive: "#220033", behavior: "chase" },
   knight:        { hp: 4, speed: 1.4, contactDamage: 0.75, pts: 45,  size: 0.5,  color: "#a04020", emissive: "#502010", behavior: "charge", chargeInterval: 2.2, chargeDuration: 0.55 },
   boss:          { hp: 20,speed: 3.5, contactDamage: 1.0,  pts: 500, size: 1.8,  color: "#550033", emissive: "#220011", behavior: "charge", chargeInterval: 2.0, chargeDuration: 0.8, rangedInterval: 1.5, projectileSpeed: 12, projectileDamage: 0.75 },
+  // New 12 enemy types
+  skeleton:      { hp: 2, speed: 2.2, contactDamage: 0.5,  pts: 22,  size: 0.48, color: "#d4caa8", emissive: "#886655", behavior: "chase" },
+  lizardman:     { hp: 3, speed: 4.2, contactDamage: 0.75, pts: 35,  size: 0.52, color: "#228833", emissive: "#114411", behavior: "charge", chargeInterval: 2.0, chargeDuration: 0.45 },
+  rockgolem:     { hp: 6, speed: 1.2, contactDamage: 1.0,  pts: 55,  size: 0.75, color: "#7a8877", emissive: "#334433", behavior: "chase" },
+  icewolf:       { hp: 2, speed: 6.2, contactDamage: 0.75, pts: 30,  size: 0.52, color: "#99ccff", emissive: "#2244aa", behavior: "charge", chargeInterval: 1.5, chargeDuration: 0.35 },
+  lavabeast:     { hp: 5, speed: 2.0, contactDamage: 0.75, pts: 50,  size: 0.62, color: "#cc5500", emissive: "#882200", behavior: "ranged", rangedInterval: 1.8, projectileSpeed: 9, projectileDamage: 0.75 },
+  crystalspider: { hp: 2, speed: 3.5, contactDamage: 0.5,  pts: 28,  size: 0.44, color: "#8844cc", emissive: "#441188", behavior: "chase" },
+  thunderbird:   { hp: 3, speed: 5.0, contactDamage: 0.5,  pts: 40,  size: 0.50, color: "#4488ff", emissive: "#224488", behavior: "charge", chargeInterval: 2.0, chargeDuration: 0.5 },
+  shadowslime:   { hp: 2, speed: 3.0, contactDamage: 0.5,  pts: 25,  size: 0.45, color: "#440066", emissive: "#220033", behavior: "chase" },
+  cavedemon:     { hp: 3, speed: 3.2, contactDamage: 0.75, pts: 38,  size: 0.50, color: "#334455", emissive: "#112233", behavior: "chase" },
+  jungletroll:   { hp: 5, speed: 1.6, contactDamage: 1.0,  pts: 52,  size: 0.70, color: "#225522", emissive: "#112211", behavior: "charge", chargeInterval: 3.0, chargeDuration: 0.7 },
+  frostphantom:  { hp: 3, speed: 2.5, contactDamage: 0.5,  pts: 42,  size: 0.50, color: "#aaddff", emissive: "#4488cc", behavior: "ranged", rangedInterval: 2.0, projectileSpeed: 8, projectileDamage: 0.75 },
+  volcanodemon:  { hp: 6, speed: 1.8, contactDamage: 1.0,  pts: 60,  size: 0.70, color: "#882200", emissive: "#ff4400", behavior: "ranged", rangedInterval: 1.4, projectileSpeed: 11, projectileDamage: 0.75 },
 };
 
 interface EnemyData {
@@ -40,10 +56,19 @@ interface Projectile {
 }
 
 const AREA_CONFIGS: Record<AreaId, Array<{ type: EnemyType; count: number; radius: number }>> = {
-  field:  [{ type: "slime", count: 8, radius: 14 }, { type: "goblin", count: 4, radius: 16 }],
-  forest: [{ type: "briarwolf", count: 6, radius: 14 }, { type: "thornspitter", count: 4, radius: 16 }, { type: "bat", count: 4, radius: 12 }],
-  desert: [{ type: "emberscorpion", count: 6, radius: 14 }, { type: "voidwraith", count: 4, radius: 16 }, { type: "knight", count: 3, radius: 12 }],
-  boss:   [{ type: "boss", count: 1, radius: 0 }],
+  field:    [{ type: "slime",        count: 8,  radius: 14 }, { type: "goblin",       count: 4, radius: 16 }],
+  forest:   [{ type: "briarwolf",    count: 6,  radius: 14 }, { type: "thornspitter", count: 4, radius: 16 }, { type: "bat",         count: 4, radius: 12 }],
+  desert:   [{ type: "emberscorpion",count: 6,  radius: 14 }, { type: "voidwraith",   count: 4, radius: 16 }, { type: "knight",      count: 3, radius: 12 }],
+  boss:     [{ type: "boss",         count: 1,  radius: 0  }],
+  cave:     [{ type: "skeleton",     count: 7,  radius: 13 }, { type: "cavedemon",    count: 4, radius: 15 }, { type: "rockgolem",   count: 2, radius: 11 }],
+  jungle:   [{ type: "lizardman",    count: 6,  radius: 14 }, { type: "jungletroll",  count: 3, radius: 16 }, { type: "briarwolf",   count: 4, radius: 12 }],
+  ice:      [{ type: "icewolf",      count: 7,  radius: 14 }, { type: "frostphantom", count: 3, radius: 16 }, { type: "skeleton",    count: 4, radius: 12 }],
+  volcano:  [{ type: "lavabeast",    count: 5,  radius: 13 }, { type: "volcanodemon", count: 3, radius: 16 }, { type: "emberscorpion",count:4, radius: 11 }],
+  sky:      [{ type: "thunderbird",  count: 7,  radius: 14 }, { type: "bat",          count: 5, radius: 12 }, { type: "voidwraith",  count: 3, radius: 16 }],
+  shadow:   [{ type: "shadowslime",  count: 8,  radius: 13 }, { type: "voidwraith",   count: 5, radius: 15 }, { type: "cavedemon",   count: 3, radius: 11 }],
+  dungeon1: [{ type: "crystalspider",count: 8,  radius: 12 }, { type: "skeleton",     count: 6, radius: 14 }, { type: "bat",         count: 5, radius: 10 }],
+  dungeon2: [{ type: "volcanodemon", count: 4,  radius: 13 }, { type: "lavabeast",    count: 5, radius: 15 }, { type: "emberscorpion",count:4, radius: 11 }],
+  dungeon3: [{ type: "frostphantom", count: 5,  radius: 13 }, { type: "icewolf",      count: 6, radius: 15 }, { type: "crystalspider",count:4, radius: 11 }],
 };
 
 function spawnEnemies(area: AreaId, bossDefeated: boolean): EnemyData[] {
@@ -286,6 +311,182 @@ function KnightMesh({ color, accent }: { color: string; accent: string }) {
   );
 }
 
+function SkeletonMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group>
+      <mesh position={[0, 0.15, 0]}><cylinderGeometry args={[0.14, 0.17, 0.3, 8]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={0.5} /></mesh>
+      <mesh position={[-0.18, 0.55, 0]}><cylinderGeometry args={[0.05, 0.05, 0.52, 6]} /><meshStandardMaterial color={color} /></mesh>
+      <mesh position={[0.18, 0.55, 0]}><cylinderGeometry args={[0.05, 0.05, 0.52, 6]} /><meshStandardMaterial color={color} /></mesh>
+      <mesh position={[0, 0.65, 0]}><boxGeometry args={[0.36, 0.36, 0.18]} /><meshStandardMaterial color={color} roughness={0.8} /></mesh>
+      <mesh position={[0, 1.05, 0]}><sphereGeometry args={[0.2, 8, 8]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={0.4} /></mesh>
+      <mesh position={[-0.06, 1.04, 0.17]}><sphereGeometry args={[0.04, 5, 5]} /><meshStandardMaterial color="#33aaff" emissive="#3399ff" emissiveIntensity={3} /></mesh>
+      <mesh position={[0.06, 1.04, 0.17]}><sphereGeometry args={[0.04, 5, 5]} /><meshStandardMaterial color="#33aaff" emissive="#3399ff" emissiveIntensity={3} /></mesh>
+    </group>
+  );
+}
+
+function LizardmanMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group>
+      <mesh position={[0, 0.14, -0.1]}><cylinderGeometry args={[0.08, 0.06, 0.45, 7]} /><meshStandardMaterial color={color} roughness={0.5} /></mesh>
+      <mesh position={[-0.2, 0.5, 0]}><cylinderGeometry args={[0.07, 0.06, 0.55, 6]} /><meshStandardMaterial color={color} /></mesh>
+      <mesh position={[0.2, 0.5, 0]}><cylinderGeometry args={[0.07, 0.06, 0.55, 6]} /><meshStandardMaterial color={color} /></mesh>
+      <mesh position={[0, 0.65, 0]}><boxGeometry args={[0.4, 0.42, 0.24]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={0.6} roughness={0.4} /></mesh>
+      <mesh position={[0, 1.1, 0]}><sphereGeometry args={[0.22, 9, 8]} /><meshStandardMaterial color={color} roughness={0.3} /></mesh>
+      <mesh position={[0, 1.06, 0.2]}><boxGeometry args={[0.24, 0.07, 0.04]} /><meshStandardMaterial color="#222" /></mesh>
+      <mesh position={[-0.07, 1.1, 0.2]}><sphereGeometry args={[0.04, 5, 5]} /><meshStandardMaterial color="#ffaa00" emissive="#ff8800" emissiveIntensity={2} /></mesh>
+      <mesh position={[0.07, 1.1, 0.2]}><sphereGeometry args={[0.04, 5, 5]} /><meshStandardMaterial color="#ffaa00" emissive="#ff8800" emissiveIntensity={2} /></mesh>
+    </group>
+  );
+}
+
+function RockGolemMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group>
+      <mesh position={[0, 0.22, 0]}><boxGeometry args={[0.7, 0.44, 0.6]} /><meshStandardMaterial color={color} roughness={0.95} /></mesh>
+      <mesh position={[-0.42, 0.55, 0]}><boxGeometry args={[0.28, 0.7, 0.28]} /><meshStandardMaterial color={color} roughness={0.95} /></mesh>
+      <mesh position={[0.42, 0.55, 0]}><boxGeometry args={[0.28, 0.7, 0.28]} /><meshStandardMaterial color={color} roughness={0.95} /></mesh>
+      <mesh position={[0, 0.7, 0]}><boxGeometry args={[0.6, 0.52, 0.5]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={0.5} roughness={0.9} /></mesh>
+      <mesh position={[0, 1.2, 0]}><boxGeometry args={[0.5, 0.42, 0.44]} /><meshStandardMaterial color={color} roughness={0.85} /></mesh>
+      <mesh position={[-0.1, 1.22, 0.22]}><sphereGeometry args={[0.06, 6, 6]} /><meshStandardMaterial color="#55aa55" emissive="#33cc33" emissiveIntensity={2} /></mesh>
+      <mesh position={[0.1, 1.22, 0.22]}><sphereGeometry args={[0.06, 6, 6]} /><meshStandardMaterial color="#55aa55" emissive="#33cc33" emissiveIntensity={2} /></mesh>
+    </group>
+  );
+}
+
+function IceWolfMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group>
+      <mesh position={[0, 0.3, 0]}><boxGeometry args={[0.45, 0.28, 0.75]} /><meshStandardMaterial color={color} roughness={0.15} metalness={0.3} /></mesh>
+      <mesh position={[0.18, 0.42, 0.26]}><boxGeometry args={[0.2, 0.22, 0.38]} /><meshStandardMaterial color={color} roughness={0.15} /></mesh>
+      <mesh position={[0.22, 0.54, 0.28]}><coneGeometry args={[0.05, 0.14, 5]} /><meshStandardMaterial color={color} /></mesh>
+      <mesh position={[-0.22, 0.54, 0.28]}><coneGeometry args={[0.05, 0.14, 5]} /><meshStandardMaterial color={color} /></mesh>
+      <mesh position={[-0.2, 0.2, 0.38]}><boxGeometry args={[0.22, 0.18, 0.32]} /><meshStandardMaterial color={color} roughness={0.1} /></mesh>
+      <mesh position={[-0.07, 0.24, 0.55]}><boxGeometry args={[0.1, 0.1, 0.12]} /><meshStandardMaterial color={color} roughness={0.1} /></mesh>
+      <mesh position={[-0.05, 0.24, 0.6]}><sphereGeometry args={[0.04, 5, 5]} /><meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={3} /></mesh>
+      <mesh position={[0.05, 0.24, 0.6]}><sphereGeometry args={[0.04, 5, 5]} /><meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={3} /></mesh>
+      <mesh position={[0, 0.24, -0.44]}><cylinderGeometry args={[0.04, 0.02, 0.32, 5]} /><meshStandardMaterial color={color} /></mesh>
+    </group>
+  );
+}
+
+function LavaBeastMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group>
+      <mesh position={[0, 0.25, 0]}><sphereGeometry args={[0.46, 9, 7]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={1.2} roughness={0.7} /></mesh>
+      <mesh position={[-0.38, 0.52, 0]}><sphereGeometry args={[0.22, 7, 6]} /><meshStandardMaterial color={color} roughness={0.6} /></mesh>
+      <mesh position={[0.38, 0.52, 0]}><sphereGeometry args={[0.22, 7, 6]} /><meshStandardMaterial color={color} roughness={0.6} /></mesh>
+      <mesh position={[0, 0.76, 0]}><sphereGeometry args={[0.3, 8, 7]} /><meshStandardMaterial color="#221100" roughness={0.9} /></mesh>
+      <mesh position={[-0.1, 0.78, 0.24]}><sphereGeometry args={[0.06, 6, 6]} /><meshStandardMaterial color="#ff6600" emissive="#ff4400" emissiveIntensity={4} /></mesh>
+      <mesh position={[0.1, 0.78, 0.24]}><sphereGeometry args={[0.06, 6, 6]} /><meshStandardMaterial color="#ff6600" emissive="#ff4400" emissiveIntensity={4} /></mesh>
+      <pointLight position={[0, 0.5, 0]} color="#ff4400" intensity={6} distance={4} />
+    </group>
+  );
+}
+
+function CrystalSpiderMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group>
+      <mesh position={[0, 0.22, 0]}><sphereGeometry args={[0.28, 7, 6]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={1.0} metalness={0.6} roughness={0.2} /></mesh>
+      <mesh position={[0, 0.32, -0.18]}><sphereGeometry args={[0.18, 7, 6]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={0.8} metalness={0.5} /></mesh>
+      {[-0.3,-0.2,-0.1,0.1,0.2,0.3,-0.2,0.2].map((ox, i) => (
+        <mesh key={i} position={[ox * 1.2, 0.2, (i < 4 ? -1 : 1) * (0.1 + (i % 3) * 0.1)]} rotation={[0, 0, (ox < 0 ? 1 : -1) * 0.4]}>
+          <cylinderGeometry args={[0.025, 0.015, 0.32, 4]} />
+          <meshStandardMaterial color={color} metalness={0.4} />
+        </mesh>
+      ))}
+      <mesh position={[-0.07, 0.36, 0.15]}><sphereGeometry args={[0.04, 5, 5]} /><meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={3} /></mesh>
+      <mesh position={[0.07, 0.36, 0.15]}><sphereGeometry args={[0.04, 5, 5]} /><meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={3} /></mesh>
+    </group>
+  );
+}
+
+function ThunderBirdMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group position={[0, 0.6, 0]}>
+      <mesh position={[0, 0, 0]}><sphereGeometry args={[0.26, 8, 7]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={1.0} metalness={0.3} /></mesh>
+      <mesh position={[0, -0.12, -0.2]}><capsuleGeometry args={[0.14, 0.36, 5, 8]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={0.6} /></mesh>
+      <mesh position={[-0.44, 0.06, -0.04]} rotation={[0.2, 0, 0.4]}><boxGeometry args={[0.55, 0.06, 0.32]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={0.8} /></mesh>
+      <mesh position={[0.44, 0.06, -0.04]} rotation={[0.2, 0, -0.4]}><boxGeometry args={[0.55, 0.06, 0.32]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={0.8} /></mesh>
+      <mesh position={[0, 0.12, 0.22]}><coneGeometry args={[0.06, 0.2, 5]} rotation={[Math.PI/2,0,0]} /><meshStandardMaterial color="#ffcc00" emissive="#ffaa00" emissiveIntensity={2} /></mesh>
+      <mesh position={[-0.07, 0.08, 0.19]}><sphereGeometry args={[0.04, 5, 5]} /><meshStandardMaterial color="#ffff00" emissive="#ffff00" emissiveIntensity={3} /></mesh>
+      <mesh position={[0.07, 0.08, 0.19]}><sphereGeometry args={[0.04, 5, 5]} /><meshStandardMaterial color="#ffff00" emissive="#ffff00" emissiveIntensity={3} /></mesh>
+    </group>
+  );
+}
+
+function ShadowSlimeMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group>
+      <mesh position={[0, 0.2, 0]}><sphereGeometry args={[0.36, 8, 6]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={1.5} transparent opacity={0.82} /></mesh>
+      <mesh position={[0, 0.42, 0]}><sphereGeometry args={[0.22, 7, 5]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={2.0} transparent opacity={0.7} /></mesh>
+      <mesh position={[-0.1, 0.5, 0.16]}><sphereGeometry args={[0.05, 5, 5]} /><meshStandardMaterial color="#cc00ff" emissive="#aa00ff" emissiveIntensity={4} /></mesh>
+      <mesh position={[0.1, 0.5, 0.16]}><sphereGeometry args={[0.05, 5, 5]} /><meshStandardMaterial color="#cc00ff" emissive="#aa00ff" emissiveIntensity={4} /></mesh>
+      <pointLight position={[0, 0.3, 0]} color="#6600cc" intensity={4} distance={3} />
+    </group>
+  );
+}
+
+function CaveDemonMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group>
+      <mesh position={[0, 0.2, 0]}><capsuleGeometry args={[0.2, 0.45, 5, 8]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={0.6} roughness={0.7} /></mesh>
+      <mesh position={[-0.38, 0.55, 0.05]} rotation={[0.3, 0, 0.6]}><boxGeometry args={[0.44, 0.05, 0.22]} /><meshStandardMaterial color={color} roughness={0.8} /></mesh>
+      <mesh position={[0.38, 0.55, 0.05]} rotation={[0.3, 0, -0.6]}><boxGeometry args={[0.44, 0.05, 0.22]} /><meshStandardMaterial color={color} roughness={0.8} /></mesh>
+      <mesh position={[0, 0.78, 0]}><sphereGeometry args={[0.22, 8, 7]} /><meshStandardMaterial color={color} roughness={0.65} /></mesh>
+      <mesh position={[-0.07, 0.8, 0.18]}><sphereGeometry args={[0.05, 5, 5]} /><meshStandardMaterial color="#ff2200" emissive="#ff0000" emissiveIntensity={3} /></mesh>
+      <mesh position={[0.07, 0.8, 0.18]}><sphereGeometry args={[0.05, 5, 5]} /><meshStandardMaterial color="#ff2200" emissive="#ff0000" emissiveIntensity={3} /></mesh>
+      <mesh position={[-0.08, 0.72, 0.2]}><coneGeometry args={[0.03, 0.09, 4]} /><meshStandardMaterial color="#aaaaaa" /></mesh>
+      <mesh position={[0.08, 0.72, 0.2]}><coneGeometry args={[0.03, 0.09, 4]} /><meshStandardMaterial color="#aaaaaa" /></mesh>
+    </group>
+  );
+}
+
+function JungleTrollMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group>
+      <mesh position={[0, 0.28, 0]}><boxGeometry args={[0.62, 0.56, 0.44]} /><meshStandardMaterial color={color} roughness={0.85} /></mesh>
+      <mesh position={[-0.44, 0.6, 0]}><boxGeometry args={[0.24, 0.72, 0.22]} /><meshStandardMaterial color={color} roughness={0.8} /></mesh>
+      <mesh position={[0.44, 0.6, 0]}><boxGeometry args={[0.24, 0.72, 0.22]} /><meshStandardMaterial color={color} roughness={0.8} /></mesh>
+      <mesh position={[0.62, 0.28, 0]}><sphereGeometry args={[0.22, 7, 6]} /><meshStandardMaterial color="#555533" roughness={0.9} /></mesh>
+      <mesh position={[0, 0.95, 0]}><sphereGeometry args={[0.3, 8, 7]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={0.3} roughness={0.8} /></mesh>
+      <mesh position={[-0.1, 0.97, 0.25]}><sphereGeometry args={[0.05, 5, 5]} /><meshStandardMaterial color="#ffaa00" emissive="#ff8800" emissiveIntensity={2} /></mesh>
+      <mesh position={[0.1, 0.97, 0.25]}><sphereGeometry args={[0.05, 5, 5]} /><meshStandardMaterial color="#ffaa00" emissive="#ff8800" emissiveIntensity={2} /></mesh>
+      <mesh position={[0, 0.88, 0.28]}><boxGeometry args={[0.28, 0.08, 0.04]} /><meshStandardMaterial color="#aaaaaa" /></mesh>
+    </group>
+  );
+}
+
+function FrostPhantomMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group>
+      <mesh position={[0, 0.5, 0]}><capsuleGeometry args={[0.22, 0.5, 5, 8]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={1.5} transparent opacity={0.65} /></mesh>
+      <mesh position={[0, 1.0, 0]}><sphereGeometry args={[0.24, 8, 7]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={2.0} transparent opacity={0.7} /></mesh>
+      <mesh position={[-0.1, 1.02, 0.19]}><sphereGeometry args={[0.05, 5, 5]} /><meshStandardMaterial color="#00ccff" emissive="#00aaff" emissiveIntensity={4} /></mesh>
+      <mesh position={[0.1, 1.02, 0.19]}><sphereGeometry args={[0.05, 5, 5]} /><meshStandardMaterial color="#00ccff" emissive="#00aaff" emissiveIntensity={4} /></mesh>
+      <mesh position={[-0.22, 0.7, 0.04]} rotation={[0.2, 0, 0.5]}><boxGeometry args={[0.38, 0.04, 0.18]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={1.2} transparent opacity={0.6} /></mesh>
+      <mesh position={[0.22, 0.7, 0.04]} rotation={[0.2, 0, -0.5]}><boxGeometry args={[0.38, 0.04, 0.18]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={1.2} transparent opacity={0.6} /></mesh>
+      <pointLight position={[0, 0.8, 0]} color="#88ccff" intensity={5} distance={4} />
+    </group>
+  );
+}
+
+function VolcanoDemonMesh({ color, accent }: { color: string; accent: string }) {
+  return (
+    <group>
+      <mesh position={[0, 0.3, 0]}><capsuleGeometry args={[0.3, 0.55, 6, 9]} /><meshStandardMaterial color={color} emissive={accent} emissiveIntensity={1.0} roughness={0.65} /></mesh>
+      <mesh position={[-0.48, 0.65, 0]}><cylinderGeometry args={[0.14, 0.18, 0.6, 7]} /><meshStandardMaterial color={color} roughness={0.7} /></mesh>
+      <mesh position={[0.48, 0.65, 0]}><cylinderGeometry args={[0.14, 0.18, 0.6, 7]} /><meshStandardMaterial color={color} roughness={0.7} /></mesh>
+      <mesh position={[0, 1.0, 0]}><sphereGeometry args={[0.32, 9, 8]} /><meshStandardMaterial color="#330000" roughness={0.8} /></mesh>
+      <mesh position={[-0.12, 1.02, 0.26]}><sphereGeometry args={[0.07, 6, 6]} /><meshStandardMaterial color="#ff6600" emissive="#ff2200" emissiveIntensity={5} /></mesh>
+      <mesh position={[0.12, 1.02, 0.26]}><sphereGeometry args={[0.07, 6, 6]} /><meshStandardMaterial color="#ff6600" emissive="#ff2200" emissiveIntensity={5} /></mesh>
+      <mesh position={[-0.1, 0.8, 0.3]}><coneGeometry args={[0.04, 0.11, 4]} /><meshStandardMaterial color="#ffcc00" /></mesh>
+      <mesh position={[0.1, 0.8, 0.3]}><coneGeometry args={[0.04, 0.11, 4]} /><meshStandardMaterial color="#ffcc00" /></mesh>
+      <pointLight position={[0, 0.6, 0]} color="#ff4400" intensity={10} distance={6} />
+    </group>
+  );
+}
+
 function EnemyMesh({ data }: { data: EnemyData }) {
   const def = ENEMY_DEFS[data.type];
   const s = def.size;
@@ -347,12 +548,24 @@ function EnemyMesh({ data }: { data: EnemyData }) {
 
   return (
     <group ref={groupRef}>
-      {data.type === "slime"         && <SlimeMesh         color={def.color} accent={def.emissive} />}
-      {data.type === "goblin"        && <GoblinMesh        color={def.color} accent={def.emissive} />}
-      {data.type === "briarwolf"     && <BriarWolfMesh     color={def.color} accent={def.emissive} />}
-      {data.type === "thornspitter"  && <ThornspitterMesh  color={def.color} accent={def.emissive} />}
-      {data.type === "emberscorpion" && <EmberScorpionMesh color={def.color} accent={def.emissive} />}
-      {data.type === "voidwraith"    && <VoidWraithMesh    color={def.color} accent={def.emissive} />}
+      {data.type === "slime"          && <SlimeMesh          color={def.color} accent={def.emissive} />}
+      {data.type === "goblin"         && <GoblinMesh         color={def.color} accent={def.emissive} />}
+      {data.type === "briarwolf"      && <BriarWolfMesh      color={def.color} accent={def.emissive} />}
+      {data.type === "thornspitter"   && <ThornspitterMesh   color={def.color} accent={def.emissive} />}
+      {data.type === "emberscorpion"  && <EmberScorpionMesh  color={def.color} accent={def.emissive} />}
+      {data.type === "voidwraith"     && <VoidWraithMesh     color={def.color} accent={def.emissive} />}
+      {data.type === "skeleton"       && <SkeletonMesh       color={def.color} accent={def.emissive} />}
+      {data.type === "lizardman"      && <LizardmanMesh      color={def.color} accent={def.emissive} />}
+      {data.type === "rockgolem"      && <RockGolemMesh      color={def.color} accent={def.emissive} />}
+      {data.type === "icewolf"        && <IceWolfMesh        color={def.color} accent={def.emissive} />}
+      {data.type === "lavabeast"      && <LavaBeastMesh      color={def.color} accent={def.emissive} />}
+      {data.type === "crystalspider"  && <CrystalSpiderMesh  color={def.color} accent={def.emissive} />}
+      {data.type === "thunderbird"    && <ThunderBirdMesh    color={def.color} accent={def.emissive} />}
+      {data.type === "shadowslime"    && <ShadowSlimeMesh    color={def.color} accent={def.emissive} />}
+      {data.type === "cavedemon"      && <CaveDemonMesh      color={def.color} accent={def.emissive} />}
+      {data.type === "jungletroll"    && <JungleTrollMesh    color={def.color} accent={def.emissive} />}
+      {data.type === "frostphantom"   && <FrostPhantomMesh   color={def.color} accent={def.emissive} />}
+      {data.type === "volcanodemon"   && <VolcanoDemonMesh   color={def.color} accent={def.emissive} />}
     </group>
   );
 }

@@ -4,7 +4,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useGameStore, SWORD_DEFS, LORE_STONES } from "./store";
+import { useGameStore, SWORD_DEFS, LORE_STONES, AreaId } from "./store";
 import { NPC_DATA } from "./npcData";
 import { WEAPON_ICONS, WEAPON_LABELS, WeaponId, playerState } from "./controls";
 import { saveBestRecord } from "./saveManager";
@@ -566,6 +566,84 @@ function MiniMap() {
   );
 }
 
+// ── Area chapter info ─────────────────────────────────────────────
+const AREA_INFO: Record<AreaId, { name: string; subtitle: string; color: string }> = {
+  field:    { name: "Verdant Fields",       subtitle: "Chapter I — The Journey Begins",   color: "#44cc66" },
+  forest:   { name: "Thornwood Forest",     subtitle: "Chapter II — Into the Dark",       color: "#228833" },
+  desert:   { name: "Ashrock Sands",        subtitle: "Chapter III — Heat of Betrayal",   color: "#ffaa44" },
+  boss:     { name: "Malgrath's Sanctum",   subtitle: "Final Chapter — The Shattered Crown", color: "#ff4488" },
+  cave:     { name: "Deepstone Caverns",    subtitle: "Chapter IV — Bones of the Earth",  color: "#886633" },
+  jungle:   { name: "Verdant Depths",       subtitle: "Chapter V — The Ancient Green",    color: "#22aa44" },
+  ice:      { name: "Frostpeak Tundra",     subtitle: "Chapter VI — Frozen in Time",      color: "#88ccff" },
+  volcano:  { name: "Ashrock Caldera",      subtitle: "Chapter VII — Heart of Fire",      color: "#ff6622" },
+  sky:      { name: "Celestial Skylands",   subtitle: "Chapter VIII — Above the Clouds",  color: "#4488ff" },
+  shadow:   { name: "Shadow Realm",         subtitle: "Chapter IX — Mirror of Darkness",  color: "#aa44ff" },
+  dungeon1: { name: "Shadowmere Crypt",     subtitle: "Dungeon I — The Walking Dead",     color: "#9966ff" },
+  dungeon2: { name: "Ashrock Forge",        subtitle: "Dungeon II — Forged in Flame",     color: "#ff4400" },
+  dungeon3: { name: "Crystal Spire",        subtitle: "Dungeon III — The Frozen Summit",  color: "#aaddff" },
+};
+
+function AreaChapterCard() {
+  const currentArea = useGameStore(s => s.currentArea);
+  const storyChaptersSeen = useGameStore(s => s.storyChaptersSeen);
+  const markChapterSeen = useGameStore(s => s.markChapterSeen);
+  const gameState = useGameStore(s => s.gameState);
+  const opacity = useRef(new Animated.Value(0)).current;
+  const lastArea = useRef<AreaId | null>(null);
+
+  useEffect(() => {
+    if (gameState !== "playing") return;
+    if (storyChaptersSeen.includes(currentArea)) return;
+    if (lastArea.current === currentArea) return;
+    lastArea.current = currentArea;
+    markChapterSeen(currentArea);
+    opacity.setValue(0);
+    Animated.sequence([
+      Animated.timing(opacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.delay(3000),
+      Animated.timing(opacity, { toValue: 0, duration: 600, useNativeDriver: true }),
+    ]).start();
+  }, [currentArea, gameState]);
+
+  const info = AREA_INFO[currentArea];
+
+  return (
+    <Animated.View style={[styles.chapterCard, { opacity, borderColor: info.color + "88" }]} pointerEvents="none">
+      <Text style={[styles.chapterSubtitle, { color: info.color }]}>{info.subtitle}</Text>
+      <Text style={styles.chapterName}>{info.name}</Text>
+    </Animated.View>
+  );
+}
+
+// ── Special items strip ───────────────────────────────────────────
+function SpecialItemsStrip() {
+  const hasMagicMirror = useGameStore(s => s.hasMagicMirror);
+  const hasSpeedBoots  = useGameStore(s => s.hasSpeedBoots);
+  const hasHookshot    = useGameStore(s => s.hasHookshot);
+  const smallKeys      = useGameStore(s => s.smallKeys);
+  const insets = useSafeAreaInsets();
+
+  const items = [
+    hasMagicMirror && { icon: "🪞", label: "Mirror" },
+    hasSpeedBoots  && { icon: "👟", label: "Boots" },
+    hasHookshot    && { icon: "⛓️", label: "Hook" },
+    smallKeys > 0  && { icon: "🗝️", label: `×${smallKeys}` },
+  ].filter(Boolean) as { icon: string; label: string }[];
+
+  if (items.length === 0) return null;
+
+  return (
+    <View style={[styles.itemsStrip, { top: insets.top + 130 }]}>
+      {items.map((item, i) => (
+        <View key={i} style={styles.itemBadge}>
+          <Text style={styles.itemBadgeIcon}>{item.icon}</Text>
+          <Text style={styles.itemBadgeLabel}>{item.label}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 // ── Root HUD ──────────────────────────────────────────────────────
 export default function HUD() {
   const gameState = useGameStore(s => s.gameState);
@@ -579,6 +657,8 @@ export default function HUD() {
       <ShieldIndicator />
       <MiniMap />
       <ComboPopup />
+      <AreaChapterCard />
+      <SpecialItemsStrip />
       <ItemFanfare />
       <NPCDialogue />
       <NPCPrompt />
@@ -940,5 +1020,57 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     opacity: 0.9,
+  },
+
+  // Chapter card
+  chapterCard: {
+    position: "absolute",
+    bottom: 220,
+    left: 30,
+    right: 30,
+    backgroundColor: "rgba(5,2,18,0.88)",
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    alignItems: "center",
+  },
+  chapterSubtitle: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: 2.5,
+    marginBottom: 4,
+    textTransform: "uppercase",
+  },
+  chapterName: {
+    color: "#ffffff",
+    fontSize: 22,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 1,
+  },
+
+  // Special items strip
+  itemsStrip: {
+    position: "absolute",
+    right: 14,
+    flexDirection: "column",
+    gap: 6,
+  },
+  itemBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(10,8,20,0.75)",
+    borderRadius: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    gap: 4,
+  },
+  itemBadgeIcon: { fontSize: 14 },
+  itemBadgeLabel: {
+    color: "#e8e0d4",
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
   },
 });

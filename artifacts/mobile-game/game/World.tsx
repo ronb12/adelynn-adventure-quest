@@ -504,8 +504,10 @@ function FieldArea() {
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[50, 50]} /><meshStandardMaterial color="#3a7a2f" /></mesh>
       {treePos.map(([tx, tz], i) => <Tree key={i} x={tx} z={tz} scale={0.85 + (i % 3) * 0.1} />)}
-      <Portal x={22} z={0} rotY={Math.PI / 2} color="#22ff88" targetArea="forest" spawnX={-20} spawnZ={0} />
-      <Portal x={-22} z={0} rotY={Math.PI / 2} color="#ffaa44" targetArea="desert" spawnX={20} spawnZ={0} />
+      <Portal x={22} z={0}  rotY={Math.PI / 2} color="#22ff88" targetArea="forest" spawnX={-20} spawnZ={0} />
+      <Portal x={-22} z={0}  rotY={Math.PI / 2} color="#ffaa44" targetArea="desert" spawnX={20}  spawnZ={0} />
+      <Portal x={0}  z={22}  rotY={0}           color="#886633" targetArea="cave"   spawnX={0}   spawnZ={-18} />
+      <Portal x={0}  z={-22} rotY={0}           color="#4488ff" targetArea="sky"    spawnX={0}   spawnZ={18} />
       {/* Main shard chest */}
       <ShardChest chestKey="field" x={0} z={-20} />
       {/* Sword chests */}
@@ -542,8 +544,9 @@ function ForestArea() {
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[50, 50]} /><meshStandardMaterial color="#1e4a14" /></mesh>
       {treePos.map(([tx, tz], i) => <Tree key={i} x={tx} z={tz} scale={1.0 + (i % 3) * 0.15} />)}
-      <Portal x={-20} z={0} rotY={Math.PI / 2} color="#66ff88" targetArea="field" spawnX={20} spawnZ={0} />
-      <Portal x={0} z={-22} rotY={0} color="#ff4444" targetArea="boss" spawnX={0} spawnZ={18} />
+      <Portal x={-20} z={0}  rotY={Math.PI / 2} color="#66ff88" targetArea="field"  spawnX={20} spawnZ={0} />
+      <Portal x={0}  z={-22} rotY={0}           color="#ff4444" targetArea="boss"   spawnX={0}  spawnZ={18} />
+      <Portal x={0}  z={22}  rotY={0}           color="#22bb44" targetArea="jungle" spawnX={0}  spawnZ={-18} />
       {/* Main shard chest */}
       <ShardChest chestKey="forest" x={0} z={0} />
       {forestSwordChests.map(sc => <SwordChest key={sc.key} chestKey={sc.key} x={sc.x} z={sc.z} />)}
@@ -570,8 +573,9 @@ function DesertArea() {
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[50, 50]} /><meshStandardMaterial color="#c9a64a" /></mesh>
       {cactiPos.map(([cx, cz], i) => <Cactus key={i} x={cx} z={cz} />)}
-      <Portal x={20} z={0} rotY={Math.PI / 2} color="#66ff88" targetArea="field" spawnX={-20} spawnZ={0} />
-      <Portal x={0} z={-22} rotY={0} color="#ff4444" targetArea="boss" spawnX={0} spawnZ={18} />
+      <Portal x={20} z={0}  rotY={Math.PI / 2} color="#66ff88" targetArea="field"   spawnX={-20} spawnZ={0} />
+      <Portal x={0}  z={-22} rotY={0}          color="#ff4444" targetArea="boss"    spawnX={0}   spawnZ={18} />
+      <Portal x={0}  z={22}  rotY={0}          color="#ff6622" targetArea="volcano" spawnX={0}   spawnZ={-18} />
       {/* Main shard chest */}
       <ShardChest chestKey="desert" x={0} z={-22} />
       {desertSwordChests.map(sc => <SwordChest key={sc.key} chestKey={sc.key} x={sc.x} z={sc.z} />)}
@@ -619,13 +623,340 @@ function BossArea() {
   );
 }
 
+function ItemAltar({ altarKey, item, x, z, color, icon }: {
+  altarKey: string; item: "magicMirror" | "speedBoots" | "hookshot";
+  x: number; z: number; color: string; icon: string;
+}) {
+  const chestsOpened = useGameStore(s => s.chestsOpened);
+  const collectSpecialItem = useGameStore(s => s.collectSpecialItem);
+  const collected = chestsOpened.includes(altarKey);
+  const cooldownRef = useRef(2.0);
+  const glowRef = useRef<THREE.Mesh>(null!);
+  const timeRef = useRef(0);
+
+  useFrame((_, delta) => {
+    timeRef.current += delta;
+    if (glowRef.current) {
+      const mat = glowRef.current.material as THREE.MeshStandardMaterial;
+      mat.emissiveIntensity = collected ? 0 : 1.0 + Math.sin(timeRef.current * 2) * 0.6;
+    }
+    if (collected) return;
+    cooldownRef.current -= delta;
+    if (cooldownRef.current > 0) return;
+    const store = useGameStore.getState();
+    if (store.gameState !== "playing") return;
+    const dx = playerState.x - x;
+    const dz = playerState.z - z;
+    if (Math.sqrt(dx * dx + dz * dz) < 1.6) {
+      cooldownRef.current = 2;
+      store.collectSpecialItem(item, altarKey);
+    }
+  });
+
+  return (
+    <group position={[x, 0, z]}>
+      <mesh position={[0, 0.18, 0]}><cylinderGeometry args={[0.65, 0.75, 0.36, 10]} /><meshStandardMaterial color="#776644" roughness={0.8} /></mesh>
+      <mesh position={[0, 0.44, 0]}><cylinderGeometry args={[0.42, 0.65, 0.16, 10]} /><meshStandardMaterial color="#998866" roughness={0.75} /></mesh>
+      {!collected && (
+        <>
+          <mesh ref={glowRef} position={[0, 0.82, 0]}>
+            <sphereGeometry args={[0.28, 10, 9]} />
+            <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.5} transparent opacity={0.85} />
+          </mesh>
+          <pointLight position={[0, 1.2, 0]} color={color} intensity={8} distance={5} />
+        </>
+      )}
+    </group>
+  );
+}
+
+function StoneWall({ x, z, w, d }: { x: number; z: number; w: number; d: number }) {
+  return (
+    <mesh position={[x, 1.2, z]}>
+      <boxGeometry args={[w, 2.4, d]} />
+      <meshStandardMaterial color="#5a5555" roughness={0.9} />
+    </mesh>
+  );
+}
+
+function IcePillar({ x, z }: { x: number; z: number }) {
+  return (
+    <group position={[x, 0, z]}>
+      <mesh position={[0, 1.2, 0]}><cylinderGeometry args={[0.22, 0.28, 2.4, 7]} /><meshStandardMaterial color="#cceeff" transparent opacity={0.8} roughness={0.1} metalness={0.2} /></mesh>
+      <mesh position={[0, 2.6, 0]}><coneGeometry args={[0.22, 0.8, 7]} /><meshStandardMaterial color="#aaddff" transparent opacity={0.75} roughness={0.1} /></mesh>
+    </group>
+  );
+}
+
+function LavaRock({ x, z }: { x: number; z: number }) {
+  return (
+    <group position={[x, 0, z]}>
+      <mesh position={[0, 0.4, 0]}><sphereGeometry args={[0.6, 7, 6]} /><meshStandardMaterial color="#442200" roughness={0.95} /></mesh>
+      <mesh position={[0, 0.32, 0.3]}><sphereGeometry args={[0.18, 6, 5]} /><meshStandardMaterial color="#cc4400" emissive="#ff2200" emissiveIntensity={2.5} /></mesh>
+    </group>
+  );
+}
+
+function CloudPlatform({ x, y, z, w }: { x: number; y: number; z: number; w: number }) {
+  return (
+    <group position={[x, y, z]}>
+      <mesh><boxGeometry args={[w, 0.25, w * 0.6]} /><meshStandardMaterial color="#eef6ff" transparent opacity={0.85} roughness={0.05} /></mesh>
+      <mesh position={[0, 0.14, 0]}><boxGeometry args={[w * 0.7, 0.15, w * 0.45]} /><meshStandardMaterial color="#ffffff" transparent opacity={0.7} roughness={0} /></mesh>
+    </group>
+  );
+}
+
+function ShadowCrystal({ x, z }: { x: number; z: number }) {
+  return (
+    <group position={[x, 0, z]}>
+      <mesh position={[0, 0.8, 0]} rotation={[0.3, 0.5, 0.2]}>
+        <octahedronGeometry args={[0.45, 0]} />
+        <meshStandardMaterial color="#330066" emissive="#6600cc" emissiveIntensity={1.5} transparent opacity={0.8} metalness={0.6} roughness={0.1} />
+      </mesh>
+      <pointLight position={[0, 0.8, 0]} color="#8800ff" intensity={4} distance={3} />
+    </group>
+  );
+}
+
+function DungeonPillar({ x, z }: { x: number; z: number }) {
+  return (
+    <group position={[x, 0, z]}>
+      <mesh position={[0, 2.5, 0]}><cylinderGeometry args={[0.35, 0.42, 5, 8]} /><meshStandardMaterial color="#2a2535" roughness={0.9} /></mesh>
+      <mesh position={[0, 5.2, 0]}><cylinderGeometry args={[0.45, 0.35, 0.4, 8]} /><meshStandardMaterial color="#3a3048" roughness={0.85} /></mesh>
+    </group>
+  );
+}
+
+function CaveArea() {
+  const caveChests = SWORD_CHESTS.filter(c => c.area === "cave");
+  return (
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[50, 50]} /><meshStandardMaterial color="#2a2520" /></mesh>
+      <pointLight position={[0, 8, 0]} color="#886633" intensity={15} distance={28} />
+      <pointLight position={[-12, 4, -10]} color="#aa7744" intensity={6} distance={12} />
+      <pointLight position={[12, 4, 10]} color="#aa6633" intensity={6} distance={12} />
+      {[[-14,-12],[-8,-18],[6,-16],[16,-14],[20,-4],[18,10],[10,18],[-4,20],[-16,14],[-20,4],[-20,-8],[2,-20],[12,-8],[-10,8]] .map(([tx,tz],i) => (
+        <group key={i} position={[tx, 0, tz]}>
+          <mesh position={[0, 0.8, 0]}><sphereGeometry args={[0.9 + (i%3)*0.3, 7, 6]} /><meshStandardMaterial color="#3a3530" roughness={0.95} /></mesh>
+        </group>
+      ))}
+      <Portal x={0}   z={22}  rotY={0}           color="#886633" targetArea="field"    spawnX={0}  spawnZ={-18} />
+      <Portal x={22}  z={0}   rotY={Math.PI / 2} color="#9966ff" targetArea="dungeon1" spawnX={-20} spawnZ={0} />
+      <Portal x={-22} z={0}   rotY={Math.PI / 2} color="#aaddff" targetArea="ice"      spawnX={20}  spawnZ={0} />
+      <ItemAltar altarKey="item-mirror" item="magicMirror" x={0} z={-14} color="#cc88ff" icon="🪞" />
+      {caveChests.map(sc => <SwordChest key={sc.key} chestKey={sc.key} x={sc.x} z={sc.z} />)}
+      {LORE_STONES.cave.map(s => <LoreStoneObj key={s.id} id={s.id} x={s.x} z={s.z} />)}
+      <Fountain x={-18} z={18} />
+      <HeartPiece id="hp-cave-1" x={14} z={-14} />
+      <HeartPiece id="hp-cave-2" x={-14} z={14} />
+      <Wall x={0} z={-26} w={52} d={1} /><Wall x={0} z={26} w={52} d={1} />
+      <Wall x={-26} z={0} w={1} d={52} /><Wall x={26} z={0} w={1} d={52} />
+    </group>
+  );
+}
+
+function JungleArea() {
+  const jungleChests = SWORD_CHESTS.filter(c => c.area === "jungle");
+  const treePos = [[-18,-16],[-12,-20],[-4,-22],[6,-20],[14,-18],[20,-12],[22,-4],[20,8],[16,18],[4,22],[-8,20],[-18,14],[-22,4],[-22,-8],[10,-10],[-10,10],[8,6],[-6,-8]];
+  return (
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[50, 50]} /><meshStandardMaterial color="#1a3d0e" /></mesh>
+      <pointLight position={[0, 10, 0]} color="#44aa22" intensity={12} distance={30} />
+      {treePos.map(([tx,tz],i) => <Tree key={i} x={tx} z={tz} scale={1.2 + (i%3)*0.15} />)}
+      <Portal x={0}   z={22}  rotY={0}           color="#22bb44" targetArea="forest"   spawnX={0}  spawnZ={-18} />
+      <Portal x={22}  z={0}   rotY={Math.PI / 2} color="#9966ff" targetArea="dungeon1" spawnX={-20} spawnZ={0} />
+      {jungleChests.map(sc => <SwordChest key={sc.key} chestKey={sc.key} x={sc.x} z={sc.z} />)}
+      {LORE_STONES.jungle.map(s => <LoreStoneObj key={s.id} id={s.id} x={s.x} z={s.z} />)}
+      <Fountain x={18} z={-18} />
+      <HeartPiece id="hp-jungle-1" x={-16} z={-16} />
+      <HeartPiece id="hp-jungle-2" x={16} z={16} />
+      <Wall x={0} z={-26} w={52} d={1} /><Wall x={0} z={26} w={52} d={1} />
+      <Wall x={-26} z={0} w={1} d={52} /><Wall x={26} z={0} w={1} d={52} />
+    </group>
+  );
+}
+
+function IceArea() {
+  const iceChests = SWORD_CHESTS.filter(c => c.area === "ice");
+  const pillarPositions = [[-14,-12],[-6,-16],[8,-14],[16,-8],[18,6],[10,16],[-4,18],[-14,10],[-4,-4],[8,4]];
+  return (
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[50, 50]} /><meshStandardMaterial color="#c8dff0" /></mesh>
+      <pointLight position={[0, 10, 0]} color="#aaccff" intensity={20} distance={32} />
+      {pillarPositions.map(([px,pz],i) => <IcePillar key={i} x={px} z={pz} />)}
+      <Portal x={-22} z={0}  rotY={Math.PI / 2} color="#886633" targetArea="cave"     spawnX={-22}  spawnZ={0} />
+      <Portal x={22}  z={0}  rotY={Math.PI / 2} color="#88ccff" targetArea="dungeon3" spawnX={-20}  spawnZ={0} />
+      <ItemAltar altarKey="item-boots" item="speedBoots" x={0} z={-14} color="#aaffcc" icon="👟" />
+      {iceChests.map(sc => <SwordChest key={sc.key} chestKey={sc.key} x={sc.x} z={sc.z} />)}
+      {LORE_STONES.ice.map(s => <LoreStoneObj key={s.id} id={s.id} x={s.x} z={s.z} />)}
+      <Fountain x={-18} z={18} />
+      <HeartPiece id="hp-ice-1" x={14} z={-14} />
+      <HeartPiece id="hp-ice-2" x={-12} z={-18} />
+      <Wall x={0} z={-26} w={52} d={1} /><Wall x={0} z={26} w={52} d={1} />
+      <Wall x={-26} z={0} w={1} d={52} /><Wall x={26} z={0} w={1} d={52} />
+    </group>
+  );
+}
+
+function VolcanoArea() {
+  const volChests = SWORD_CHESTS.filter(c => c.area === "volcano");
+  const lavaRockPos = [[-16,-14],[-8,-18],[6,-16],[14,-10],[18,4],[12,16],[-2,20],[-14,14],[-20,2],[-18,-10],[4,-4],[-8,6]];
+  return (
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[50, 50]} /><meshStandardMaterial color="#3a1800" /></mesh>
+      <pointLight position={[0, 8, 0]} color="#ff4400" intensity={18} distance={28} />
+      <pointLight position={[-10, 3, -10]} color="#ff2200" intensity={8} distance={15} />
+      <pointLight position={[10, 3, 10]} color="#ff6600" intensity={8} distance={15} />
+      {lavaRockPos.map(([lx,lz],i) => <LavaRock key={i} x={lx} z={lz} />)}
+      <Portal x={0}   z={22}  rotY={0}           color="#ff6622" targetArea="desert"   spawnX={0}   spawnZ={-18} />
+      <Portal x={22}  z={0}   rotY={Math.PI / 2} color="#ff2200" targetArea="dungeon2" spawnX={-20} spawnZ={0} />
+      {volChests.map(sc => <SwordChest key={sc.key} chestKey={sc.key} x={sc.x} z={sc.z} />)}
+      {LORE_STONES.volcano.map(s => <LoreStoneObj key={s.id} id={s.id} x={s.x} z={s.z} />)}
+      <Fountain x={-18} z={-18} />
+      <HeartPiece id="hp-vol-1" x={12} z={-16} />
+      <HeartPiece id="hp-vol-2" x={-14} z={14} />
+      <Wall x={0} z={-26} w={52} d={1} /><Wall x={0} z={26} w={52} d={1} />
+      <Wall x={-26} z={0} w={1} d={52} /><Wall x={26} z={0} w={1} d={52} />
+    </group>
+  );
+}
+
+function SkyArea() {
+  const skyChests = SWORD_CHESTS.filter(c => c.area === "sky");
+  return (
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[50, 50]} /><meshStandardMaterial color="#2244aa" /></mesh>
+      <pointLight position={[0, 12, 0]} color="#88aaff" intensity={25} distance={35} />
+      <CloudPlatform x={-12} y={0.1} z={-8} w={6} />
+      <CloudPlatform x={10}  y={0.1} z={10} w={5} />
+      <CloudPlatform x={-8}  y={0.1} z={14} w={4} />
+      <CloudPlatform x={14}  y={0.1} z={-14} w={5} />
+      <CloudPlatform x={-16} y={0.1} z={4}  w={4} />
+      <CloudPlatform x={6}   y={0.1} z={-16} w={5} />
+      <Portal x={0}   z={22}  rotY={0}           color="#4488ff" targetArea="field"  spawnX={0}  spawnZ={22} />
+      <Portal x={-22} z={0}   rotY={Math.PI / 2} color="#aa44ff" targetArea="shadow" spawnX={20} spawnZ={0} />
+      {skyChests.map(sc => <SwordChest key={sc.key} chestKey={sc.key} x={sc.x} z={sc.z} />)}
+      {LORE_STONES.sky.map(s => <LoreStoneObj key={s.id} id={s.id} x={s.x} z={s.z} />)}
+      <Fountain x={18} z={18} />
+      <HeartPiece id="hp-sky-1" x={-14} z={-14} />
+      <HeartPiece id="hp-sky-2" x={16} z={-18} />
+      <Wall x={0} z={-26} w={52} d={1} /><Wall x={0} z={26} w={52} d={1} />
+      <Wall x={-26} z={0} w={1} d={52} /><Wall x={26} z={0} w={1} d={52} />
+    </group>
+  );
+}
+
+function ShadowArea() {
+  const shadChests = SWORD_CHESTS.filter(c => c.area === "shadow");
+  const crystalPos = [[-14,-12],[-6,-16],[8,-14],[16,-8],[18,6],[10,16],[-4,18],[-14,10],[-2,-4],[10,4]];
+  return (
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[50, 50]} /><meshStandardMaterial color="#0a0010" /></mesh>
+      <pointLight position={[0, 8, 0]} color="#8800ff" intensity={15} distance={25} />
+      <pointLight position={[-10, 4, -8]} color="#4400aa" intensity={8} distance={15} />
+      <pointLight position={[10, 4, 8]} color="#6600cc" intensity={8} distance={15} />
+      {crystalPos.map(([cx,cz],i) => <ShadowCrystal key={i} x={cx} z={cz} />)}
+      <Portal x={22}  z={0}  rotY={Math.PI / 2} color="#aa44ff" targetArea="sky"  spawnX={-22} spawnZ={0} />
+      <Portal x={0}   z={-22} rotY={0}          color="#ff2244" targetArea="boss"  spawnX={0}   spawnZ={18} />
+      {shadChests.map(sc => <SwordChest key={sc.key} chestKey={sc.key} x={sc.x} z={sc.z} />)}
+      {LORE_STONES.shadow.map(s => <LoreStoneObj key={s.id} id={s.id} x={s.x} z={s.z} />)}
+      <Fountain x={-18} z={18} />
+      <HeartPiece id="hp-shadow-1" x={-14} z={-14} />
+      <HeartPiece id="hp-shadow-2" x={14} z={-16} />
+      <Wall x={0} z={-26} w={52} d={1} /><Wall x={0} z={26} w={52} d={1} />
+      <Wall x={-26} z={0} w={1} d={52} /><Wall x={26} z={0} w={1} d={52} />
+    </group>
+  );
+}
+
+function Dungeon1Area() {
+  const d1Chests = SWORD_CHESTS.filter(c => c.area === "dungeon1");
+  const pillarPos = [[-10,-10],[10,-10],[-10,10],[10,10],[-10,0],[10,0],[0,-10],[0,10]];
+  return (
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[44, 44]} /><meshStandardMaterial color="#1a1525" /></mesh>
+      <pointLight position={[0, 8, 0]} color="#9966ff" intensity={15} distance={24} />
+      {pillarPos.map(([px,pz],i) => <DungeonPillar key={i} x={px} z={pz} />)}
+      <StoneWall x={0} z={-18} w={30} d={1} />
+      <StoneWall x={0} z={18} w={30} d={1} />
+      <StoneWall x={-18} z={0} w={1} d={30} />
+      <StoneWall x={18} z={0} w={1} d={30} />
+      <Portal x={-20} z={0}  rotY={Math.PI / 2} color="#886633" targetArea="cave"   spawnX={20}  spawnZ={0} />
+      <Portal x={20}  z={0}  rotY={Math.PI / 2} color="#22bb44" targetArea="jungle" spawnX={-22} spawnZ={0} />
+      {d1Chests.map(sc => <SwordChest key={sc.key} chestKey={sc.key} x={sc.x} z={sc.z} />)}
+      {LORE_STONES.dungeon1.map(s => <LoreStoneObj key={s.id} id={s.id} x={s.x} z={s.z} />)}
+      <Fountain x={-16} z={-16} />
+      <HeartPiece id="hp-d1-1" x={16} z={-16} />
+      <HeartPiece id="hp-d1-2" x={-16} z={16} />
+      <Wall x={0} z={-23} w={46} d={1} /><Wall x={0} z={23} w={46} d={1} />
+      <Wall x={-23} z={0} w={1} d={46} /><Wall x={23} z={0} w={1} d={46} />
+    </group>
+  );
+}
+
+function Dungeon2Area() {
+  const d2Chests = SWORD_CHESTS.filter(c => c.area === "dungeon2");
+  const pillarPos = [[-10,-10],[10,-10],[-10,10],[10,10],[-6,-6],[6,-6],[-6,6],[6,6]];
+  return (
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[44, 44]} /><meshStandardMaterial color="#220800" /></mesh>
+      <pointLight position={[0, 8, 0]} color="#ff4400" intensity={18} distance={24} />
+      <pointLight position={[-8, 3, -8]} color="#cc2200" intensity={8} distance={14} />
+      <pointLight position={[8, 3, 8]} color="#ff5500" intensity={8} distance={14} />
+      {pillarPos.map(([px,pz],i) => (
+        <mesh key={i} position={[px, 2.5, pz]}><cylinderGeometry args={[0.5, 0.6, 5, 8]} /><meshStandardMaterial color="#221100" emissive="#661100" emissiveIntensity={0.3} /></mesh>
+      ))}
+      <ItemAltar altarKey="item-hookshot" item="hookshot" x={0} z={-14} color="#ffaa44" icon="⛓️" />
+      <Portal x={-20} z={0} rotY={Math.PI / 2} color="#ff6622" targetArea="volcano" spawnX={20} spawnZ={0} />
+      {d2Chests.map(sc => <SwordChest key={sc.key} chestKey={sc.key} x={sc.x} z={sc.z} />)}
+      {LORE_STONES.dungeon2.map(s => <LoreStoneObj key={s.id} id={s.id} x={s.x} z={s.z} />)}
+      <Fountain x={-16} z={16} />
+      <HeartPiece id="hp-d2-1" x={16} z={-16} />
+      <HeartPiece id="hp-d2-2" x={-14} z={-14} />
+      <Wall x={0} z={-23} w={46} d={1} /><Wall x={0} z={23} w={46} d={1} />
+      <Wall x={-23} z={0} w={1} d={46} /><Wall x={23} z={0} w={1} d={46} />
+    </group>
+  );
+}
+
+function Dungeon3Area() {
+  const d3Chests = SWORD_CHESTS.filter(c => c.area === "dungeon3");
+  const pillarPos = [[-12,-12],[12,-12],[-12,12],[12,12],[0,-12],[0,12],[-12,0],[12,0]];
+  return (
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[44, 44]} /><meshStandardMaterial color="#061220" /></mesh>
+      <pointLight position={[0, 8, 0]} color="#88ccff" intensity={18} distance={24} />
+      <pointLight position={[-8, 3, -8]} color="#4488cc" intensity={8} distance={14} />
+      <pointLight position={[8, 3, 8]} color="#6699ff" intensity={8} distance={14} />
+      {pillarPos.map(([px,pz],i) => <IcePillar key={i} x={px} z={pz} />)}
+      <Portal x={-20} z={0} rotY={Math.PI / 2} color="#aaddff" targetArea="ice" spawnX={20} spawnZ={0} />
+      {d3Chests.map(sc => <SwordChest key={sc.key} chestKey={sc.key} x={sc.x} z={sc.z} />)}
+      {LORE_STONES.dungeon3.map(s => <LoreStoneObj key={s.id} id={s.id} x={s.x} z={s.z} />)}
+      <Fountain x={16} z={-16} />
+      <HeartPiece id="hp-d3-1" x={-16} z={-16} />
+      <HeartPiece id="hp-d3-2" x={16} z={16} />
+      <Wall x={0} z={-23} w={46} d={1} /><Wall x={0} z={23} w={46} d={1} />
+      <Wall x={-23} z={0} w={1} d={46} /><Wall x={23} z={0} w={1} d={46} />
+    </group>
+  );
+}
+
 export default function World() {
   const currentArea = useGameStore(s => s.currentArea);
   switch (currentArea) {
-    case "field":  return <FieldArea />;
-    case "forest": return <ForestArea />;
-    case "desert": return <DesertArea />;
-    case "boss":   return <BossArea />;
-    default:       return <FieldArea />;
+    case "field":    return <FieldArea />;
+    case "forest":   return <ForestArea />;
+    case "desert":   return <DesertArea />;
+    case "boss":     return <BossArea />;
+    case "cave":     return <CaveArea />;
+    case "jungle":   return <JungleArea />;
+    case "ice":      return <IceArea />;
+    case "volcano":  return <VolcanoArea />;
+    case "sky":      return <SkyArea />;
+    case "shadow":   return <ShadowArea />;
+    case "dungeon1": return <Dungeon1Area />;
+    case "dungeon2": return <Dungeon2Area />;
+    case "dungeon3": return <Dungeon3Area />;
+    default:         return <FieldArea />;
   }
 }
