@@ -54,7 +54,6 @@ struct WorldConfig {
     static let enemySpawns: [AreaId: [EnemySpawnConfig]] = [
         .field: [
             EnemySpawnConfig(count:5, maxHP:2,  speed:80...120,  bodyColor:.from(hex:"#c0392b"), accentColor:.from(hex:"#922b21"), chaseRange:200, enemyType:.slime,       behavior:.chase),
-            EnemySpawnConfig(count:3, maxHP:1,  speed:130...180, bodyColor:.from(hex:"#2d7d20"), accentColor:.from(hex:"#55cc44"), chaseRange:280, enemyType:.goblin,      behavior:.charge),
         ],
         .forest: [
             EnemySpawnConfig(count:4, maxHP:2,  speed:100...160, bodyColor:.from(hex:"#4a235a"), accentColor:.from(hex:"#6c3483"), chaseRange:240, enemyType:.bat,         behavior:.chase),
@@ -69,6 +68,7 @@ struct WorldConfig {
             EnemySpawnConfig(count:5, maxHP:5,  speed:110...160, bodyColor:.from(hex:"#2a6e1a"), accentColor:.from(hex:"#66ee44"), chaseRange:220, enemyType:.briarwolf,   behavior:.charge),
             EnemySpawnConfig(count:3, maxHP:4,  speed:60...100,  bodyColor:.from(hex:"#1a4a0a"), accentColor:.from(hex:"#44cc22"), chaseRange:300, enemyType:.thornspitter,behavior:.ranged),
             EnemySpawnConfig(count:2, maxHP:6,  speed:35...60,   bodyColor:.from(hex:"#3a5a1a"), accentColor:.from(hex:"#88dd44"), chaseRange:140, enemyType:.knight,      behavior:.chase),
+            EnemySpawnConfig(count:4, maxHP:3,  speed:140...190, bodyColor:.from(hex:"#2d7d20"), accentColor:.from(hex:"#55cc44"), chaseRange:280, enemyType:.goblin,      behavior:.charge),
         ],
         .ice: [
             EnemySpawnConfig(count:5, maxHP:5,  speed:75...120,  bodyColor:.from(hex:"#88ccff"), accentColor:.from(hex:"#ffffff"), chaseRange:200, enemyType:.slime,       behavior:.chase),

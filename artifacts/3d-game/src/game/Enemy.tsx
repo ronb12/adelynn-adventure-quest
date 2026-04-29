@@ -17,7 +17,6 @@ const AREA_CONFIG: Record<AreaId, {
 }[]> = {
   field: [
     { count: 5, maxHp: 2, speed: [1.4, 2.5], body: '#c0392b', accent: '#922b21', chaseRange: 8,  meshType: 'slime' },
-    { count: 3, maxHp: 1, speed: [2.8, 3.6], body: '#2d7d20', accent: '#55cc44', chaseRange: 14, meshType: 'goblin', behavior: 'charge' },
   ],
   forest: [
     { count: 4, maxHp: 2, speed: [2.0, 3.2], body: '#4a235a', accent: '#6c3483', chaseRange: 12, meshType: 'bat' },
@@ -35,6 +34,7 @@ const AREA_CONFIG: Record<AreaId, {
     { count: 5, maxHp: 5, speed: [2.2, 3.2], body: '#2a6e1a', accent: '#66ee44', chaseRange: 11, meshType: 'briarwolf', behavior: 'charge' },
     { count: 3, maxHp: 4, speed: [1.2, 2.0], body: '#1a4a0a', accent: '#44cc22', chaseRange: 15, meshType: 'thornspitter', behavior: 'ranged' },
     { count: 2, maxHp: 6, speed: [0.7, 1.2], body: '#3a5a1a', accent: '#88dd44', chaseRange: 7,  meshType: 'knight' },
+    { count: 4, maxHp: 3, speed: [2.8, 3.8], body: '#2d7d20', accent: '#55cc44', chaseRange: 14, meshType: 'goblin', behavior: 'charge' },
   ],
   ice: [
     { count: 5, maxHp: 5, speed: [1.5, 2.4], body: '#88ccff', accent: '#ffffff', chaseRange: 10, meshType: 'slime' },
