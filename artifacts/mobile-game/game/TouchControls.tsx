@@ -1,6 +1,6 @@
 import React, { useRef, useCallback } from "react";
 import {
-  View, StyleSheet, PanResponder, TouchableOpacity, Dimensions, Text,
+  View, StyleSheet, PanResponder, TouchableOpacity, Dimensions, Text, Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -13,7 +13,7 @@ const JOYSTICK_DOT = 20;
 
 export default function TouchControls() {
   const joystickOriginRef = useRef<{ x: number; y: number } | null>(null);
-  const dotRef = useRef<View>(null);
+  const dotAnim = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
   const togglePause = useGameStore(s => s.togglePause);
   const gameState = useGameStore(s => s.gameState);
   const selectedWeapon = useGameStore(s => s.selectedWeapon);
@@ -43,19 +43,13 @@ export default function TouchControls() {
         const ny = len > 0 ? (dy / len) * clampedLen : 0;
         touchInput.joyX = nx / maxLen;
         touchInput.joyY = ny / maxLen;
-        if (dotRef.current) {
-          dotRef.current.setNativeProps({
-            style: { transform: [{ translateX: nx }, { translateY: ny }] },
-          });
-        }
+        dotAnim.setValue({ x: nx, y: ny });
       },
       onPanResponderRelease: () => {
         touchInput.joyX = 0;
         touchInput.joyY = 0;
         joystickOriginRef.current = null;
-        if (dotRef.current) {
-          dotRef.current.setNativeProps({ style: { transform: [{ translateX: 0 }, { translateY: 0 }] } });
-        }
+        dotAnim.setValue({ x: 0, y: 0 });
       },
       onPanResponderTerminate: () => {
         touchInput.joyX = 0;
@@ -130,7 +124,7 @@ export default function TouchControls() {
       {/* Left: Joystick */}
       <View style={styles.leftZone} {...panResponder.panHandlers}>
         <View style={styles.joystickBase}>
-          <View ref={dotRef} style={styles.joystickDot} />
+          <Animated.View style={[styles.joystickDot, { transform: dotAnim.getTranslateTransform() }]} />
         </View>
       </View>
 
