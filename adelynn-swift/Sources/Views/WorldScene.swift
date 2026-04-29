@@ -13,6 +13,8 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
     private var guardianNode:  GuardianNode?
     private var bossNode:      BossNode?
 
+    private let screenShake = ScreenShake()
+
     // MARK: - State
     private var transitionCooldown: TimeInterval = 0
     private var autosaveTimer:      TimeInterval = 0
@@ -20,9 +22,14 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
     private var fanfareNode:        SKNode?
     private var lorePopupNode:      SKNode?
     private var pauseMenuNode:      SKNode?
+    private var pauseQuestLogNode:  SKNode?
     private var nearLoreDef:        LoreStoneDef?
     private var nearChestNode:      ChestSprite?
     private var nearPortalDef:      PortalDef?
+    private var nearNPCDef:         NPCDef?
+    private var nearShopId:         String?
+    private var shopMenuNode:       SKNode?
+    private var npcDialogueNode:    SKNode?
     private var didTriggerGameOver  = false
     private var didTriggerVictory   = false
 
@@ -35,6 +42,7 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
 
         setupCamera()
         setupWorld()
+        GameJuice.attachAreaAtmosphere(to: worldLayer, area: currentArea)
         setupHUD()
         setupControls()
         showAreaBanner()
@@ -69,6 +77,8 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
         addPortals()
         addChests()
         addLoreStones()
+        addNPCs()
+        addShopkeepers()
         addShards()
         spawnEnemies()
 
@@ -90,7 +100,7 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
             let wall = SKShapeNode(rect:r); wall.fillColor = .clear; wall.strokeColor = .clear
             let pb = SKPhysicsBody(rectangleOf:r.size, center:CGPoint(x:r.midX,y:r.midY))
             pb.isDynamic = false; pb.categoryBitMask = PhysicsCategory.wall
-            pb.collisionBitMask = PhysicsCategory.player | PhysicsCategory.enemy
+            pb.collisionBitMask = PhysicsCategory.player | PhysicsCategory.enemy | PhysicsCategory.guardian | PhysicsCategory.boss
             wall.physicsBody = pb; worldLayer.addChild(wall)
         }
     }
@@ -103,6 +113,7 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
             let y = CGFloat(cos(seed*1.73)) * (hh-28)
             if abs(x)<60 && abs(y)<60 { continue }
             let d = makeDecorNode(index:i); d.position = CGPoint(x:x,y:y); d.zPosition = 2
+            attachDecorPhysics(d, index:i)
             worldLayer.addChild(d)
         }
 
@@ -148,6 +159,27 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
         return node
     }
 
+    /// Trees / rocks / props — solid obstacles (category `wall` matches border walls).
+    private func attachDecorPhysics(_ node: SKShapeNode, index: Int) {
+        let radius: CGFloat
+        switch currentArea {
+        case .field:   radius = 11
+        case .forest:  radius = 15
+        case .desert:  radius = 8 + CGFloat(index % 5) * 2.5
+        case .volcano: radius = 14
+        case .ice:     radius = 13
+        case .cave:    radius = 12
+        case .sky:     radius = 18
+        case .crypt:   radius = 12
+        default:       radius = 13
+        }
+        let pb = SKPhysicsBody(circleOfRadius: radius)
+        pb.isDynamic = false
+        pb.categoryBitMask = PhysicsCategory.wall
+        pb.collisionBitMask = PhysicsCategory.player | PhysicsCategory.enemy | PhysicsCategory.guardian | PhysicsCategory.boss
+        node.physicsBody = pb
+    }
+
     private func addPortals() {
         guard let defs = WorldConfig.portals[currentArea] else { return }
         for def in defs {
@@ -170,6 +202,24 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
             let s = LoreStoneSprite(def:def); s.position = def.position; s.zPosition = 3
             worldLayer.addChild(s)
         }
+    }
+
+    private func addNPCs() {
+        guard let defs = WorldConfig.npcsByArea[currentArea] else { return }
+        for def in defs {
+            let n = NPCSprite(def: def)
+            n.position = def.position
+            n.zPosition = 3
+            worldLayer.addChild(n)
+        }
+    }
+
+    private func addShopkeepers() {
+        guard let sh = WorldConfig.shopkeepers[currentArea] else { return }
+        let m = MerchantSprite(id: sh.id)
+        m.position = sh.position
+        m.zPosition = 4
+        worldLayer.addChild(m)
     }
 
     private func addShards() {
@@ -198,7 +248,7 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
                 x = max(-ws.width/2+40, min(ws.width/2-40, x))
                 y = max(-ws.height/2+40, min(ws.height/2-40, y))
                 let e = EnemyNode(enemyType:cfg.enemyType, behavior:cfg.behavior, maxHP:cfg.maxHP,
-                                  speed:CGFloat.random(in:cfg.speed), bodyColor:cfg.bodyColor,
+                                  moveSpeed: CGFloat.random(in: cfg.speed), bodyColor:cfg.bodyColor,
                                   accentColor:cfg.accentColor, chaseRange:cfg.chaseRange)
                 e.position = CGPoint(x:x,y:y); e.zPosition = 4
                 worldLayer.addChild(e); enemies.append(e)
@@ -212,8 +262,35 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func spawnBoss() {
-        let b = BossNode(); b.position = CGPoint(x:0,y:-150); b.zPosition = 5
-        worldLayer.addChild(b); bossNode = b
+        let b = BossNode()
+        b.position = CGPoint(x: 0, y: -150)
+        b.zPosition = 5
+        b.onSpawnAdd = { [weak self] pp in self?.spawnMalgrathAdd(near: pp) }
+        worldLayer.addChild(b)
+        bossNode = b
+    }
+
+    /// Phase-3 Malgrath adds — tracked like normal enemies for AI.
+    private func spawnMalgrathAdd(near playerPos: CGPoint) {
+        let ws = WorldConfig.worldSize
+        let hx = ws.width / 2 - 36
+        let hy = ws.height / 2 - 36
+        let angle = CGFloat.random(in: 0..<(2 * .pi))
+        var x = playerPos.x + cos(angle) * 125
+        var y = playerPos.y + sin(angle) * 125
+        x = max(-hx, min(hx, x))
+        y = max(-hy, min(hy, y))
+        let e = EnemyNode(
+            enemyType: .wraith, behavior: .ranged, maxHP: 2,
+            moveSpeed: CGFloat.random(in: 100...140),
+            bodyColor: .from(hex: "#220022"),
+            accentColor: .from(hex: "#ff4488"),
+            chaseRange: 260
+        )
+        e.position = CGPoint(x: x, y: y)
+        e.zPosition = 4
+        worldLayer.addChild(e)
+        enemies.append(e)
     }
 
     private func setupHUD() {
@@ -225,12 +302,28 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
         controlsNode = ControlsNode(size:size); controlsNode.zPosition = 110
         cameraNode.addChild(controlsNode)
 
-        controlsNode.onAttack      = { [weak self] in guard let self else{return}; player.performAttack(in: worldLayer) }
-        controlsNode.onSpinAttack  = { [weak self] in guard let self else{return}; player.performSpinAttack(in: worldLayer) }
+        controlsNode.onAttack      = { [weak self] in
+            GameStore.shared.isBlocking = false
+            guard let self else { return }
+            player.performAttack(in: worldLayer)
+        }
+        controlsNode.onSpinAttack  = { [weak self] in
+            GameStore.shared.isBlocking = false
+            guard let self else { return }
+            player.performSpinAttack(in: worldLayer)
+        }
+        controlsNode.onBlock       = { GameStore.shared.isBlocking = $0 }
         controlsNode.onInteract    = { [weak self] in self?.handleInteract() }
         controlsNode.onCycleWeapon = { GameStore.shared.cycleWeapon(direction:1) }
         controlsNode.onRun         = { [weak self] r in self?.player.isRunning = r }
         controlsNode.onTogglePause = { [weak self] in self?.togglePause() }
+        controlsNode.onDodge = { [weak self] in
+            guard let self else { return }
+            player.performDodge(in: worldLayer, joystickDirection: controlsNode.joystickDirection)
+        }
+        controlsNode.onUsePotion = {
+            if GameStore.shared.useHeartPotion() { SaveManager.shared.save() }
+        }
     }
 
     // MARK: - Update Loop
@@ -238,10 +331,12 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
         guard GameStore.shared.gameState == .playing else { return }
         let delta: TimeInterval = 1.0/60.0
         let store = GameStore.shared
+        store.tickDodgeInvulnerability(delta)
 
         // Player movement
         player.updateMovement(direction: controlsNode.joystickDirection, delta: delta)
-        cameraNode.position = player.position
+        let shake = screenShake.tick(delta: delta)
+        cameraNode.position = CGPoint(x: player.position.x + shake.dx, y: player.position.y + shake.dy)
 
         // Enemies
         let pp = player.position
@@ -254,9 +349,18 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
         checkChests()
         checkLoreStones()
         checkShards()
+        checkNPCs()
+        checkShopkeeper()
+        refreshInteractHint()
+
+        if GameStore.shared.pendingParryPulse {
+            GameStore.shared.pendingParryPulse = false
+            GameJuice.addParryFlash(to: worldLayer, at: player.position)
+            screenShake.impulse(3.5)
+        }
 
         // HUD
-        hudNode.update(store:store)
+        hudNode.update(store: store, playerWorldPos: player.position)
 
         // Combo
         store.tickCombo(delta)
@@ -276,10 +380,23 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
 
         // Clean dead
         enemies.removeAll { e in
-            if e.isDead { e.playDeathEffect(); return true }; return false
+            if e.isDead {
+                GameJuice.addDeathBurst(to: worldLayer, at: e.position, accent: e.accentColor)
+                e.playDeathEffect()
+                return true
+            }
+            return false
         }
-        if let g = guardianNode, g.isDead { g.playDeathEffect(); guardianNode=nil }
-        if let b = bossNode, b.isDead    { b.playDeathEffect(); bossNode=nil }
+        if let g = guardianNode, g.isDead {
+            GameJuice.addDeathBurst(to: worldLayer, at: g.position, accent: g.cfg.accentColor)
+            g.playDeathEffect()
+            guardianNode = nil
+        }
+        if let b = bossNode, b.isDead {
+            GameJuice.addDeathBurst(to: worldLayer, at: b.position, accent: UIColor(red: 0.85, green: 0.15, blue: 1, alpha: 1))
+            b.playDeathEffect()
+            bossNode = nil
+        }
 
         // Game state checks
         if store.hearts <= 0 && !didTriggerGameOver { didTriggerGameOver=true; triggerGameOver() }
@@ -307,24 +424,63 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
 
     private func checkChests() {
         let threshold: CGFloat = 52
-        for node in worldLayer.children.compactMap({$0 as? ChestSprite}) {
-            if player.position.distance(to:node.position) < threshold {
-                hudNode.showInteractHint("Open Chest"); nearChestNode=node; return
+        nearChestNode = nil
+        for node in worldLayer.children.compactMap({ $0 as? ChestSprite }) {
+            if player.position.distance(to: node.position) < threshold {
+                nearChestNode = node
+                return
             }
         }
-        nearChestNode=nil
-        if nearLoreDef==nil { hudNode.hideInteractHint() }
     }
 
     private func checkLoreStones() {
         let threshold: CGFloat = 52
-        for node in worldLayer.children.compactMap({$0 as? LoreStoneSprite}) {
-            if player.position.distance(to:node.position) < threshold {
-                hudNode.showInteractHint("Read: \(node.def.title)"); nearLoreDef=node.def; return
+        nearLoreDef = nil
+        for node in worldLayer.children.compactMap({ $0 as? LoreStoneSprite }) {
+            if player.position.distance(to: node.position) < threshold {
+                nearLoreDef = node.def
+                return
             }
         }
-        nearLoreDef=nil
-        if nearChestNode==nil { hudNode.hideInteractHint() }
+    }
+
+    private func checkNPCs() {
+        let th: CGFloat = 52
+        nearNPCDef = nil
+        guard let defs = WorldConfig.npcsByArea[currentArea] else { return }
+        for def in defs where player.position.distance(to: def.position) < th {
+            nearNPCDef = def
+            return
+        }
+    }
+
+    private func checkShopkeeper() {
+        let th: CGFloat = 52
+        nearShopId = nil
+        guard let sh = WorldConfig.shopkeepers[currentArea] else { return }
+        if player.position.distance(to: sh.position) < th {
+            nearShopId = sh.id
+        }
+    }
+
+    private func refreshInteractHint() {
+        if nearChestNode != nil {
+            hudNode.showInteractHint("Open Chest")
+            return
+        }
+        if let lore = nearLoreDef {
+            hudNode.showInteractHint("Read: \(lore.title)")
+            return
+        }
+        if nearShopId != nil {
+            hudNode.showInteractHint("Rowan's Wares — Shop")
+            return
+        }
+        if let npc = nearNPCDef {
+            hudNode.showInteractHint("Talk: \(npc.name)")
+            return
+        }
+        hudNode.hideInteractHint()
     }
 
     private func checkShards() {
@@ -338,9 +494,13 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
 
     // MARK: - Interact
     private func handleInteract() {
+        if shopMenuNode != nil { dismissShop(); return }
+        if npcDialogueNode != nil { dismissNPCDialogue(); return }
         if lorePopupNode != nil { dismissLorePopup(); return }
+        if nearShopId != nil { openShop(); return }
+        if let npc = nearNPCDef { showNPCDialogue(npc); return }
         if let chest = nearChestNode { openChest(chest); return }
-        if let stone = nearLoreDef   { showLorePopup(stone); return }
+        if let stone = nearLoreDef { showLorePopup(stone); return }
     }
 
     private func openChest(_ chest: ChestSprite) {
@@ -372,13 +532,169 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
         lorePopupNode=nil
     }
 
+    // MARK: - Shop (Rowan)
+    private func openShop() {
+        guard shopMenuNode == nil else { return }
+        let root = SKNode()
+        root.zPosition = 210
+        let overlay = SKShapeNode(rectOf: size)
+        overlay.fillColor = UIColor.black.withAlphaComponent(0.72)
+        overlay.strokeColor = .clear
+        root.addChild(overlay)
+
+        let panelW = min(size.width * 0.88, 340)
+        let bg = SKShapeNode(rectOf: CGSize(width: panelW, height: 220), cornerRadius: 14)
+        bg.fillColor = UIColor(red: 0.06, green: 0.04, blue: 0.12, alpha: 0.96)
+        bg.strokeColor = UIColor(red: 0.9, green: 0.55, blue: 0.2, alpha: 0.85)
+        bg.lineWidth = 2
+        root.addChild(bg)
+
+        let title = SKLabelNode(text: "Rowan's Wares")
+        title.fontName = "Georgia-Bold"
+        title.fontSize = 20
+        title.fontColor = UIColor(red: 1, green: 0.82, blue: 0.35, alpha: 1)
+        title.position = CGPoint(x: 0, y: 82)
+        root.addChild(title)
+
+        let sub = SKLabelNode(text: "Rupees: \(GameStore.shared.rupees)")
+        sub.fontName = "AvenirNext"
+        sub.fontSize = 13
+        sub.fontColor = UIColor.white.withAlphaComponent(0.75)
+        sub.position = CGPoint(x: 0, y: 56)
+        sub.name = "shopRupeeLabel"
+        root.addChild(sub)
+
+        let rows: [(String, String, Int)] = [
+            ("shopPotion", "Heart Draught — restores hearts (16 r)", 16),
+            ("shopAmmo", "Ammo Satchel — arrows, bombs & more (24 r)", 24),
+            ("shopArmor", "Armor Polish — +1 armor tier, max 2 (40 r)", 40),
+        ]
+        for (i, row) in rows.enumerated() {
+            let btn = makeShopRow(name: row.0, label: row.1, y: CGFloat(12 - i * 44))
+            root.addChild(btn)
+        }
+
+        let close = makePauseBtn(text: "Close", name: "shopClose")
+        close.position = CGPoint(x: 0, y: -92)
+        root.addChild(close)
+
+        cameraNode.addChild(root)
+        shopMenuNode = root
+    }
+
+    private func makeShopRow(name: String, label: String, y: CGFloat) -> SKShapeNode {
+        let btn = SKShapeNode(rectOf: CGSize(width: min(size.width * 0.82, 300), height: 38), cornerRadius: 8)
+        btn.fillColor = UIColor(red: 0.15, green: 0.12, blue: 0.22, alpha: 1)
+        btn.strokeColor = UIColor.white.withAlphaComponent(0.2)
+        btn.lineWidth = 1
+        btn.name = name
+        btn.position = CGPoint(x: 0, y: y)
+        let l = SKLabelNode(text: label)
+        l.fontName = "AvenirNext-DemiBold"
+        l.fontSize = 11
+        l.fontColor = .white
+        l.verticalAlignmentMode = .center
+        l.preferredMaxLayoutWidth = min(size.width * 0.78, 280)
+        l.numberOfLines = 2
+        btn.addChild(l)
+        return btn
+    }
+
+    private func dismissShop() {
+        shopMenuNode?.removeFromParent()
+        shopMenuNode = nil
+    }
+
+    private func handleShopTap(at loc: CGPoint) {
+        guard let root = shopMenuNode else { return }
+        for n in root.nodes(at: loc) {
+            var node: SKNode? = n
+            while let c = node {
+                switch c.name {
+                case "shopClose", "lbl_shopClose":
+                    dismissShop(); return
+                case "shopPotion":
+                    if GameStore.shared.buyHeartPotion() { SaveManager.shared.save(); refreshShopRupeeLabel(in: root) }
+                    return
+                case "shopAmmo":
+                    if GameStore.shared.buyAmmoSatchel() { SaveManager.shared.save(); refreshShopRupeeLabel(in: root) }
+                    return
+                case "shopArmor":
+                    if GameStore.shared.buyArmorPolish() { SaveManager.shared.save(); refreshShopRupeeLabel(in: root) }
+                    return
+                default: break
+                }
+                node = c.parent
+            }
+        }
+        dismissShop()
+    }
+
+    private func refreshShopRupeeLabel(in root: SKNode) {
+        (root.childNode(withName: "shopRupeeLabel") as? SKLabelNode)?.text = "Rupees: \(GameStore.shared.rupees)"
+    }
+
+    // MARK: - NPC dialogue
+    private func showNPCDialogue(_ def: NPCDef) {
+        GameStore.shared.talkedToNPCs.insert(def.id)
+        dismissNPCDialogue()
+        let root = SKNode()
+        root.zPosition = 200
+        let mw = min(size.width * 0.88, 360)
+        let text = def.lines.joined(separator: "\n\n")
+        let approxLines = max(4, def.lines.count * 2)
+        let boxH = CGFloat(min(220, 70 + CGFloat(approxLines) * 18))
+
+        let bg = SKShapeNode(rectOf: CGSize(width: mw, height: boxH), cornerRadius: 14)
+        bg.fillColor = UIColor(red: 0.05, green: 0.03, blue: 0.1, alpha: 0.95)
+        bg.strokeColor = def.color.withAlphaComponent(0.75)
+        bg.lineWidth = 2
+        root.addChild(bg)
+
+        let nameLbl = SKLabelNode(text: def.name)
+        nameLbl.fontName = "Georgia-Bold"
+        nameLbl.fontSize = 15
+        nameLbl.fontColor = def.color
+        nameLbl.position = CGPoint(x: 0, y: boxH * 0.5 - 28)
+        root.addChild(nameLbl)
+
+        let body = SKLabelNode(text: text)
+        body.fontName = "Georgia"
+        body.fontSize = 12
+        body.fontColor = UIColor.white.withAlphaComponent(0.9)
+        body.preferredMaxLayoutWidth = mw - 28
+        body.numberOfLines = 0
+        body.verticalAlignmentMode = .top
+        body.horizontalAlignmentMode = .center
+        body.position = CGPoint(x: 0, y: boxH * 0.5 - 52)
+        root.addChild(body)
+
+        let hint = SKLabelNode(text: "Tap X or anywhere to close")
+        hint.fontName = "AvenirNext"
+        hint.fontSize = 10
+        hint.fontColor = UIColor.white.withAlphaComponent(0.45)
+        hint.position = CGPoint(x: 0, y: -boxH * 0.5 + 20)
+        root.addChild(hint)
+
+        root.position = CGPoint(x: 0, y: -size.height * 0.12)
+        cameraNode.addChild(root)
+        npcDialogueNode = root
+    }
+
+    private func dismissNPCDialogue() {
+        npcDialogueNode?.removeFromParent()
+        npcDialogueNode = nil
+    }
+
     private func buildLorePopup(_ def: LoreStoneDef) -> SKNode {
         let c = SKNode(); let mw = min(size.width*0.88, 370)
         let bg = SKShapeNode(rectOf:CGSize(width:mw, height:130), cornerRadius:14)
         bg.fillColor = UIColor(red:0.04,green:0.02,blue:0.14,alpha:0.95)
         bg.strokeColor = UIColor(red:0.45,green:0.35,blue:0.85,alpha:0.7); bg.lineWidth=1.5; c.addChild(bg)
 
-        let icon = SKLabelNode(text:"📜"); icon.fontSize=20
+        let icon = SKLabelNode(text: "📜")
+        icon.fontSize = 20
+        SpriteKitEmojiSupport.applyEmojiFont(to: icon, size: 20)
         icon.position = CGPoint(x:-mw/2+28, y:44); icon.verticalAlignmentMode = .center; c.addChild(icon)
 
         let title = SKLabelNode(text:def.title); title.fontName="Georgia-Bold"; title.fontSize=13
@@ -424,7 +740,9 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
         bg.fillColor = UIColor.black.withAlphaComponent(0.82)
         bg.strokeColor = UIColor(red:1.0,green:0.8,blue:0.2,alpha:0.65); bg.lineWidth=1.5; node.addChild(bg)
 
-        let icon = SKLabelNode(text:f.icon); icon.fontSize=26
+        let icon = SKLabelNode(text: f.icon)
+        icon.fontSize = 26
+        SpriteKitEmojiSupport.applyEmojiFont(to: icon, size: 26)
         icon.position = CGPoint(x:-110, y:0); icon.verticalAlignmentMode = .center; node.addChild(icon)
 
         let nl = SKLabelNode(text:f.name); nl.fontName="Georgia-Bold"; nl.fontSize=15
@@ -468,22 +786,73 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func showPauseMenu() {
+        pauseQuestLogNode = nil
         let m = SKNode(); m.zPosition=200
         let overlay = SKShapeNode(rectOf:size)
         overlay.fillColor = UIColor.black.withAlphaComponent(0.68); overlay.strokeColor = .clear
         m.addChild(overlay)
 
         let t = SKLabelNode(text:"Paused"); t.fontName="Georgia-Bold"; t.fontSize=34; t.fontColor = .white
-        t.position = CGPoint(x:0,y:65); t.verticalAlignmentMode = .center; m.addChild(t)
+        t.position = CGPoint(x:0,y:78); t.verticalAlignmentMode = .center; m.addChild(t)
 
-        for (i,(txt,nm)) in [("Resume","resume"),("Save & Title","quitTitle")].enumerated() {
+        for (i,(txt,nm)) in [("Resume","resume"),("Quest log","questLog"),("Save & Title","quitTitle")].enumerated() {
             let btn = makePauseBtn(text:txt, name:nm)
-            btn.position = CGPoint(x:0, y:CGFloat(-i)*62); m.addChild(btn)
+            btn.position = CGPoint(x:0, y:12 - CGFloat(i)*62); m.addChild(btn)
         }
         cameraNode.addChild(m); pauseMenuNode=m
     }
 
-    private func hidePauseMenu() { pauseMenuNode?.removeFromParent(); pauseMenuNode=nil }
+    private func hidePauseMenu() {
+        pauseQuestLogNode?.removeFromParent(); pauseQuestLogNode=nil
+        pauseMenuNode?.removeFromParent(); pauseMenuNode=nil
+    }
+
+    private func showQuestLogPanel() {
+        guard let menu = pauseMenuNode else { return }
+        pauseQuestLogNode?.removeFromParent()
+        let q = SKNode(); q.zPosition = 5
+        let panel = SKShapeNode(rectOf: CGSize(width: min(size.width - 36, 340), height: 268), cornerRadius: 14)
+        panel.fillColor = UIColor(red:0.08,green:0.1,blue:0.2,alpha:0.96)
+        panel.strokeColor = UIColor.white.withAlphaComponent(0.22); panel.lineWidth = 1.5
+        q.addChild(panel)
+
+        let title = SKLabelNode(text: "Quest log")
+        title.fontName = "Georgia-Bold"; title.fontSize = 22; title.fontColor = .white
+        title.position = CGPoint(x: 0, y: 108); title.verticalAlignmentMode = .center
+        q.addChild(title)
+
+        var y: CGFloat = 72
+        for line in questLogBodyLines() {
+            let ln = SKLabelNode(text: line)
+            ln.fontName = "Georgia"; ln.fontSize = line.isEmpty ? 6 : 14
+            ln.fontColor = UIColor(white: 0.92, alpha: 1)
+            ln.position = CGPoint(x: 0, y: y)
+            ln.verticalAlignmentMode = .center
+            q.addChild(ln)
+            y -= line.isEmpty ? 10 : 22
+        }
+
+        let back = makePauseBtn(text: "Back", name: "questBack")
+        back.position = CGPoint(x: 0, y: -118)
+        q.addChild(back)
+
+        menu.addChild(q)
+        pauseQuestLogNode = q
+    }
+
+    private func questLogBodyLines() -> [String] {
+        let s = GameStore.shared
+        let gTotal = WorldConfig.guardians.count
+        let gDone = s.guardianDefeated.count
+        return [
+            "Crystal shards: \(s.shardsCollected)/\(WorldConfig.shards.count)",
+            "Guardians defeated: \(gDone)/\(gTotal)",
+            s.bossDefeated ? "Malgrath: fallen" : "Malgrath: the Shattered King awaits",
+            "",
+            "Find three shards to open the path to the throne.",
+            "Seek nine guardian courts to ascend the blade."
+        ]
+    }
 
     private func makePauseBtn(text: String, name: String) -> SKShapeNode {
         let btn = SKShapeNode(rectOf:CGSize(width:200,height:46), cornerRadius:10)
@@ -525,8 +894,16 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
             guard let t = touches.first else { return }
             let loc = t.location(in:cameraNode)
             for n in cameraNode.nodes(at:loc) {
+                if n.name == "questBack" || n.name == "lbl_questBack" {
+                    pauseQuestLogNode?.removeFromParent(); pauseQuestLogNode = nil
+                    return
+                }
+            }
+            if pauseQuestLogNode != nil { return }
+            for n in cameraNode.nodes(at:loc) {
                 if n.name == "resume"   || n.name == "lbl_resume"    { togglePause(); return }
-                if n.name == "quitTitle"|| n.name == "lbl_quitTitle" {
+                if n.name == "questLog" || n.name == "lbl_questLog" { showQuestLogPanel(); return }
+                if n.name == "quitTitle" || n.name == "lbl_quitTitle" {
                     SaveManager.shared.save()
                     isPaused=false; GameStore.shared.gameState = .playing
                     guard let v=view else{return}
@@ -537,22 +914,30 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
             return
         }
 
-        // Dismiss lore popup on tap
+        if shopMenuNode != nil {
+            guard let t = touches.first else { return }
+            handleShopTap(at: t.location(in: cameraNode))
+            return
+        }
+        if npcDialogueNode != nil {
+            dismissNPCDialogue()
+            return
+        }
         if lorePopupNode != nil { dismissLorePopup(); return }
 
-        controlsNode.touchesBegan(touches, with:event)
+        controlsNode.forwardTouchesBegan(touches, with: event)
     }
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard GameStore.shared.gameState == .playing else { return }
-        controlsNode.touchesMoved(touches, with:event)
+        controlsNode.forwardTouchesMoved(touches, with: event)
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        controlsNode.touchesEnded(touches, with:event)
+        controlsNode.forwardTouchesEnded(touches, with: event)
     }
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        controlsNode.touchesCancelled(touches, with:event)
+        controlsNode.forwardTouchesCancelled(touches, with: event)
     }
 
     // MARK: - Physics
@@ -569,22 +954,39 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
         // Player weapon → enemy
         if let (wBody, eBody) = bodies(a:PhysicsCategory.playerWeapon, b:PhysicsCategory.enemy),
            let en = eBody.node as? EnemyNode,
-           let wp = wBody.node as? WeaponProjectileNode {
-            en.takeDamage(wp.damage, from: wp.position); wp.onHit()
+           let wp = weaponProjectile(from: wBody) {
+            let hit = wp.position
+            let (dmg, crit) = rollWeaponDamage(base: wp.damage, weapon: wp.sourceWeapon)
+            en.takeDamage(dmg, from: hit, isCritical: crit, hitEffect: wp.hitEffect, sourceWeapon: wp.sourceWeapon)
+            wp.onHit()
+            juiceEnemyWeaponHit(at: hit, enemy: en)
+            if crit { GameJuice.addCritFlash(to: worldLayer, at: hit) }
         }
 
         // Player weapon → guardian
         if let (wBody, gBody) = bodies(a:PhysicsCategory.playerWeapon, b:PhysicsCategory.guardian),
            let gn = gBody.node as? GuardianNode,
-           let wp = wBody.node as? WeaponProjectileNode {
-            gn.takeDamage(wp.damage); wp.onHit()
+           let wp = weaponProjectile(from: wBody) {
+            let hit = wp.position
+            let (dmg, crit) = rollWeaponDamage(base: wp.damage, weapon: wp.sourceWeapon)
+            gn.takeDamage(dmg, isCritical: crit, hitEffect: wp.hitEffect)
+            wp.onHit()
+            screenShake.impulse(gn.isDead ? 11 : 5.5)
+            GameJuice.addHitSparks(to: worldLayer, at: hit, color: gn.cfg.accentColor, count: gn.isDead ? 18 : 10)
+            if crit { GameJuice.addCritFlash(to: worldLayer, at: hit) }
         }
 
         // Player weapon → boss
         if let (wBody, bBody) = bodies(a:PhysicsCategory.playerWeapon, b:PhysicsCategory.boss),
            let bn = bBody.node as? BossNode,
-           let wp = wBody.node as? WeaponProjectileNode {
-            bn.takeDamage(wp.damage); wp.onHit()
+           let wp = weaponProjectile(from: wBody) {
+            let hit = wp.position
+            let (dmg, crit) = rollWeaponDamage(base: wp.damage, weapon: wp.sourceWeapon)
+            bn.takeDamage(dmg, isCritical: crit, hitEffect: wp.hitEffect)
+            wp.onHit()
+            screenShake.impulse(bn.isDead ? 15 : 6.5)
+            GameJuice.addHitSparks(to: worldLayer, at: hit, color: UIColor(red: 0.9, green: 0.35, blue: 1, alpha: 1), count: bn.isDead ? 22 : 10)
+            if crit { GameJuice.addCritFlash(to: worldLayer, at: hit) }
         }
 
         // Enemy weapon → player
@@ -593,11 +995,130 @@ class WorldScene: SKScene, SKPhysicsContactDelegate {
             GameStore.shared.damagePlayer(pn.damage)
             pn.run(SKAction.sequence([SKAction.fadeOut(withDuration:0.06), SKAction.removeFromParent()]))
             player?.flashHit()
+            screenShake.impulse(6.5)
+            GameJuice.addPainSparks(to: worldLayer, at: player.position)
         }
+    }
+
+    // MARK: - Juice (screen shake, particles)
+    private func juiceEnemyWeaponHit(at hitWorld: CGPoint, enemy: EnemyNode) {
+        let accent = enemy.accentColor
+        let elite = enemy.isElite
+        let dead = enemy.isDead
+        screenShake.impulse(dead ? (elite ? 9 : 6) : (elite ? 4.5 : 2.4))
+        GameJuice.addHitSparks(to: worldLayer, at: hitWorld, color: UIColor.white.withAlphaComponent(0.9), count: 3)
+        GameJuice.addHitSparks(to: worldLayer, at: hitWorld, color: accent, count: elite ? 12 : 7)
+    }
+
+    func juiceSwordSwing() {
+        screenShake.impulse(1.4)
+    }
+
+    func juiceSpinAttack() {
+        screenShake.impulse(4)
+        GameJuice.addHitSparks(to: worldLayer, at: player.position, color: UIColor(red: 0.45, green: 0.85, blue: 1, alpha: 1), count: 8)
+    }
+
+    func juiceBomb(at worldPos: CGPoint) {
+        screenShake.impulse(16)
+        GameJuice.addExplosionFlash(to: worldLayer, at: worldPos)
+    }
+
+    func juiceDodgeRoll() {
+        screenShake.impulse(2.2)
+    }
+
+    private func weaponProjectile(from body: SKPhysicsBody) -> WeaponProjectileNode? {
+        var n: SKNode? = body.node
+        while let cur = n {
+            if let w = cur as? WeaponProjectileNode { return w }
+            n = cur.parent
+        }
+        return nil
+    }
+
+    private func rollWeaponDamage(base: CGFloat, weapon: WeaponType) -> (CGFloat, Bool) {
+        let m = GameStore.shared.weaponMasteryDamageMultiplier(for: weapon)
+        let scaled = base * m
+        if CGFloat.random(in: 0...1) < GameStore.shared.effectiveCritChance { return (scaled * 2.08, true) }
+        return (scaled, false)
     }
 }
 
 // MARK: - Helper Sprites
+
+class NPCSprite: SKNode {
+    let npcId: String
+    init(def: NPCDef) {
+        self.npcId = def.id
+        super.init()
+        let body = SKShapeNode(circleOfRadius: 14)
+        body.fillColor = def.color.withAlphaComponent(0.88)
+        body.strokeColor = UIColor.white.withAlphaComponent(0.35)
+        body.lineWidth = 1.5
+        addChild(body)
+        let hat = SKShapeNode(rectOf: CGSize(width: 20, height: 8), cornerRadius: 2)
+        hat.fillColor = def.color.withAlphaComponent(0.65)
+        hat.strokeColor = .clear
+        hat.position = CGPoint(x: 0, y: 12)
+        addChild(hat)
+        let glow = SKShapeNode(circleOfRadius: 22)
+        glow.fillColor = .clear
+        glow.strokeColor = UIColor(red: 0.55, green: 0.85, blue: 1, alpha: 0.35)
+        glow.lineWidth = 2
+        glow.run(SKAction.repeatForever(SKAction.sequence([
+            SKAction.fadeAlpha(to: 0.15, duration: 1.1),
+            SKAction.fadeAlpha(to: 0.65, duration: 1.1)
+        ])))
+        addChild(glow)
+        let pb = SKPhysicsBody(circleOfRadius: 16)
+        pb.isDynamic = false
+        pb.categoryBitMask = PhysicsCategory.loreStone
+        pb.collisionBitMask = PhysicsCategory.player | PhysicsCategory.enemy | PhysicsCategory.guardian | PhysicsCategory.boss
+        physicsBody = pb
+    }
+    required init?(coder: NSCoder) { fatalError() }
+}
+
+class MerchantSprite: SKNode {
+    let merchantId: String
+    init(id: String) {
+        self.merchantId = id
+        super.init()
+        let stall = SKShapeNode(rectOf: CGSize(width: 44, height: 28), cornerRadius: 4)
+        stall.fillColor = UIColor(red: 0.45, green: 0.28, blue: 0.12, alpha: 1)
+        stall.strokeColor = UIColor(red: 0.95, green: 0.7, blue: 0.25, alpha: 0.9)
+        stall.lineWidth = 2
+        addChild(stall)
+        let awning = SKShapeNode(rectOf: CGSize(width: 50, height: 10), cornerRadius: 2)
+        awning.fillColor = UIColor(red: 0.75, green: 0.2, blue: 0.15, alpha: 1)
+        awning.strokeColor = .clear
+        awning.position = CGPoint(x: 0, y: 16)
+        addChild(awning)
+        let sign = SKLabelNode(text: "SHOP")
+        sign.fontName = "AvenirNext-Heavy"
+        sign.fontSize = 9
+        sign.fontColor = UIColor(red: 1, green: 0.9, blue: 0.45, alpha: 1)
+        sign.verticalAlignmentMode = .center
+        sign.position = CGPoint(x: 0, y: 17)
+        addChild(sign)
+        let glow = SKShapeNode(circleOfRadius: 30)
+        glow.fillColor = .clear
+        glow.strokeColor = UIColor(red: 1, green: 0.55, blue: 0.15, alpha: 0.4)
+        glow.lineWidth = 2
+        glow.run(SKAction.repeatForever(SKAction.sequence([
+            SKAction.fadeAlpha(to: 0.12, duration: 0.9),
+            SKAction.fadeAlpha(to: 0.55, duration: 0.9)
+        ])))
+        addChild(glow)
+        let pb = SKPhysicsBody(rectangleOf: CGSize(width: 48, height: 32))
+        pb.isDynamic = false
+        pb.categoryBitMask = PhysicsCategory.chest
+        pb.collisionBitMask = PhysicsCategory.player | PhysicsCategory.enemy | PhysicsCategory.guardian | PhysicsCategory.boss
+        physicsBody = pb
+    }
+    required init?(coder: NSCoder) { fatalError() }
+}
 
 class PortalSprite: SKNode {
     let def: PortalDef
@@ -638,6 +1159,11 @@ class ChestSprite: SKNode {
             glow.run(SKAction.repeatForever(SKAction.sequence([SKAction.fadeAlpha(to:0.12,duration:1.0),SKAction.fadeAlpha(to:0.8,duration:1.0)])))
             addChild(glow)
         }
+        let pb = SKPhysicsBody(rectangleOf: CGSize(width: 28, height: 22))
+        pb.isDynamic = false
+        pb.categoryBitMask = PhysicsCategory.chest
+        pb.collisionBitMask = PhysicsCategory.player | PhysicsCategory.enemy | PhysicsCategory.guardian | PhysicsCategory.boss
+        physicsBody = pb
     }
     func open() {
         childNode(withName:"lid")?.run(SKAction.rotate(byAngle:-.pi*0.55, duration:0.2))
@@ -657,6 +1183,11 @@ class LoreStoneSprite: SKNode {
         glow.strokeColor = UIColor(red:0.45,green:0.35,blue:0.85,alpha:0.5); glow.lineWidth=2
         glow.run(SKAction.repeatForever(SKAction.sequence([SKAction.fadeAlpha(to:0.18,duration:1.5),SKAction.fadeAlpha(to:0.8,duration:1.5)])))
         addChild(glow)
+        let pb = SKPhysicsBody(rectangleOf: CGSize(width: 22, height: 30))
+        pb.isDynamic = false
+        pb.categoryBitMask = PhysicsCategory.loreStone
+        pb.collisionBitMask = PhysicsCategory.player | PhysicsCategory.enemy | PhysicsCategory.guardian | PhysicsCategory.boss
+        physicsBody = pb
     }
 }
 
@@ -676,6 +1207,11 @@ class ShardSprite: SKNode {
         glow.strokeColor = UIColor(red:0.5,green:0.8,blue:1.0,alpha:0.4); glow.lineWidth=2; addChild(glow)
         shard.run(SKAction.repeatForever(SKAction.sequence([SKAction.rotate(byAngle:.pi*0.08,duration:1.1),SKAction.rotate(byAngle:-.pi*0.08,duration:1.1)])))
         run(SKAction.repeatForever(SKAction.sequence([SKAction.moveBy(x:0,y:6,duration:1.1),SKAction.moveBy(x:0,y:-6,duration:1.1)])))
+        let pb = SKPhysicsBody(circleOfRadius: 18)
+        pb.isDynamic = false
+        pb.categoryBitMask = PhysicsCategory.shard
+        pb.collisionBitMask = PhysicsCategory.player | PhysicsCategory.enemy | PhysicsCategory.guardian | PhysicsCategory.boss
+        physicsBody = pb
     }
     func collect() {
         guard !collected else { return }; collected=true

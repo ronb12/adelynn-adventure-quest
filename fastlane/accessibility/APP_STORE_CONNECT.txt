@@ -1,0 +1,27 @@
+App Store Connect — Accessibility (“nutrition labels”)
+=======================================================
+
+Fastlane deliver does NOT upload these yet (see GitHub fastlane discussion #29634).
+Configure them in App Store Connect or via the App Store Connect API.
+
+Manual (recommended)
+--------------------
+1. Open App Store Connect → My Apps → Adelynn's Adventure Quest → App Information (or the version’s App Accessibility section, depending on ASC UI).
+2. Under App Accessibility, add declarations for each device family you ship:
+   • iPhone — device family IPHONE
+   • iPad — device family IPAD
+3. Toggle features to match what the app actually supports (see recommended_declarations.json and the notes below).
+4. Optional: set an Accessibility URL (public page describing accessibility) on the app record — same area as other marketing URLs.
+
+API (automation)
+----------------
+• Documentation: https://developer.apple.com/documentation/appstoreconnectapi/configuring-accessibility-declarations
+• Create: POST /v1/accessibilityDeclarations with relationships.app pointing to your app’s ID (internal ASC app id, e.g. 6764447633).
+• Publish the declaration when ready (draft → published per Apple’s workflow).
+
+Honesty notes for this build
+----------------------------
+• Native SpriteKit game: standard UIKit/SpriteKit text and controls; system alerts use Dynamic Type where applicable. Gameplay is primarily visual/touch — full VoiceOver coverage for in-world action is limited unless you add explicit accessibility elements.
+• Heavy screen shake / particle effects may affect users sensitive to motion; consider a Reduce Motion check in `GameStore` or settings if you expand accessibility.
+
+After changing declarations, submit/publish so the App Store product page shows them.

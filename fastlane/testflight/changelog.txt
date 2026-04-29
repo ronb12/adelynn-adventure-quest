@@ -1,0 +1,6 @@
+WHAT TO TEST
+- Install fresh, launch, and complete the tutorial or first area if present.
+- Exercise movement, attack, run, interact, weapon cycle, and block on both iPhone and iPad (portrait and landscape).
+- Fight regular enemies and at least one boss or guardian; confirm pickups, hearts, and save/resume.
+- Confirm offline play (airplane mode): title → new game → world loads with no network.
+- Report any crash, soft-lock, or UI overlap with device model and iOS version.

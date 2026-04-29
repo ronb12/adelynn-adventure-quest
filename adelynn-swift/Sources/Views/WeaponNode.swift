@@ -5,11 +5,16 @@ import UIKit
 class WeaponProjectileNode: SKNode {
     let damage: CGFloat
     let isPersistent: Bool
+    var hitEffect: ProjectileHitEffect = .physical
+    /// Used for mastery damage bonus (kills tracked separately per weapon).
+    var sourceWeapon: WeaponType = .sword
     var hasHit = false
 
-    init(damage: CGFloat, isPersistent: Bool) {
+    init(damage: CGFloat, isPersistent: Bool, hitEffect: ProjectileHitEffect = .physical, sourceWeapon: WeaponType = .sword) {
         self.damage = damage
         self.isPersistent = isPersistent
+        self.hitEffect = hitEffect
+        self.sourceWeapon = sourceWeapon
         super.init()
         name = "playerWeapon"
     }
@@ -79,17 +84,14 @@ class SwordSlashNode: SKNode {
         arc.fillColor = color.withAlphaComponent(0.12)
         addChild(arc)
 
-        // Hitbox
-        let hitbox = WeaponProjectileNode(damage: damage, isPersistent: true)
-        let hb = SKShapeNode(circleOfRadius: radius)
-        hb.fillColor = .clear; hb.strokeColor = .clear
+        // Hitbox (physics on WeaponProjectileNode so contacts resolve mastery/elementals)
+        let hitbox = WeaponProjectileNode(damage: damage, isPersistent: true, hitEffect: .physical, sourceWeapon: .sword)
         let pb = SKPhysicsBody(circleOfRadius: radius)
         pb.isDynamic = false
         pb.categoryBitMask = PhysicsCategory.playerWeapon
         pb.contactTestBitMask = PhysicsCategory.enemy | PhysicsCategory.guardian | PhysicsCategory.boss
         pb.collisionBitMask = PhysicsCategory.none
-        hb.physicsBody = pb
-        hitbox.addChild(hb)
+        hitbox.physicsBody = pb
         addChild(hitbox)
 
         run(SKAction.sequence([
@@ -103,8 +105,10 @@ class SwordSlashNode: SKNode {
 // MARK: - Generic Ranged Projectile Builder
 func makePlayerBolt(damage: CGFloat, color: UIColor, speed: CGFloat,
                     from pos: CGPoint, direction: CGPoint,
-                    radius: CGFloat = 7, lifetime: TimeInterval = 2.0) -> WeaponProjectileNode {
-    let proj = WeaponProjectileNode(damage: damage, isPersistent: false)
+                    radius: CGFloat = 7, lifetime: TimeInterval = 2.0,
+                    hitEffect: ProjectileHitEffect = .physical,
+                    sourceWeapon: WeaponType = .sword) -> WeaponProjectileNode {
+    let proj = WeaponProjectileNode(damage: damage, isPersistent: false, hitEffect: hitEffect, sourceWeapon: sourceWeapon)
 
     let visual = SKShapeNode(circleOfRadius: radius)
     visual.fillColor = color

@@ -1,0 +1,9 @@
+REVIEW BUILD (primary)
+
+- The shipping build is a fully native SpriteKit adventure game (UIKit entry via GameViewController). No embedded browser, no third-party web content, and no network requirement for gameplay.
+
+- Progress, settings, and combat are handled in-app (UserDefaults via SaveManager). Game Center is optional for leaderboards from the title screen Scores tab.
+
+- Controls: virtual joystick, attack (double-tap attack for spin), run (double-tap run for dodge roll with brief invulnerability), block, interact, weapon cycle, pause.
+
+- No in-app purchases. Encryption: standard Apple APIs only (ITSAppUsesNonExemptEncryption = false).

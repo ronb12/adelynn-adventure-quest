@@ -54,6 +54,7 @@ struct WorldConfig {
     static let enemySpawns: [AreaId: [EnemySpawnConfig]] = [
         .field: [
             EnemySpawnConfig(count:5, maxHP:2,  speed:80...120,  bodyColor:.from(hex:"#c0392b"), accentColor:.from(hex:"#922b21"), chaseRange:200, enemyType:.slime,       behavior:.chase),
+            EnemySpawnConfig(count:3, maxHP:1,  speed:130...180, bodyColor:.from(hex:"#2d7d20"), accentColor:.from(hex:"#55cc44"), chaseRange:280, enemyType:.goblin,      behavior:.charge),
         ],
         .forest: [
             EnemySpawnConfig(count:4, maxHP:2,  speed:100...160, bodyColor:.from(hex:"#4a235a"), accentColor:.from(hex:"#6c3483"), chaseRange:240, enemyType:.bat,         behavior:.chase),
@@ -68,7 +69,6 @@ struct WorldConfig {
             EnemySpawnConfig(count:5, maxHP:5,  speed:110...160, bodyColor:.from(hex:"#2a6e1a"), accentColor:.from(hex:"#66ee44"), chaseRange:220, enemyType:.briarwolf,   behavior:.charge),
             EnemySpawnConfig(count:3, maxHP:4,  speed:60...100,  bodyColor:.from(hex:"#1a4a0a"), accentColor:.from(hex:"#44cc22"), chaseRange:300, enemyType:.thornspitter,behavior:.ranged),
             EnemySpawnConfig(count:2, maxHP:6,  speed:35...60,   bodyColor:.from(hex:"#3a5a1a"), accentColor:.from(hex:"#88dd44"), chaseRange:140, enemyType:.knight,      behavior:.chase),
-            EnemySpawnConfig(count:4, maxHP:3,  speed:140...190, bodyColor:.from(hex:"#2d7d20"), accentColor:.from(hex:"#55cc44"), chaseRange:280, enemyType:.goblin,      behavior:.charge),
         ],
         .ice: [
             EnemySpawnConfig(count:5, maxHP:5,  speed:75...120,  bodyColor:.from(hex:"#88ccff"), accentColor:.from(hex:"#ffffff"), chaseRange:200, enemyType:.slime,       behavior:.chase),
@@ -114,17 +114,47 @@ struct WorldConfig {
         let bodyColor: UIColor; let accentColor: UIColor; let barColor: UIColor; let size: CGFloat
     }
 
+    /// Hub area (Sunfield Plains) has no guardian — only regular enemies so the village stays approachable.
     static let guardians: [AreaId: GuardianCfg] = [
-        .field:   GuardianCfg(name:"Thornback Brute",    title:"Warchief of the Plains",         maxHP:15, speed1:125, speed2:210, bolts1:1, bolts2:3, boltRate1:2.5, boltRate2:1.5, boltColor:.from(hex:"#88ff44"), boltSpeed:350, bodyColor:.from(hex:"#2d8020"), accentColor:.from(hex:"#88ff44"), barColor:.from(hex:"#66dd22"), size:60),
-        .forest:  GuardianCfg(name:"Gorgomara",          title:"Rootweaver of Whisper Woods",    maxHP:18, speed1:90,  speed2:160, bolts1:3, bolts2:5, boltRate1:2.0, boltRate2:1.2, boltColor:.from(hex:"#88dd22"), boltSpeed:300, bodyColor:.from(hex:"#1a4a0a"), accentColor:.from(hex:"#66ff22"), barColor:.from(hex:"#44bb00"), size:65),
-        .desert:  GuardianCfg(name:"Embric Sentinel",    title:"Undying Guardian of Ashrock",    maxHP:20, speed1:70,  speed2:140, bolts1:2, bolts2:4, boltRate1:2.0, boltRate2:1.0, boltColor:.from(hex:"#ff8800"), boltSpeed:375, bodyColor:.from(hex:"#aa4400"), accentColor:.from(hex:"#ff8800"), barColor:.from(hex:"#ff6600"), size:68),
-        .jungle:  GuardianCfg(name:"Canopy Tyrant",      title:"Apex Predator of the Jungle",    maxHP:22, speed1:150, speed2:250, bolts1:1, bolts2:3, boltRate1:2.2, boltRate2:1.2, boltColor:.from(hex:"#66ff22"), boltSpeed:450, bodyColor:.from(hex:"#1a5a0a"), accentColor:.from(hex:"#88ff44"), barColor:.from(hex:"#55cc00"), size:65),
-        .ice:     GuardianCfg(name:"Frostveil Wraith",   title:"Specter of the Frozen Keep",     maxHP:22, speed1:110, speed2:200, bolts1:4, bolts2:6, boltRate1:1.8, boltRate2:0.9, boltColor:.from(hex:"#aaddff"), boltSpeed:400, bodyColor:.from(hex:"#88ccff"), accentColor:.from(hex:"#ffffff"), barColor:.from(hex:"#99ddff"), size:62),
-        .volcano: GuardianCfg(name:"Magma Titan",        title:"Infernal Lord of the Caldera",   maxHP:26, speed1:60,  speed2:120, bolts1:4, bolts2:6, boltRate1:1.5, boltRate2:0.8, boltColor:.from(hex:"#ff4400"), boltSpeed:350, bodyColor:.from(hex:"#882200"), accentColor:.from(hex:"#ff6600"), barColor:.from(hex:"#ff5500"), size:78),
-        .sky:     GuardianCfg(name:"Storm Herald Vayne", title:"Champion of the Tempest Spire",  maxHP:24, speed1:175, speed2:275, bolts1:2, bolts2:4, boltRate1:1.8, boltRate2:0.9, boltColor:.from(hex:"#88aaff"), boltSpeed:500, bodyColor:.from(hex:"#2244cc"), accentColor:.from(hex:"#88aaff"), barColor:.from(hex:"#6688ff"), size:62),
-        .crypt:   GuardianCfg(name:"The Bonelord",       title:"Undead Tyrant of Ashenmoor",     maxHP:28, speed1:90,  speed2:175, bolts1:5, bolts2:8, boltRate1:1.5, boltRate2:0.7, boltColor:.from(hex:"#ffffaa"), boltSpeed:325, bodyColor:.from(hex:"#cccc88"), accentColor:.from(hex:"#ffffaa"), barColor:.from(hex:"#eeee88"), size:68),
-        .void:    GuardianCfg(name:"Null Predator",      title:"Devourer of the Void Realm",     maxHP:30, speed1:140, speed2:250, bolts1:3, bolts2:6, boltRate1:1.3, boltRate2:0.6, boltColor:.from(hex:"#cc00ff"), boltSpeed:450, bodyColor:.from(hex:"#220033"), accentColor:.from(hex:"#cc00ff"), barColor:.from(hex:"#aa00ee"), size:70),
-        .cave:    GuardianCfg(name:"Crystal Golem Shard",title:"Construct of the Deep Caverns",  maxHP:20, speed1:75,  speed2:150, bolts1:4, bolts2:6, boltRate1:1.8, boltRate2:0.9, boltColor:.from(hex:"#bb88ff"), boltSpeed:350, bodyColor:.from(hex:"#553388"), accentColor:.from(hex:"#aa66ff"), barColor:.from(hex:"#9955ff"), size:66),
+        .forest:  GuardianCfg(name:"Thornwick",          title:"Spirit of the Wild",            maxHP:18, speed1:90,  speed2:160, bolts1:3, bolts2:5, boltRate1:2.0, boltRate2:1.2, boltColor:.from(hex:"#88dd22"), boltSpeed:300, bodyColor:.from(hex:"#1a4a0a"), accentColor:.from(hex:"#66ff22"), barColor:.from(hex:"#44bb00"), size:65),
+        .desert:  GuardianCfg(name:"Embris",             title:"Spirit of the Forge",           maxHP:20, speed1:70,  speed2:140, bolts1:2, bolts2:4, boltRate1:2.0, boltRate2:1.0, boltColor:.from(hex:"#ff8800"), boltSpeed:375, bodyColor:.from(hex:"#aa4400"), accentColor:.from(hex:"#ff8800"), barColor:.from(hex:"#ff6600"), size:68),
+        .jungle:  GuardianCfg(name:"Mirekon",            title:"Spirit of the Deep",            maxHP:22, speed1:150, speed2:250, bolts1:1, bolts2:3, boltRate1:2.2, boltRate2:1.2, boltColor:.from(hex:"#66ff22"), boltSpeed:450, bodyColor:.from(hex:"#1a5a0a"), accentColor:.from(hex:"#88ff44"), barColor:.from(hex:"#55cc00"), size:65),
+        .ice:     GuardianCfg(name:"Glacira",            title:"Spirit of Frost",               maxHP:22, speed1:110, speed2:200, bolts1:4, bolts2:6, boltRate1:1.8, boltRate2:0.9, boltColor:.from(hex:"#aaddff"), boltSpeed:400, bodyColor:.from(hex:"#88ccff"), accentColor:.from(hex:"#ffffff"), barColor:.from(hex:"#99ddff"), size:62),
+        .volcano: GuardianCfg(name:"Cinder",             title:"Spirit of the Volcano",         maxHP:26, speed1:60,  speed2:120, bolts1:4, bolts2:6, boltRate1:1.5, boltRate2:0.8, boltColor:.from(hex:"#ff4400"), boltSpeed:350, bodyColor:.from(hex:"#882200"), accentColor:.from(hex:"#ff6600"), barColor:.from(hex:"#ff5500"), size:78),
+        .sky:     GuardianCfg(name:"Solara",             title:"Spirit of Light",               maxHP:24, speed1:175, speed2:275, bolts1:2, bolts2:4, boltRate1:1.8, boltRate2:0.9, boltColor:.from(hex:"#88aaff"), boltSpeed:500, bodyColor:.from(hex:"#2244cc"), accentColor:.from(hex:"#88aaff"), barColor:.from(hex:"#6688ff"), size:62),
+        .crypt:   GuardianCfg(name:"Sorvath",            title:"Crypt Warden",                  maxHP:28, speed1:90,  speed2:175, bolts1:5, bolts2:8, boltRate1:1.5, boltRate2:0.7, boltColor:.from(hex:"#ffffaa"), boltSpeed:325, bodyColor:.from(hex:"#cccc88"), accentColor:.from(hex:"#ffffaa"), barColor:.from(hex:"#eeee88"), size:68),
+        .void:    GuardianCfg(name:"Nullis",             title:"The Void Sovereign",            maxHP:30, speed1:140, speed2:250, bolts1:3, bolts2:6, boltRate1:1.3, boltRate2:0.6, boltColor:.from(hex:"#cc00ff"), boltSpeed:450, bodyColor:.from(hex:"#220033"), accentColor:.from(hex:"#cc00ff"), barColor:.from(hex:"#aa00ee"), size:70),
+        .cave:    GuardianCfg(name:"Crystara",           title:"Cave Shaper",                   maxHP:20, speed1:75,  speed2:150, bolts1:4, bolts2:6, boltRate1:1.8, boltRate2:0.9, boltColor:.from(hex:"#bb88ff"), boltSpeed:350, bodyColor:.from(hex:"#553388"), accentColor:.from(hex:"#aa66ff"), barColor:.from(hex:"#9955ff"), size:66),
+    ]
+
+    // MARK: - NPCs (dialogue — interact with X)
+    static let npcsByArea: [AreaId: [NPCDef]] = [
+        .field: [
+            NPCDef(id: "npc-maren", name: "Elder Maren", position: CGPoint(x: 165, y: -125), color: .from(hex: "#c4b898"), lines: [
+                "Child of the plains — the Crown's echo still hums in you.",
+                "Three shards hide where dawn breaks, where dusk gathers, and where ember-sand sleeps.",
+                "Double-tap Run to roll past the Bonelord's jaws. Time your shield for a perfect parry!"
+            ]),
+            NPCDef(id: "npc-finn", name: "Scout Finn", position: CGPoint(x: -195, y: -85), color: .from(hex: "#88aa66"), lines: [
+                "I mapped nine guardian courts. Each spirit guards a sword blessing.",
+                "Buy draughts from Rowan at the crossroads — you'll need them in the Void."
+            ]),
+        ],
+        .forest: [
+            NPCDef(id: "npc-hermit", name: "Hermit Yarrow", position: CGPoint(x: 130, y: 160), color: .from(hex: "#6a8a5a"), lines: [
+                "The roots remember Malgrath's footsteps. Frost and fire both scar the deep paths."
+            ]),
+        ],
+        .desert: [
+            NPCDef(id: "npc-caravan", name: "Caravan Master", position: CGPoint(x: -140, y: 130), color: .from(hex: "#c9a055"), lines: [
+                "Moonbow bolts pierce wraith-fog. Keep shurikens for the quick ones."
+            ]),
+        ],
+    ]
+
+    // MARK: - Shop (Rowan's Wares — field hub)
+    static let shopkeepers: [AreaId: ShopkeeperDef] = [
+        .field: ShopkeeperDef(id: "shop-rowan", position: CGPoint(x: -125, y: 108)),
     ]
 
     // MARK: - Lore Stones

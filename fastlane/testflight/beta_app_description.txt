@@ -1,0 +1,1 @@
+Thank you for beta testing Adelynn's Adventure Quest. This build is an action-adventure game with multiple realms, bosses, touch controls (joystick plus action buttons), progression, and autosave. Please report crashes, control issues, or difficulty spikes via the feedback email or GitHub Issues. Your feedback helps polish the experience before release.

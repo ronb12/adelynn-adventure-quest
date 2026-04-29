@@ -1,0 +1,217 @@
+# frozen_string_literal: true
+
+Encoding.default_external = Encoding::UTF_8
+Encoding.default_internal = Encoding::UTF_8
+
+require "fileutils"
+
+default_platform(:ios)
+
+platform :ios do
+  PROJECT = "AdelynnAdventureQuest.xcodeproj"
+  SCHEME = "AdelynnAdventureQuest"
+  IPA_DIR = "build/ipa"
+  IPA_NAME = "AdelynnAdventureQuest.ipa"
+  EXTERNAL_MOUNT = "/Volumes/My Passport for Mac"
+  EXTERNAL_SCRATCH = "#{EXTERNAL_MOUNT}/Developer/AdelynnFastlane"
+
+  def ipa_path
+    ext = "#{EXTERNAL_SCRATCH}/ipa_out/#{IPA_NAME}"
+    return ext if File.exist?(ext)
+
+    File.expand_path("../#{IPA_DIR}/#{IPA_NAME}", __dir__)
+  end
+
+  def read_txt_optional(path)
+    return nil unless File.exist?(path)
+
+    s = File.read(path).strip
+    s.empty? ? nil : s
+  end
+
+  def connect_api_key
+    key_id = ENV["APP_STORE_CONNECT_KEY_ID"]
+    issuer_id = ENV["APP_STORE_CONNECT_ISSUER_ID"]
+    return nil if key_id.to_s.empty? || issuer_id.to_s.empty?
+
+    key_path = ENV["APP_STORE_CONNECT_KEY_PATH"]
+    if key_path.to_s.empty?
+      default_p8 = File.expand_path("~/.private_keys/AuthKey_#{key_id}.p8")
+      key_path = default_p8 if File.exist?(default_p8)
+    end
+    UI.user_error!("Missing API key .p8. Set APP_STORE_CONNECT_KEY_PATH or place AuthKey_#{key_id}.p8 in ~/.private_keys/") if key_path.to_s.empty? || !File.exist?(key_path)
+
+    app_store_connect_api_key(
+      key_id: key_id,
+      issuer_id: issuer_id,
+      key_filepath: key_path,
+      duration: 1200,
+      in_house: false
+    )
+  end
+
+  desc "Archive Release and export an App Store / TestFlight IPA (uses ExportOptions.plist)"
+  lane :build do
+    use_external = File.directory?(EXTERNAL_MOUNT)
+    if use_external
+      FileUtils.mkdir_p("#{EXTERNAL_SCRATCH}/gym_logs")
+      FileUtils.mkdir_p("#{EXTERNAL_SCRATCH}/archives")
+      FileUtils.mkdir_p("#{EXTERNAL_SCRATCH}/ipa_out")
+      FileUtils.mkdir_p("#{EXTERNAL_MOUNT}/Developer/tmp")
+    end
+
+    build_app(
+      project: PROJECT,
+      scheme: SCHEME,
+      configuration: "Release",
+      export_method: "app-store",
+      export_options: File.expand_path("../ExportOptions.plist", __dir__),
+      output_directory: use_external ? "#{EXTERNAL_SCRATCH}/ipa_out" : File.expand_path("../#{IPA_DIR}", __dir__),
+      output_name: IPA_NAME.sub(/\.ipa$/, ""),
+      clean: true,
+      buildlog_path: use_external ? "#{EXTERNAL_SCRATCH}/gym_logs" : nil,
+      build_path: use_external ? "#{EXTERNAL_SCRATCH}/archives" : nil,
+      derived_data_path: use_external ? "#{EXTERNAL_MOUNT}/Developer/XcodeDerivedDataGlobal" : nil,
+      xcargs: "CODE_SIGN_STYLE=Automatic -allowProvisioningUpdates"
+    )
+  end
+
+  desc "Create App ID (Dev Portal) + new app (App Store Connect) if missing. Run once; uses Appfile. Interactive: 2FA."
+  lane :setup_app_store do
+    create_app_online(
+      username: "ronellbradley@gmail.com",
+      app_identifier: "com.adelynn.adventurequest",
+      app_name: "Adelynn's Adventure Quest",
+      app_version: "1.0",
+      language: "en-US",
+      team_id: "4SQJ3AH62S",
+      # Unique forever in App Store Connect; change if this SKU is already taken.
+      sku: "adelynn-aq-4sqj3-001"
+    )
+  end
+
+  desc "Create ASC app (if needed) then upload IPA to TestFlight"
+  lane :first_testflight do
+    setup_app_store
+    beta
+  end
+
+  desc "Upload existing IPA to TestFlight (pilot). Requires App Store Connect API key OR FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD (altool does not use the normal ASC web session)."
+  lane :beta do
+    path = ENV["IPA_PATH"] || ipa_path
+    UI.user_error!("IPA not found: #{path}. Run `bundle exec fastlane build` first.") unless File.exist?(path)
+
+    has_api_key = !ENV["APP_STORE_CONNECT_KEY_ID"].to_s.empty? && !ENV["APP_STORE_CONNECT_ISSUER_ID"].to_s.empty?
+    has_asp = !ENV["FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD"].to_s.strip.empty?
+    unless has_api_key || has_asp
+      UI.user_error!(
+        "Binary upload needs credentials. Either:\n" \
+        "  (1) Create fastlane/.env with FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD=xxxx-xxxx-xxxx-xxxx (see fastlane/env.example), or\n" \
+        "  (2) Set APP_STORE_CONNECT_KEY_ID, APP_STORE_CONNECT_ISSUER_ID, and APP_STORE_CONNECT_KEY_PATH (API key .p8).\n" \
+        "Then run: LC_ALL=en_US.UTF-8 fastlane beta"
+      )
+    end
+
+    opts = {
+      ipa: path,
+      skip_waiting_for_build_processing: true,
+      app_platform: "ios"
+    }
+    opts[:api_key] = connect_api_key if has_api_key
+
+    upload_to_testflight(opts)
+  end
+
+  desc "Alias for beta — upload IPA to TestFlight"
+  lane :upload_testflight do
+    beta
+  end
+
+  desc "Build IPA then upload to TestFlight"
+  lane :ship do
+    build
+    beta
+  end
+
+  desc "Update TestFlight fields on the latest processed build: Beta App Description, feedback email, What to Test (changelog), beta app review contact. Edit fastlane/testflight/*.txt first."
+  lane :update_testflight_beta_info do
+    tf_dir = File.expand_path("testflight", __dir__)
+    beta_desc = read_txt_optional(File.join(tf_dir, "beta_app_description.txt"))
+    feedback = read_txt_optional(File.join(tf_dir, "beta_app_feedback_email.txt"))
+    changelog = read_txt_optional(File.join(tf_dir, "changelog.txt"))
+
+    UI.user_error!("Missing fastlane/testflight/changelog.txt (What to Test)") unless changelog
+    UI.user_error!("Missing fastlane/testflight/beta_app_description.txt") unless beta_desc
+    UI.user_error!("Missing fastlane/testflight/beta_app_feedback_email.txt") unless feedback
+
+    ri = File.expand_path("metadata/review_information", __dir__)
+    review = {
+      contact_email: File.read(File.join(ri, "email_address.txt")).strip,
+      contact_first_name: File.read(File.join(ri, "first_name.txt")).strip,
+      contact_last_name: File.read(File.join(ri, "last_name.txt")).strip,
+      contact_phone: File.read(File.join(ri, "phone_number.txt")).strip,
+      notes: File.read(File.join(ri, "notes.txt")).strip,
+      demo_account_required: false
+    }
+
+    support = read_txt_optional(File.expand_path("metadata/en-US/support_url.txt", __dir__))
+    privacy = read_txt_optional(File.expand_path("metadata/en-US/privacy_url.txt", __dir__))
+
+    en_us = {
+      description: beta_desc,
+      feedback_email: feedback
+    }
+    en_us[:marketing_url] = support if support
+    en_us[:privacy_policy_url] = privacy if privacy
+
+    opts = {
+      distribute_only: true,
+      skip_submission: true,
+      skip_waiting_for_build_processing: false,
+      app_platform: "ios",
+      localized_app_info: { "en-US" => en_us },
+      localized_build_info: { "en-US" => { whats_new: changelog } },
+      beta_app_review_info: review,
+      team_id: "4SQJ3AH62S"
+    }
+    opts[:api_key] = connect_api_key if connect_api_key
+
+    upload_to_testflight(opts)
+  end
+
+  desc "Add external testers from fastlane/testflight/external_testers.csv (columns: FirstName,LastName,email). Copy external_testers.example.csv to external_testers.csv. Set TESTFLIGHT_EXTERNAL_GROUP to the exact group name from TestFlight (defaults to External Testing)."
+  lane :import_external_testers do
+    require "pilot/tester_importer"
+
+    csv_path = File.expand_path("testflight/external_testers.csv", __dir__)
+    UI.user_error!("Missing #{csv_path}. Copy fastlane/testflight/external_testers.example.csv to external_testers.csv and add rows.") unless File.exist?(csv_path)
+
+    group_name = ENV["TESTFLIGHT_EXTERNAL_GROUP"].to_s.strip
+    group_name = "External Testing" if group_name.empty?
+    UI.important("Using external TestFlight group \"#{group_name}\". Override with TESTFLIGHT_EXTERNAL_GROUP if adds fail.")
+
+    opts = {
+      testers_file_path: csv_path,
+      app_identifier: "com.adelynn.adventurequest",
+      groups: [group_name],
+      team_id: "4SQJ3AH62S"
+    }
+    opts[:api_key] = connect_api_key if connect_api_key
+
+    Pilot::TesterImporter.new.import_testers(opts)
+  end
+
+  desc "Upload App Store Connect listing only (fastlane/metadata + review_information). No binary. Set API key or app-specific password for 2FA."
+  lane :upload_metadata do
+    opts = {
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      submit_for_review: false,
+      automatic_release: false,
+      force: true,
+      precheck_include_in_app_purchases: false
+    }
+    opts[:api_key] = connect_api_key if connect_api_key
+    deliver(opts)
+  end
+end

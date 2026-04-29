@@ -11,14 +11,14 @@ enum AreaId: String, Codable, CaseIterable {
         case .field:   return "Sunfield Plains"
         case .forest:  return "Whisper Woods"
         case .desert:  return "Ashrock Summit"
-        case .boss:    return "Shadowmere Throne"
-        case .jungle:  return "Verdant Canopy"
+        case .boss:    return "Malgrath's Keep"
+        case .jungle:  return "Jungle Ruins"
         case .ice:     return "Frostpeak Tundra"
-        case .volcano: return "Volcara's Caldera"
-        case .sky:     return "Tempest Spire"
-        case .crypt:   return "Ashenmoor Crypt"
-        case .void:    return "The Void Realm"
-        case .cave:    return "Crystal Caverns"
+        case .volcano: return "Ember Volcano"
+        case .sky:     return "Skyreach Islands"
+        case .crypt:   return "Ancient Crypt"
+        case .void:    return "The Void"
+        case .cave:    return "Crystal Cavern"
         }
     }
 
@@ -27,7 +27,7 @@ enum AreaId: String, Codable, CaseIterable {
         case .field:   return "Where the adventure begins"
         case .forest:  return "Ancient secrets hide in shadow"
         case .desert:  return "The shard calls from the sand"
-        case .boss:    return "Malgrath awaits…"
+        case .boss:    return "The Shattered Crown awaits…"
         case .jungle:  return "Vines remember old kings"
         case .ice:     return "The cold preserves all things"
         case .volcano: return "Fire forged the world"
@@ -78,14 +78,14 @@ enum WeaponType: String, Codable, CaseIterable {
     var displayName: String {
         switch self {
         case .sword:     return "Crystal Sword"
-        case .bow:       return "Elven Bow"
+        case .bow:       return "Bow & Arrow"
         case .moonbow:   return "Moonbow"
         case .bomb:      return "Bomb"
-        case .boomerang: return "Shadowrang"
+        case .boomerang: return "Shadow Veil"
         case .wand:      return "Wand of Sparks"
-        case .frost:     return "Frost Scepter"
+        case .frost:     return "Frost Wand"
         case .shuriken:  return "Shuriken"
-        case .flare:     return "Solar Flare"
+        case .flare:     return "Fire Flare"
         }
     }
 
@@ -172,6 +172,23 @@ struct PhysicsCategory {
     static let wall:         UInt32 = 1 << 7
     static let guardian:     UInt32 = 1 << 8
     static let boss:         UInt32 = 1 << 9
+    static let shard:        UInt32 = 1 << 10
+}
+
+// MARK: - SpriteKit emoji / icon labels
+/// Custom fonts omit emoji glyphs → **?** — use Apple’s emoji font for emoji-only `SKLabelNode` text.
+enum SpriteKitEmojiSupport {
+    static func applyEmojiFont(to label: SKLabelNode, size: CGFloat) {
+        let uif = emojiUIFont(size: size)
+        label.fontName = uif.fontName
+        label.fontSize = uif.pointSize
+    }
+
+    static func emojiUIFont(size: CGFloat) -> UIFont {
+        if let f = UIFont(name: "Apple Color Emoji", size: size) { return f }
+        if let f = UIFont(name: "AppleColorEmoji", size: size) { return f }
+        return .systemFont(ofSize: size)
+    }
 }
 
 // MARK: - Data structs
@@ -181,6 +198,14 @@ struct EnemySpawnConfig { let count: Int; let maxHP: CGFloat; let speed: ClosedR
 struct ChestDef    { let id: String; let position: CGPoint; let weaponUnlock: WeaponType?; let rupeeReward: Int }
 struct LoreStoneDef { let id: String; let position: CGPoint; let title: String; let text: String }
 struct NPCDef      { let id: String; let name: String; let position: CGPoint; let color: UIColor; let lines: [String] }
+struct ShopkeeperDef { let id: String; let position: CGPoint }
+
+/// Elemental rider on player projectiles / explosions (enemies only for DOT/slow).
+enum ProjectileHitEffect: Equatable {
+    case physical
+    case burn
+    case chill
+}
 struct ShardDef    { let id: String; let areaId: AreaId; let position: CGPoint; let name: String }
 
 // MARK: - Extensions

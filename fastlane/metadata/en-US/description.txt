@@ -1,0 +1,13 @@
+This is the official iOS client for Adelynn's Adventure Quest: a native app that runs the full game in an embedded web view (the same experience as our public web build), with touch-optimized controls and an iOS-specific loading experience.
+
+Malgrath shattered the Crown of Radiance into three Crystal Shards. Lead Adelynn across Sunfield Plains, Whisper Woods, Ashrock Summit, crystal caverns, jungles, frozen peaks, volcanic calderas, storm spires, haunted crypts, and the Void Realm -- then face Malgrath at Shadowmere Throne.
+
+FEATURES
+- Eleven handcrafted realms with distinct hazards and lore stones that deepen the story.
+- Battle dozens of foes -- from slimes and goblins to guardians and zone bosses -- with melee, ranged weapons, and combos.
+- Upgrade through guardian victories; unlock swords, bow, bombs, boomerang, wand, frost scepter, shuriken, and solar flare.
+- Touch controls in-game: virtual joystick plus on-screen actions -- attack, run, interact, cycle weapons, and block (as shown in the game).
+- Rupees, chests, heart pieces, shards of the Crown, score & combo tracking, autosave, and multiple endings.
+
+PLAY YOUR WAY
+Portrait or landscape on iPhone and iPad. Explore, fight, collect shards, and restore the kingdom of Aldenmere.

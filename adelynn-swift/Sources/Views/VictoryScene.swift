@@ -107,7 +107,7 @@ class VictoryScene: SKScene {
         btn.alpha = 0; addChild(btn)
         btn.run(SKAction.sequence([SKAction.wait(forDuration:delay), SKAction.fadeIn(withDuration:0.4),
             SKAction.repeatForever(SKAction.sequence([SKAction.scale(to:1.04,duration:0.75), SKAction.scale(to:1.0,duration:0.75)]))]))
-        let bl = SKLabelNode(text:"▶  Play Again"); bl.fontName="Georgia-Bold"; bl.fontSize=17; bl.fontColor = .white
+        let bl = SKLabelNode(text:"Play Again"); bl.fontName="Georgia-Bold"; bl.fontSize=17; bl.fontColor = .white
         bl.verticalAlignmentMode = .center; bl.name="lbl_playAgain"; btn.addChild(bl)
     }
 

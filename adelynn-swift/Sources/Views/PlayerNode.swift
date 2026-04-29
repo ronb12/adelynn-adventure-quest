@@ -8,6 +8,7 @@ class PlayerNode: SKNode {
     var attackCooldown: TimeInterval = 0
     var hurtCooldown: TimeInterval = 0
     var spinCooldown: TimeInterval = 0
+    var dodgeCooldown: TimeInterval = 0
     var isRunning = false
 
     // MARK: - Constants
@@ -20,6 +21,8 @@ class PlayerNode: SKNode {
     private var eyeLeft: SKShapeNode!
     private var eyeRight: SKShapeNode!
     private var swordGlow: SKShapeNode!
+    private var shadowNode: SKShapeNode!
+    private let bodyFillDefault = UIColor(red: 0.15, green: 0.60, blue: 0.45, alpha: 1)
 
     override init() {
         super.init()
@@ -30,22 +33,36 @@ class PlayerNode: SKNode {
 
     // MARK: - Build Visual
     private func buildVisual() {
+        let outline = SKShapeNode(circleOfRadius: 20)
+        outline.fillColor = .clear
+        outline.strokeColor = UIColor(white: 0.06, alpha: 0.92)
+        outline.lineWidth = 3.5
+        outline.zPosition = -0.5
+        addChild(outline)
+
+        shadowNode = SKShapeNode(ellipseIn: CGRect(x: -18, y: -26, width: 36, height: 14))
+        shadowNode.fillColor = UIColor(white: 0, alpha: 0.35)
+        shadowNode.strokeColor = .clear
+        shadowNode.zPosition = -2
+        addChild(shadowNode)
+
         // Body (tunic — teal/green)
         bodyNode = SKShapeNode(circleOfRadius: 17)
-        bodyNode.fillColor = UIColor(red:0.15, green:0.60, blue:0.45, alpha:1)
-        bodyNode.strokeColor = UIColor(red:0.08, green:0.40, blue:0.28, alpha:1)
-        bodyNode.lineWidth = 2
+        bodyNode.fillColor = bodyFillDefault
+        bodyNode.strokeColor = UIColor(red:0.05, green:0.32, blue:0.22, alpha:1)
+        bodyNode.lineWidth = 2.5
         addChild(bodyNode)
 
         // Hair (auburn)
         let hairPath = UIBezierPath(ovalIn: CGRect(x:-17, y:6, width:34, height:16))
         hairNode = SKShapeNode(path: hairPath.cgPath)
         hairNode.fillColor = UIColor(red:0.60, green:0.25, blue:0.08, alpha:1)
-        hairNode.strokeColor = .clear
+        hairNode.strokeColor = UIColor(white: 0.04, alpha: 0.55)
+        hairNode.lineWidth = 1
         addChild(hairNode)
 
         // Face
-        for (xOff, node) in [(-6, eyeLeft), (6, eyeRight)] as [(CGFloat, SKShapeNode?)] {
+        for (xOff, _) in [(-6, eyeLeft), (6, eyeRight)] as [(CGFloat, SKShapeNode?)] {
             let e = SKShapeNode(circleOfRadius: 3)
             e.fillColor = UIColor(red:0.15, green:0.1, blue:0.35, alpha:1)
             e.strokeColor = .clear
@@ -73,7 +90,8 @@ class PlayerNode: SKNode {
         body.isDynamic = true; body.allowsRotation = false; body.linearDamping = 10
         body.categoryBitMask    = PhysicsCategory.player
         body.contactTestBitMask = PhysicsCategory.enemyWeapon
-        body.collisionBitMask   = PhysicsCategory.wall | PhysicsCategory.enemy
+        body.collisionBitMask   = PhysicsCategory.wall | PhysicsCategory.enemy | PhysicsCategory.guardian | PhysicsCategory.boss
+            | PhysicsCategory.chest | PhysicsCategory.loreStone | PhysicsCategory.shard
         physicsBody = body
     }
 
@@ -82,9 +100,19 @@ class PlayerNode: SKNode {
         if attackCooldown > 0 { attackCooldown -= delta }
         if hurtCooldown  > 0 { hurtCooldown  -= delta }
         if spinCooldown  > 0 { spinCooldown   -= delta }
+        if dodgeCooldown > 0 { dodgeCooldown -= delta }
+
+        if GameStore.shared.dodgeInvulnerabilityRemaining > 0 {
+            bodyNode.fillColor = UIColor(red: 0.32, green: 0.82, blue: 0.95, alpha: 1)
+            bodyNode.alpha = 0.86 + CGFloat(sin(CACurrentMediaTime() * 14)) * 0.1
+        } else {
+            bodyNode.fillColor = bodyFillDefault
+            bodyNode.alpha = 1
+        }
 
         if direction != .zero {
-            let speed = isRunning ? runSpeed : walkSpeed
+            var speed = isRunning ? runSpeed : walkSpeed
+            if GameStore.shared.isBlocking { speed *= 0.38 }
             physicsBody?.velocity = CGVector(dx: direction.x*speed, dy: direction.y*speed)
             facingAngle = atan2(direction.y, direction.x) - .pi/2
             zRotation = facingAngle
@@ -150,18 +178,19 @@ class PlayerNode: SKNode {
     // MARK: - Sword
     private func swordSlash(in scene: SKNode) {
         attackCooldown = 0.38
-        let slash = SwordSlashNode(color: GameStore.shared.activeWeapon.color, damage: 1.5)
+        let dm = GameStore.shared.swordDamageMultiplier
+        let slash = SwordSlashNode(color: GameStore.shared.activeWeapon.color, damage: 1.5 * dm)
         slash.zRotation = facingAngle
         slash.position = position
         slash.zPosition = 6
         scene.addChild(slash)
-        // Audio feedback (shake)
+        worldScene(from: scene)?.juiceSwordSwing()
         bodyNode.run(SKAction.sequence([SKAction.moveBy(x:0,y:3,duration:0.05), SKAction.moveBy(x:0,y:-3,duration:0.05)]))
     }
 
     // MARK: - Bow
     private func fireBolt(in scene: SKNode, dir: CGPoint, damage: CGFloat, color: UIColor, speed: CGFloat) {
-        let proj = makePlayerBolt(damage:damage, color:color, speed:speed, from:position, direction:dir)
+        let proj = makePlayerBolt(damage:damage, color:color, speed:speed, from:position, direction:dir, sourceWeapon: .bow)
         proj.zPosition = 6
         scene.addChild(proj)
     }
@@ -172,7 +201,7 @@ class PlayerNode: SKNode {
             let spread = CGFloat(i) * 0.22
             let d = CGPoint(x: dir.x*cos(spread)-dir.y*sin(spread),
                             y: dir.x*sin(spread)+dir.y*cos(spread))
-            let proj = makePlayerBolt(damage:1.2, color:.from(hex:"#8844ff"), speed:470, from:position, direction:d, radius:8)
+            let proj = makePlayerBolt(damage:1.2, color:.from(hex:"#8844ff"), speed:470, from:position, direction:d, radius:8, hitEffect: .chill, sourceWeapon: .moonbow)
             proj.zPosition = 6
             scene.addChild(proj)
         }
@@ -180,14 +209,14 @@ class PlayerNode: SKNode {
 
     // MARK: - Wand
     private func fireWandBolt(in scene: SKNode, dir: CGPoint) {
-        let proj = makePlayerBolt(damage:0.5, color:.from(hex:"#ffff44"), speed:570, from:position, direction:dir, radius:5, lifetime:1.2)
+        let proj = makePlayerBolt(damage:0.5, color:.from(hex:"#ffff44"), speed:570, from:position, direction:dir, radius:5, lifetime:1.2, hitEffect: .burn, sourceWeapon: .wand)
         proj.zPosition = 6
         scene.addChild(proj)
     }
 
     // MARK: - Shuriken
     private func fireShuriken(in scene: SKNode, dir: CGPoint) {
-        let proj = WeaponProjectileNode(damage:1.0, isPersistent:false)
+        let proj = WeaponProjectileNode(damage:1.0, isPersistent:false, hitEffect: .physical, sourceWeapon: .shuriken)
         let star = buildStarNode(radius:9, points:5, color:.from(hex:"#cccccc"))
         star.run(SKAction.repeatForever(SKAction.rotate(byAngle:.pi*2, duration:0.4)))
         proj.addChild(star)
@@ -209,7 +238,7 @@ class PlayerNode: SKNode {
             let spread = CGFloat(i) * 0.18
             let d = CGPoint(x: dir.x*cos(spread)-dir.y*sin(spread),
                             y: dir.x*sin(spread)+dir.y*cos(spread))
-            let proj = makePlayerBolt(damage:1.0, color:.from(hex:"#88eeff"), speed:400, from:position, direction:d, radius:9, lifetime:1.5)
+            let proj = makePlayerBolt(damage:1.0, color:.from(hex:"#88eeff"), speed:400, from:position, direction:d, radius:9, lifetime:1.5, hitEffect: .chill, sourceWeapon: .frost)
             proj.zPosition = 6
             scene.addChild(proj)
         }
@@ -234,7 +263,7 @@ class PlayerNode: SKNode {
     }
 
     private func explodeBomb(at pos: CGPoint, in scene: SKNode) {
-        let explosion = WeaponProjectileNode(damage:5.0, isPersistent:true)
+        let explosion = WeaponProjectileNode(damage:5.0, isPersistent:true, hitEffect: .burn, sourceWeapon: .bomb)
         let visual = SKShapeNode(circleOfRadius:65)
         visual.fillColor = UIColor(red:1,green:0.5,blue:0,alpha:0.35)
         visual.strokeColor = UIColor(red:1,green:0.8,blue:0,alpha:0.85); visual.lineWidth = 3
@@ -246,20 +275,21 @@ class PlayerNode: SKNode {
         explosion.physicsBody = pb
         explosion.position = pos; explosion.zPosition = 6
         scene.addChild(explosion)
+        worldScene(from: scene)?.juiceBomb(at: pos)
         visual.run(SKAction.sequence([SKAction.group([SKAction.scale(to:1.4,duration:0.28), SKAction.fadeOut(withDuration:0.28)]), SKAction.removeFromParent()]))
         explosion.run(SKAction.sequence([SKAction.wait(forDuration:0.2), SKAction.removeFromParent()]))
     }
 
     // MARK: - Flare
     private func throwFlare(in scene: SKNode, dir: CGPoint) {
-        let proj = makePlayerBolt(damage:3.0, color:.from(hex:"#ffaa00"), speed:460, from:position, direction:dir, radius:13, lifetime:1.3)
+        let proj = makePlayerBolt(damage:3.0, color:.from(hex:"#ffaa00"), speed:460, from:position, direction:dir, radius:13, lifetime:1.3, hitEffect: .burn, sourceWeapon: .flare)
         proj.zPosition = 6
         scene.addChild(proj)
     }
 
     // MARK: - Boomerang
     private func throwBoomerang(in scene: SKNode, dir: CGPoint) {
-        let proj = WeaponProjectileNode(damage:0.8, isPersistent:false)
+        let proj = WeaponProjectileNode(damage:0.8, isPersistent:false, hitEffect: .physical, sourceWeapon: .boomerang)
         let v = SKShapeNode(circleOfRadius:10)
         v.fillColor = .from(hex:"#cc8844"); v.strokeColor = .from(hex:"#ffcc66"); v.lineWidth = 1.5
         proj.addChild(v); v.run(SKAction.repeatForever(SKAction.rotate(byAngle:.pi*2, duration:0.38)))
@@ -279,11 +309,36 @@ class PlayerNode: SKNode {
         ]))
     }
 
+    /// Dodge roll: burst movement + brief i-frames (double-tap Run).
+    func performDodge(in scene: SKNode, joystickDirection: CGPoint) {
+        guard dodgeCooldown <= 0, spinCooldown <= 0 else { return }
+        dodgeCooldown = 1.05
+        attackCooldown = max(attackCooldown, 0.22)
+        let dir: CGPoint
+        if joystickDirection.x * joystickDirection.x + joystickDirection.y * joystickDirection.y > 0.04 {
+            dir = joystickDirection.normalized()
+        } else {
+            dir = CGPoint(x: sin(facingAngle + .pi / 2), y: cos(facingAngle + .pi / 2))
+        }
+        let burst: CGFloat = 395
+        physicsBody?.velocity = CGVector(dx: dir.x * burst, dy: dir.y * burst)
+        GameStore.shared.dodgeInvulnerabilityRemaining = max(GameStore.shared.dodgeInvulnerabilityRemaining, 0.42)
+        GameStore.shared.isBlocking = false
+        worldScene(from: scene)?.juiceDodgeRoll()
+        GameJuice.addDodgeBurst(to: scene, at: position, color: GameStore.shared.activeWeapon.color)
+        let squish = SKAction.sequence([
+            SKAction.group([SKAction.scaleX(to: 1.14, y: 0.86, duration: 0.08), SKAction.fadeAlpha(to: 0.82, duration: 0.08)]),
+            SKAction.group([SKAction.scaleX(to: 1, y: 1, duration: 0.12), SKAction.fadeAlpha(to: 1, duration: 0.12)])
+        ])
+        bodyNode.run(squish)
+    }
+
     // MARK: - Spin Attack
     func performSpinAttack(in scene: SKNode) {
         guard spinCooldown <= 0 else { return }
         spinCooldown = 1.8; attackCooldown = 0.5
-        let spin = WeaponProjectileNode(damage:2.0, isPersistent:true)
+        worldScene(from: scene)?.juiceSpinAttack()
+        let spin = WeaponProjectileNode(damage: 2.0 * GameStore.shared.swordDamageMultiplier, isPersistent:true, hitEffect: .physical, sourceWeapon: .sword)
         let visual = SKShapeNode(circleOfRadius:60)
         visual.fillColor = UIColor(red:0.4,green:0.8,blue:1.0,alpha:0.2)
         visual.strokeColor = UIColor(red:0.4,green:0.8,blue:1.0,alpha:0.8); visual.lineWidth = 5
@@ -314,6 +369,10 @@ class PlayerNode: SKNode {
     }
 
     // MARK: - Helpers
+    private func worldScene(from layer: SKNode) -> WorldScene? {
+        layer.scene as? WorldScene
+    }
+
     private func buildStarNode(radius: CGFloat, points: Int, color: UIColor) -> SKShapeNode {
         let path = UIBezierPath(); let inner = radius*0.42
         for i in 0..<points*2 {

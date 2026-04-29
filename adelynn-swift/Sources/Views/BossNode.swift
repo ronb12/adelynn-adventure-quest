@@ -7,6 +7,7 @@ class BossNode: SKNode {
     var maxHP: CGFloat { GameStore.shared.bossMaxHP }
     var isDead = false
     var isPhase2: Bool { hp < maxHP * 0.5 }
+    var isPhase3: Bool { hp < maxHP * 0.25 }
 
     private var bodyNode: SKShapeNode!
     private var cloakNode: SKShapeNode!
@@ -18,6 +19,14 @@ class BossNode: SKNode {
     private var isVulnerable = true
     private var invulnWindow: TimeInterval = 0
     private var phase2Triggered = false
+    private var phase3Triggered = false
+    private var addSpawnTimer: TimeInterval = 3.2
+    private var chillRemaining: TimeInterval = 0
+    private var burnStacks: Int = 0
+    private var burnTickTimer: TimeInterval = 0
+
+    /// World spawns a small add (wired from `WorldScene`).
+    var onSpawnAdd: ((CGPoint) -> Void)?
 
     override init() {
         super.init()
@@ -41,10 +50,17 @@ class BossNode: SKNode {
         cloakPath.addLine(to: CGPoint(x:-35, y:20))
         cloakPath.close()
 
+        let cloakShadow = SKShapeNode(path: cloakPath.cgPath)
+        cloakShadow.fillColor = UIColor(white: 0, alpha: 0.42)
+        cloakShadow.strokeColor = .clear
+        cloakShadow.position = CGPoint(x: 5, y: -6)
+        cloakShadow.zPosition = -2
+        insertChild(cloakShadow, at: 0)
+
         cloakNode = SKShapeNode(path: cloakPath.cgPath)
         cloakNode.fillColor = UIColor(red:0.04, green:0.0, blue:0.10, alpha:1)
         cloakNode.strokeColor = UIColor(red:0.5, green:0.0, blue:0.8, alpha:0.8)
-        cloakNode.lineWidth = 2.5
+        cloakNode.lineWidth = 3.2
         addChild(cloakNode)
 
         // Glowing runes on cloak
@@ -138,7 +154,8 @@ class BossNode: SKNode {
         body.isDynamic = true; body.allowsRotation = false; body.linearDamping = 6
         body.categoryBitMask = PhysicsCategory.boss
         body.contactTestBitMask = PhysicsCategory.playerWeapon
-        body.collisionBitMask = PhysicsCategory.wall
+        body.collisionBitMask = PhysicsCategory.wall | PhysicsCategory.player | PhysicsCategory.enemy
+            | PhysicsCategory.chest | PhysicsCategory.loreStone | PhysicsCategory.shard
         physicsBody = body
     }
 
@@ -147,22 +164,57 @@ class BossNode: SKNode {
         guard !isDead else { return }
         if hurtTimer > 0 { hurtTimer -= delta }
         if invulnWindow > 0 { invulnWindow -= delta; isVulnerable = invulnWindow <= 0 }
+        if chillRemaining > 0 { chillRemaining -= delta }
+
+        if burnStacks > 0 {
+            burnTickTimer -= delta
+            while burnTickTimer <= 0 && burnStacks > 0 && !isDead {
+                burnTickTimer += 0.62
+                let defeated = GameStore.shared.damageBoss(0.22)
+                burnStacks -= 1
+                if let w = scene?.childNode(withName: "world") {
+                    GameJuice.addHitSparks(to: w, at: position, color: UIColor(red: 1, green: 0.4, blue: 0.1, alpha: 1), count: 6)
+                }
+                bodyNode.run(SKAction.sequence([
+                    SKAction.colorize(with: UIColor.orange, colorBlendFactor: 0.45, duration: 0.05),
+                    SKAction.colorize(withColorBlendFactor: 0, duration: 0.12)
+                ]))
+                if defeated { isDead = true; return }
+            }
+        }
 
         let dir = (playerPosition - position).normalized()
-        let speed: CGFloat = isPhase2 ? 140 : 90
-        physicsBody?.velocity = CGVector(dx: dir.x*speed, dy: dir.y*speed)
+        let speed: CGFloat = isPhase3 ? 170 : (isPhase2 ? 140 : 90)
+        let chillMult: CGFloat = chillRemaining > 0 ? 0.68 : 1
+        physicsBody?.velocity = CGVector(dx: dir.x*speed*chillMult, dy: dir.y*speed*chillMult)
         zRotation = atan2(dir.y, dir.x) - .pi / 2
 
         // Fire shadow bolts
-        boltTimer -= delta
+        boltTimer -= delta * (chillRemaining > 0 ? 0.58 : 1)
         if boltTimer <= 0 {
-            boltTimer = isPhase2 ? 1.0 : 2.2
+            if isPhase3 { boltTimer = 0.52 }
+            else if isPhase2 { boltTimer = 1.0 }
+            else { boltTimer = 2.2 }
             fireShadowBolts(toward: playerPosition)
+        }
+
+        // Phase 3: summon adds periodically
+        if isPhase3 {
+            addSpawnTimer -= delta * (chillRemaining > 0 ? 0.62 : 1)
+            if addSpawnTimer <= 0 {
+                addSpawnTimer = CGFloat.random(in: 2.8...4.2)
+                onSpawnAdd?(playerPosition)
+            }
+        }
+
+        if !phase3Triggered && isPhase3 {
+            phase3Triggered = true
+            triggerPhase3()
         }
 
         // Teleport in phase 2
         if isPhase2 {
-            teleportTimer -= delta
+            teleportTimer -= delta * (chillRemaining > 0 ? 0.65 : 1)
             if teleportTimer <= 0 {
                 teleportTimer = CGFloat.random(in: 3.5...6.0)
                 performTeleport(near: playerPosition)
@@ -188,8 +240,8 @@ class BossNode: SKNode {
 
     private func fireShadowBolts(toward target: CGPoint) {
         guard let scene = scene else { return }
-        let boltCount = isPhase2 ? 5 : 3
-        let boltColor = UIColor(red:0.7, green:0.0, blue:1.0, alpha:1)
+        let boltCount = isPhase3 ? 7 : (isPhase2 ? 5 : 3)
+        let boltColor = isPhase3 ? UIColor(red:1.0, green:0.15, blue:0.2, alpha:1) : UIColor(red:0.7, green:0.0, blue:1.0, alpha:1)
 
         for i in 0..<boltCount {
             let spreadAngle = CGFloat(i - boltCount/2) * (.pi / CGFloat(boltCount)) * 0.5
@@ -198,10 +250,11 @@ class BossNode: SKNode {
                 x: baseDir.x * cos(spreadAngle) - baseDir.y * sin(spreadAngle),
                 y: baseDir.x * sin(spreadAngle) + baseDir.y * cos(spreadAngle)
             )
-            let bolt = EnemyProjectileNode(damage: isPhase2 ? 1.0 : 0.75, color: boltColor, radius: 10)
+            let dmg: CGFloat = isPhase3 ? 1.15 : (isPhase2 ? 1.0 : 0.75)
+            let bolt = EnemyProjectileNode(damage: dmg, color: boltColor, radius: isPhase3 ? 11 : 10)
             bolt.position = position + dir * 55
             bolt.zPosition = 5
-            let spd: CGFloat = isPhase2 ? 420 : 340
+            let spd: CGFloat = isPhase3 ? 480 : (isPhase2 ? 420 : 340)
             bolt.physicsBody?.velocity = CGVector(dx: dir.x*spd, dy: dir.y*spd)
             scene.childNode(withName: "world")?.addChild(bolt)
             bolt.run(SKAction.sequence([SKAction.wait(forDuration:3.5), SKAction.removeFromParent()]))
@@ -222,6 +275,14 @@ class BossNode: SKNode {
             },
             SKAction.fadeIn(withDuration: 0.2)
         ]))
+    }
+
+    private func triggerPhase3() {
+        cloakNode.strokeColor = UIColor(red:1.0, green:0.0, blue:0.0, alpha:1)
+        eyesNode.run(SKAction.repeatForever(SKAction.sequence([
+            SKAction.fadeAlpha(to:0.4, duration:0.15), SKAction.fadeAlpha(to:1.0, duration:0.15)
+        ])))
+        bodyNode.run(SKAction.colorize(with: UIColor(red:0.5, green:0, blue:0, alpha:1), colorBlendFactor: 0.35, duration: 0.3))
     }
 
     private func triggerPhase2() {
@@ -252,9 +313,19 @@ class BossNode: SKNode {
     }
 
     // MARK: - Damage
-    func takeDamage(_ amount: CGFloat) {
+    func takeDamage(_ amount: CGFloat, isCritical: Bool = false, hitEffect: ProjectileHitEffect = .physical) {
         guard !isDead && hurtTimer <= 0 && isVulnerable else { return }
-        hurtTimer = 0.15
+        hurtTimer = isCritical ? 0.1 : 0.15
+
+        switch hitEffect {
+        case .burn:
+            burnStacks = min(6, burnStacks + 1)
+            burnTickTimer = min(burnTickTimer, 0.22)
+        case .chill:
+            chillRemaining = max(chillRemaining, 1.45)
+        case .physical:
+            break
+        }
 
         let defeated = GameStore.shared.damageBoss(amount)
 
@@ -264,9 +335,9 @@ class BossNode: SKNode {
         ]))
 
         // Damage number
-        let lbl = SKLabelNode(text: "-\(Int(ceil(amount * 10)))")
-        lbl.fontName = "AvenirNext-Bold"; lbl.fontSize = 16
-        lbl.fontColor = UIColor(red:1,green:0.8,blue:0,alpha:1)
+        let lbl = SKLabelNode(text: isCritical ? "CRIT -\(Int(ceil(amount * 10)))" : "-\(Int(ceil(amount * 10)))")
+        lbl.fontName = "AvenirNext-Bold"; lbl.fontSize = isCritical ? 19 : 16
+        lbl.fontColor = isCritical ? UIColor(red: 1, green: 0.92, blue: 0.2, alpha: 1) : UIColor(red:1,green:0.8,blue:0,alpha:1)
         lbl.position = CGPoint(x:0, y:100); lbl.zPosition = 25
         addChild(lbl)
         lbl.run(SKAction.sequence([

@@ -80,6 +80,22 @@ class TitleScene: SKScene {
             node.run(SKAction.sequence([SKAction.wait(forDuration:d), SKAction.fadeIn(withDuration:0.4)]))
         }
 
+        // Top tabs — match web menu: Quest (current) + Scores (Game Center)
+        let tabBar = SKNode()
+        tabBar.position = CGPoint(x: size.width / 2, y: size.height * 0.88)
+        let questTab = makeTopTabPill(text: "Quest", isSelected: true, name: "tabQuest")
+        let scoresTab = makeTopTabPill(text: "Scores", isSelected: false, name: "tabScores")
+        addTabLeadingSymbol(to: questTab, systemName: "map.fill")
+        addTabLeadingSymbol(to: scoresTab, systemName: "trophy.fill")
+        let pillW: CGFloat = 124
+        let tabGap: CGFloat = 12
+        let tabCenterOffset = (pillW + tabGap) / 2
+        questTab.position = CGPoint(x: -tabCenterOffset, y: 0)
+        scoresTab.position = CGPoint(x: tabCenterOffset, y: 0)
+        tabBar.addChild(questTab)
+        tabBar.addChild(scoresTab)
+        add(tabBar, d: delay); delay += 0.12
+
         // Title
         let title = SKLabelNode(text:"Adelynn's Adventure Quest")
         title.fontName = "Georgia-Bold"
@@ -95,29 +111,27 @@ class TitleScene: SKScene {
         sub.position = CGPoint(x:size.width/2, y:size.height*0.51)
         add(sub, d:delay); delay += 0.15
 
-        // Story lines
-        for (i, line) in [
-            "Malgrath shattered the Crown of Radiance into three Crystal Shards.",
-            "Adelynn must recover them all and restore the kingdom of Aldenmere."
-        ].enumerated() {
-            let l = SKLabelNode(text:line)
-            l.fontName = "Georgia"; l.fontSize = min(size.width*0.028, 14)
-            l.fontColor = UIColor.white.withAlphaComponent(0.80)
-            l.position = CGPoint(x:size.width/2, y:size.height*0.44 - CGFloat(i)*22)
-            add(l, d:delay); delay += 0.12
-        }
+        // Lore — single bordered panel (same copy as web reference)
+        let lorePanel = buildLorePanel()
+        lorePanel.position = CGPoint(x: size.width / 2, y: size.height * 0.405)
+        add(lorePanel, d: delay); delay += 0.12
 
-        // Shard display
-        for (i, info) in [("Shard of Dawn","Sunfield Plains"),("Shard of Dusk","Whisper Woods"),("Shard of Ember","Ashrock Summit")].enumerated() {
-            let panel = buildShardPanel(name:info.0, loc:info.1)
-            let xOff = CGFloat(i-1) * (min(size.width*0.28, 140))
-            panel.position = CGPoint(x:size.width/2+xOff, y:size.height*0.37)
-            add(panel, d:delay); delay += 0.10
+        // Shard display — names + places match `WorldConfig` / `AreaId.displayName`
+        let shardRows: [(String, AreaId)] = [
+            ("Shard of Dawn", .field),
+            ("Shard of Dusk", .forest),
+            ("Shard of Ember", .desert)
+        ]
+        for (i, row) in shardRows.enumerated() {
+            let panel = buildShardPanel(name: row.0, loc: row.1.displayName)
+            let xOff = CGFloat(i - 1) * (min(size.width * 0.28, 140))
+            panel.position = CGPoint(x: size.width / 2 + xOff, y: size.height * 0.28)
+            add(panel, d: delay); delay += 0.10
         }
 
         // New Game button
-        let newBtn = makeButton(text:"▶  Begin the Quest", fillColor:UIColor(red:0.8,green:0.35,blue:0.0,alpha:1), name:"newGame")
-        newBtn.position = CGPoint(x:size.width/2, y:size.height*0.26)
+        let newBtn = makeButton(text:"Begin the Quest", fillColor:UIColor(red:0.8,green:0.35,blue:0.0,alpha:1), name:"newGame")
+        newBtn.position = CGPoint(x:size.width/2, y:size.height*0.17)
         add(newBtn, d:delay); delay += 0.15
         newBtn.run(SKAction.repeatForever(SKAction.sequence([
             SKAction.scale(to:1.04,duration:0.75), SKAction.scale(to:1.0,duration:0.75)
@@ -125,17 +139,83 @@ class TitleScene: SKScene {
 
         // Continue button
         if SaveManager.shared.hasSave() {
-            let contBtn = makeButton(text:"▶  Continue", fillColor:UIColor(red:0.1,green:0.3,blue:0.5,alpha:1), name:"continueGame")
-            contBtn.position = CGPoint(x:size.width/2, y:size.height*0.18)
+            let contBtn = makeButton(text:"Continue", fillColor:UIColor(red:0.1,green:0.3,blue:0.5,alpha:1), name:"continueGame")
+            contBtn.position = CGPoint(x:size.width/2, y:size.height*0.095)
             add(contBtn, d:delay)
         }
 
         // Controls hint
-        let hint = SKLabelNode(text:"Virtual joystick (left)  ·  A=Attack  ·  B=Run  ·  X=Interact  ·  Y=Cycle Weapon")
+        // Avoid emoji here — SKLabelNode often renders them as "?" with custom fonts.
+        let hint = SKLabelNode(text:"A / spin · B / dodge roll · Block (tap early = parry) · HP potion · X talk/shop · Y weapon")
         hint.fontName = "AvenirNext"; hint.fontSize = min(size.width*0.022, 11)
         hint.fontColor = UIColor.white.withAlphaComponent(0.4)
         hint.position = CGPoint(x:size.width/2, y:20)
         addChild(hint)
+    }
+
+    /// SF Symbol beside tab text — avoids emoji / missing glyphs showing as "?".
+    private func addTabLeadingSymbol(to pill: SKShapeNode, systemName: String) {
+        guard let img = UIImage(systemName: systemName, withConfiguration: UIImage.SymbolConfiguration(pointSize: 12, weight: .semibold))?
+            .withTintColor(.white, renderingMode: .alwaysTemplate)
+        else { return }
+        let spr = SKSpriteNode(texture: SKTexture(image: img))
+        spr.size = CGSize(width: 16, height: 16)
+        spr.color = .white
+        spr.colorBlendFactor = 1
+        spr.position = CGPoint(x: -44, y: 0)
+        pill.addChild(spr)
+        for c in pill.children where c is SKLabelNode {
+            (c as? SKLabelNode)?.position.x = 8
+        }
+    }
+
+    private func makeTopTabPill(text: String, isSelected: Bool, name: String) -> SKShapeNode {
+        let w: CGFloat = 124
+        let h: CGFloat = 36
+        let btn = SKShapeNode(rectOf: CGSize(width: w, height: h), cornerRadius: h / 2)
+        if isSelected {
+            btn.fillColor = UIColor(red: 1.0, green: 0.48, blue: 0.1, alpha: 1)
+            btn.strokeColor = UIColor.white.withAlphaComponent(0.25)
+        } else {
+            btn.fillColor = UIColor.black.withAlphaComponent(0.55)
+            btn.strokeColor = UIColor(red: 1.0, green: 0.55, blue: 0.2, alpha: 0.95)
+            btn.lineWidth = 1.5
+        }
+        btn.lineWidth = isSelected ? 1 : 1.5
+        btn.name = name
+        let l = SKLabelNode(text: text)
+        l.fontName = "AvenirNext-DemiBold"
+        l.fontSize = 14
+        l.fontColor = .white
+        l.verticalAlignmentMode = .center
+        btn.addChild(l)
+        return btn
+    }
+
+    private func buildLorePanel() -> SKNode {
+        let c = SKNode()
+        let boxW = min(size.width * 0.9, 380)
+        let boxH: CGFloat = 88
+        let bg = SKShapeNode(rectOf: CGSize(width: boxW, height: boxH), cornerRadius: 12)
+        bg.fillColor = UIColor.black.withAlphaComponent(0.48)
+        bg.strokeColor = UIColor(red: 1.0, green: 0.48, blue: 0.12, alpha: 0.9)
+        bg.lineWidth = 1.5
+        c.addChild(bg)
+
+        let line1 = SKLabelNode(text: "Malgrath shattered the Crown of Radiance into three Crystal Shards.")
+        line1.fontName = "Georgia"
+        line1.fontSize = min(size.width * 0.028, 14)
+        line1.fontColor = UIColor.white.withAlphaComponent(0.88)
+        line1.position = CGPoint(x: 0, y: 14)
+        c.addChild(line1)
+
+        let line2 = SKLabelNode(text: "Adelynn must recover them all and restore the kingdom of Aldenmere!")
+        line2.fontName = "Georgia"
+        line2.fontSize = min(size.width * 0.028, 14)
+        line2.fontColor = UIColor.white.withAlphaComponent(0.88)
+        line2.position = CGPoint(x: 0, y: -14)
+        c.addChild(line2)
+        return c
     }
 
     private func buildShardPanel(name: String, loc: String) -> SKNode {
@@ -191,6 +271,14 @@ class TitleScene: SKScene {
         let loc = touch.location(in: self)
         let tapped = nodes(at:loc)
         for n in tapped {
+            var node: SKNode? = n
+            while let current = node {
+                if current.name == "tabScores" {
+                    GameCenterAuth.presentLeaderboards(from: view?.window?.rootViewController)
+                    return
+                }
+                node = current.parent
+            }
             if n.name == "newGame" || n.name == "lbl_newGame" { startNew(); return }
             if n.name == "continueGame" || n.name == "lbl_continueGame" { continueSave(); return }
         }

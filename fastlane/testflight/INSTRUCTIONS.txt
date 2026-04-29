@@ -1,0 +1,12 @@
+External testers (TestFlight)
+1. Copy external_testers.example.csv to external_testers.csv in this folder.
+2. One row per tester: FirstName,LastName,email@domain.com
+3. In App Store Connect, note the exact name of your external testing group (TestFlight tab).
+4. Run: TESTFLIGHT_EXTERNAL_GROUP="Your Group Name" bundle exec fastlane import_external_testers
+   If the group name has spaces, quote it. Default group name if unset: External Testing
+
+Internal testers
+Add people under Users and Access in App Store Connect (they must have an App Store Connect role). They are not added via CSV.
+
+Beta fields (description, What to Test, contact)
+Edit the .txt files here, then: bundle exec fastlane update_testflight_beta_info

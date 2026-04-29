@@ -10,7 +10,8 @@ class HUDNode: SKNode {
     private var heartContainer: SKNode!
 
     // Resources
-    private var rupeeLabel: SKLabelNode!
+    private var rupeeGemLabel: SKLabelNode!
+    private var rupeeValueLabel: SKLabelNode!
     private var ammoLabel: SKLabelNode!
     private var weaponLabel: SKLabelNode!
     private var weaponIconLabel: SKLabelNode!
@@ -33,6 +34,16 @@ class HUDNode: SKNode {
     private var bossBarFill: SKShapeNode?
     private let bossBarW: CGFloat = 300
 
+    private var minimapMarkers: SKNode?
+    private var loreCountLabel: SKLabelNode?
+    private var lastPlayerWorldPos: CGPoint = .zero
+    private var shardGemNodes: [SKShapeNode] = []
+    private var shardQuestRoot: SKNode?
+    private var levelLabel: SKLabelNode!
+    private var xpBarBg: SKShapeNode!
+    private var xpBarFill: SKSpriteNode!
+    private let xpBarMaxW: CGFloat = 108
+
     init(size: CGSize) {
         self.sceneSize = size
         super.init()
@@ -43,11 +54,61 @@ class HUDNode: SKNode {
     // MARK: - Build
     private func buildHUD() {
         buildHearts()
+        buildLevelXPBar()
         buildResourceBar()
         buildWeaponBar()
         buildScoreBar()
         buildGuardianBar()
         buildBossBar()
+        buildMinimap()
+        buildShardQuest()
+    }
+
+    private func buildShardQuest() {
+        let root = SKNode()
+        root.position = CGPoint(x: 0, y: sceneSize.height / 2 - 72)
+        root.zPosition = 8
+        addChild(root)
+        shardQuestRoot = root
+
+        let title = SKLabelNode(text: "CROWN SHARDS")
+        title.fontName = "Georgia-Bold"
+        title.fontSize = 9
+        title.fontColor = UIColor(red: 0.85, green: 0.75, blue: 1, alpha: 0.85)
+        title.position = CGPoint(x: 0, y: 22)
+        root.addChild(title)
+
+        let names = ["Dawn", "Dusk", "Ember"]
+        let spacing: CGFloat = 36
+        for i in 0..<3 {
+            let g = SKShapeNode(rectOf: CGSize(width: 26, height: 26), cornerRadius: 5)
+            g.fillColor = UIColor.black.withAlphaComponent(0.5)
+            g.strokeColor = UIColor(red: 0.5, green: 0.75, blue: 1, alpha: 0.45)
+            g.lineWidth = 1
+            g.position = CGPoint(x: CGFloat(i - 1) * spacing, y: 0)
+            root.addChild(g)
+
+            let path = UIBezierPath()
+            path.move(to: CGPoint(x: 0, y: 8))
+            path.addLine(to: CGPoint(x: 7, y: 2))
+            path.addLine(to: CGPoint(x: 0, y: -8))
+            path.addLine(to: CGPoint(x: -7, y: 2))
+            path.close()
+            let gem = SKShapeNode(path: path.cgPath)
+            gem.fillColor = UIColor(white: 0.22, alpha: 0.9)
+            gem.strokeColor = UIColor(white: 0.4, alpha: 0.5)
+            gem.lineWidth = 0.8
+            gem.name = "shardGem_\(i)"
+            g.addChild(gem)
+            shardGemNodes.append(gem)
+
+            let cap = SKLabelNode(text: names[i])
+            cap.fontName = "AvenirNext"
+            cap.fontSize = 7
+            cap.fontColor = UIColor.white.withAlphaComponent(0.45)
+            cap.position = CGPoint(x: CGFloat(i - 1) * spacing, y: -22)
+            root.addChild(cap)
+        }
     }
 
     private func buildHearts() {
@@ -74,6 +135,31 @@ class HUDNode: SKNode {
         }
     }
 
+    private func buildLevelXPBar() {
+        let leftX = -sceneSize.width / 2 + 14
+        let yTop = sceneSize.height / 2 - 76
+        levelLabel = SKLabelNode(text: "Lv 1")
+        levelLabel.fontName = "AvenirNext-Bold"
+        levelLabel.fontSize = 11
+        levelLabel.fontColor = UIColor(red: 0.75, green: 0.88, blue: 1, alpha: 1)
+        levelLabel.horizontalAlignmentMode = .left
+        levelLabel.position = CGPoint(x: leftX, y: yTop)
+        addChild(levelLabel)
+
+        xpBarBg = SKShapeNode(rectOf: CGSize(width: xpBarMaxW, height: 7), cornerRadius: 3)
+        xpBarBg.fillColor = UIColor.black.withAlphaComponent(0.55)
+        xpBarBg.strokeColor = UIColor.white.withAlphaComponent(0.15)
+        xpBarBg.lineWidth = 1
+        xpBarBg.position = CGPoint(x: leftX + xpBarMaxW / 2, y: yTop - 14)
+        addChild(xpBarBg)
+
+        xpBarFill = SKSpriteNode(color: UIColor(red: 0.4, green: 0.72, blue: 1, alpha: 1),
+                                  size: CGSize(width: xpBarMaxW - 4, height: 5))
+        xpBarFill.anchorPoint = CGPoint(x: 0, y: 0.5)
+        xpBarFill.position = CGPoint(x: -xpBarMaxW / 2 + 2, y: 0)
+        xpBarBg.addChild(xpBarFill)
+    }
+
     private func buildResourceBar() {
         let bg = SKShapeNode(rectOf:CGSize(width:120, height:22), cornerRadius:6)
         bg.fillColor = UIColor.black.withAlphaComponent(0.55)
@@ -81,12 +167,22 @@ class HUDNode: SKNode {
         bg.position = CGPoint(x: -sceneSize.width/2 + 74, y: sceneSize.height/2 - 52)
         addChild(bg)
 
-        rupeeLabel = SKLabelNode(text:"💎 0")
-        rupeeLabel.fontName = "AvenirNext-Bold"; rupeeLabel.fontSize = 13
-        rupeeLabel.fontColor = UIColor(red:0.4, green:0.9, blue:0.5, alpha:1)
-        rupeeLabel.position = CGPoint(x:-sceneSize.width/2+28, y:sceneSize.height/2-58)
-        rupeeLabel.horizontalAlignmentMode = .left
-        addChild(rupeeLabel)
+        let rupeeY = sceneSize.height / 2 - 58
+        let leftX = -sceneSize.width / 2 + 18
+        rupeeGemLabel = SKLabelNode(text: "💎")
+        SpriteKitEmojiSupport.applyEmojiFont(to: rupeeGemLabel, size: 13)
+        rupeeGemLabel.fontColor = UIColor(red: 0.4, green: 0.9, blue: 0.5, alpha: 1)
+        rupeeGemLabel.position = CGPoint(x: leftX, y: rupeeY)
+        rupeeGemLabel.horizontalAlignmentMode = .left
+        addChild(rupeeGemLabel)
+
+        rupeeValueLabel = SKLabelNode(text: "0")
+        rupeeValueLabel.fontName = "AvenirNext-Bold"
+        rupeeValueLabel.fontSize = 13
+        rupeeValueLabel.fontColor = UIColor(red: 0.4, green: 0.9, blue: 0.5, alpha: 1)
+        rupeeValueLabel.position = CGPoint(x: leftX + 17, y: rupeeY)
+        rupeeValueLabel.horizontalAlignmentMode = .left
+        addChild(rupeeValueLabel)
     }
 
     private func buildWeaponBar() {
@@ -96,8 +192,8 @@ class HUDNode: SKNode {
         bg.position = CGPoint(x: sceneSize.width/2-84, y: -sceneSize.height/2+28)
         addChild(bg)
 
-        weaponIconLabel = SKLabelNode(text:"⚔️")
-        weaponIconLabel.fontSize = 18
+        weaponIconLabel = SKLabelNode(text: "⚔️")
+        SpriteKitEmojiSupport.applyEmojiFont(to: weaponIconLabel, size: 18)
         weaponIconLabel.position = CGPoint(x:sceneSize.width/2-145, y:-sceneSize.height/2+20)
         weaponIconLabel.verticalAlignmentMode = .center
         addChild(weaponIconLabel)
@@ -183,15 +279,105 @@ class HUDNode: SKNode {
         container.addChild(fill)
         bossBarFill = fill
 
-        let lbl = SKLabelNode(text:"Malgrath — The Shattered King")
+        let lbl = SKLabelNode(text:"Malgrath — The Shattered Crown")
         lbl.fontName = "Georgia-Bold"; lbl.fontSize = 11
         lbl.fontColor = UIColor(red:0.8,green:0.4,blue:1.0,alpha:1)
         lbl.position = CGPoint(x:0, y:16); lbl.verticalAlignmentMode = .center
         container.addChild(lbl)
     }
 
+    private func buildMinimap() {
+        let root = SKNode()
+        root.position = CGPoint(x: -sceneSize.width / 2 + 58, y: sceneSize.height / 2 - 96)
+        root.zPosition = 6
+        addChild(root)
+
+        let border = SKShapeNode(rectOf: CGSize(width: 86, height: 86), cornerRadius: 8)
+        border.fillColor = UIColor.black.withAlphaComponent(0.48)
+        border.strokeColor = UIColor.white.withAlphaComponent(0.22)
+        border.lineWidth = 1.5
+        root.addChild(border)
+
+        let title = SKLabelNode(text: "MAP")
+        title.fontName = "AvenirNext-Bold"
+        title.fontSize = 9
+        title.fontColor = UIColor.white.withAlphaComponent(0.55)
+        title.position = CGPoint(x: 0, y: 48)
+        root.addChild(title)
+
+        let loreLbl = SKLabelNode(text: "lore 0/3")
+        loreLbl.fontName = "AvenirNext"
+        loreLbl.fontSize = 8
+        loreLbl.fontColor = UIColor(red: 0.75, green: 0.55, blue: 1.0, alpha: 0.9)
+        loreLbl.position = CGPoint(x: 0, y: -52)
+        root.addChild(loreLbl)
+        loreCountLabel = loreLbl
+
+        let markers = SKNode()
+        markers.zPosition = 2
+        root.addChild(markers)
+        minimapMarkers = markers
+    }
+
+    private func refreshMinimap(store: GameStore, playerWorldPos: CGPoint) {
+        guard let markers = minimapMarkers else { return }
+        markers.removeAllChildren()
+        let ws = WorldConfig.worldSize
+        let span: CGFloat = 34
+        func toMini(_ p: CGPoint) -> CGPoint {
+            let nx = (p.x + ws.width / 2) / ws.width
+            let ny = (p.y + ws.height / 2) / ws.height
+            return CGPoint(x: (nx - 0.5) * (span * 2), y: (ny - 0.5) * (span * 2))
+        }
+        let area = store.currentArea
+        if let ports = WorldConfig.portals[area] {
+            for p in ports {
+                let d = SKShapeNode(circleOfRadius: 3)
+                d.fillColor = UIColor(red: 0.35, green: 0.88, blue: 1.0, alpha: 0.95)
+                d.strokeColor = .clear
+                d.position = toMini(p.position)
+                markers.addChild(d)
+            }
+        }
+        if let chestList = WorldConfig.chests[area] {
+            for c in chestList where !store.chestsOpened.contains(c.id) {
+                let d = SKShapeNode(circleOfRadius: 2.5)
+                d.fillColor = UIColor(red: 1.0, green: 0.88, blue: 0.25, alpha: 1)
+                d.strokeColor = .clear
+                d.position = toMini(c.position)
+                markers.addChild(d)
+            }
+        }
+        if let loreList = WorldConfig.loreStones[area] {
+            var readN = 0
+            for L in loreList {
+                if store.loreRead.contains(L.id) {
+                    readN += 1
+                } else {
+                    let d = SKShapeNode(circleOfRadius: 2.2)
+                    d.fillColor = UIColor(red: 0.72, green: 0.38, blue: 1.0, alpha: 0.95)
+                    d.strokeColor = .clear
+                    d.position = toMini(L.position)
+                    markers.addChild(d)
+                }
+            }
+            loreCountLabel?.text = "lore \(readN)/\(loreList.count)"
+        } else {
+            loreCountLabel?.text = "lore —"
+        }
+
+        let pl = SKShapeNode(circleOfRadius: 3.5)
+        pl.fillColor = .white
+        pl.strokeColor = UIColor.black.withAlphaComponent(0.35)
+        pl.lineWidth = 0.5
+        pl.position = toMini(playerWorldPos)
+        pl.zPosition = 4
+        markers.addChild(pl)
+    }
+
     // MARK: - Public Update
-    func update(store: GameStore) {
+    func update(store: GameStore, playerWorldPos: CGPoint) {
+        lastPlayerWorldPos = playerWorldPos
         // Hearts
         let maxH = Int(store.maxHearts)
         if heartNodes.count != maxH { refreshHearts() }
@@ -201,17 +387,18 @@ class HUDNode: SKNode {
         }
 
         // Rupees
-        rupeeLabel.text = "💎 \(store.rupees)"
+        rupeeValueLabel.text = "\(store.rupees)"
 
         // Weapon
         let w = store.activeWeapon
         weaponIconLabel.text = w.icon
-        weaponLabel.text = w.displayName
+        SpriteKitEmojiSupport.applyEmojiFont(to: weaponIconLabel, size: 18)
+        weaponLabel.text = w == .sword ? store.swordDisplayTitle : w.displayName
         let ammo = store.ammoCount(for: w)
         ammoLabel.text = ammo < 0 ? "" : "×\(ammo)"
 
         // Score
-        scoreLabel.text = "\(store.score)"
+        scoreLabel.text = "\(store.score)  ·  elites \(store.eliteKills)"
         timerLabel.text = store.elapsedFormatted
         if store.comboCount > 1 {
             comboLabel.text = "×\(store.comboCount) COMBO!"
@@ -244,9 +431,37 @@ class HUDNode: SKNode {
         } else {
             bossBarContainer?.alpha = 0
         }
+
+        refreshMinimap(store: store, playerWorldPos: playerWorldPos)
+        refreshShardQuest(collected: store.shardsCollected)
+
+        levelLabel.text = "Lv \(store.playerLevel)  ·  \(store.totalEnemiesSlain) felled"
+        let need = max(1, store.xpToNextLevel)
+        let ratio = CGFloat(store.playerXP) / CGFloat(need)
+        xpBarFill.size = CGSize(width: max(2, (xpBarMaxW - 4) * min(1, ratio)), height: 5)
     }
 
-    func updateWeaponBar() { update(store: GameStore.shared) }
+    private func refreshShardQuest(collected: Int) {
+        for (i, gem) in shardGemNodes.enumerated() {
+            let got = i < collected
+            gem.fillColor = got
+                ? UIColor(red: 0.45, green: 0.82, blue: 1, alpha: 0.95)
+                : UIColor(white: 0.22, alpha: 0.9)
+            gem.strokeColor = got
+                ? UIColor.white.withAlphaComponent(0.85)
+                : UIColor(white: 0.4, alpha: 0.5)
+            gem.alpha = got ? 1 : 0.45
+            gem.removeAllActions()
+            if got {
+                gem.run(SKAction.repeatForever(SKAction.sequence([
+                    SKAction.fadeAlpha(to: 0.75, duration: 0.9),
+                    SKAction.fadeAlpha(to: 1, duration: 0.9)
+                ])))
+            }
+        }
+    }
+
+    func updateWeaponBar() { update(store: GameStore.shared, playerWorldPos: lastPlayerWorldPos) }
 
     // MARK: - Portal / Interact Hints
     func showPortalHint(label: String) {

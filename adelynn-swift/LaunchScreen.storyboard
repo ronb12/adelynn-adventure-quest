@@ -1,33 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="22154" targetRuntime="AppleCocoa" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
-    <device id="retina6_12" orientation="landscape" appearance="light"/>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <device id="retina6_12" orientation="portrait" appearance="dark"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22154"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
-        <!--View Controller-->
         <scene sceneID="EHf-IW-A2E">
             <objects>
                 <viewController id="01J-lp-oVM" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
-                        <rect key="frame" x="0.0" y="0.0" width="844" height="390"/>
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Adelynn's Adventure Quest" textAlignment="center" lineBreakMode="middleTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Wb2-sA-kWZ">
-                                <rect key="frame" x="108" y="153" width="628" height="43"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="36"/>
-                                <nil key="textColor"/>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="LaunchBackground" translatesAutoresizingMaskIntoConstraints="NO" id="aq-splash-bg">
+                                <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                            </imageView>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="aq-splash-dim">
+                                <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                                <color key="backgroundColor" red="0.02" green="0.01" blue="0.06" alpha="0.45" colorSpace="custom" customColorSpace="sRGB"/>
+                            </view>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Adelynn's Adventure Quest" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" adjustsFontSizeToFit="YES" minimumScaleFactor="0.6" translatesAutoresizingMaskIntoConstraints="NO" id="Wb2-sA-kWZ">
+                                <rect key="frame" x="24" y="383" width="345" height="34"/>
+                                <fontDescription key="fontDescription" name="Georgia-Bold" family="Georgia" pointSize="26"/>
+                                <color key="textColor" red="1" green="0.81999999999999995" blue="0.22" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <nil key="highlightedTextColor"/>
                             </label>
+                            <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="The Shattered Crown" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="YES" minimumScaleFactor="0.8" translatesAutoresizingMaskIntoConstraints="NO" id="sub-lbl-crown">
+                                <rect key="frame" x="24" y="425" width="345" height="21"/>
+                                <fontDescription key="fontDescription" name="Georgia-Italic" family="Georgia" pointSize="17"/>
+                                <color key="textColor" red="0.78" green="0.48" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedTextColor"/>
+                            </label>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="accent-line">
+                                <rect key="frame" x="168" y="471" width="56" height="3"/>
+                                <color key="backgroundColor" red="1" green="0.45" blue="0.12" alpha="0.9" colorSpace="custom" customColorSpace="sRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="3" id="h-accent"/>
+                                    <constraint firstAttribute="width" constant="56" id="w-accent"/>
+                                </constraints>
+                            </view>
                         </subviews>
                         <viewLayoutGuide key="safeAreaLayoutGuide" id="Bcu-3y-fUS"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <color key="backgroundColor" red="0.02" green="0.01" blue="0.06" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
+                            <constraint firstItem="aq-splash-bg" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="bg-lead"/>
+                            <constraint firstAttribute="trailing" secondItem="aq-splash-bg" secondAttribute="trailing" id="bg-trail"/>
+                            <constraint firstItem="aq-splash-bg" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="bg-top"/>
+                            <constraint firstAttribute="bottom" secondItem="aq-splash-bg" secondAttribute="bottom" id="bg-bot"/>
+                            <constraint firstItem="aq-splash-dim" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="dim-lead"/>
+                            <constraint firstAttribute="trailing" secondItem="aq-splash-dim" secondAttribute="trailing" id="dim-trail"/>
+                            <constraint firstItem="aq-splash-dim" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="dim-top"/>
+                            <constraint firstAttribute="bottom" secondItem="aq-splash-dim" secondAttribute="bottom" id="dim-bot"/>
+                            <constraint firstItem="Wb2-sA-kWZ" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="-36" id="moa-c2-u7t"/>
+                            <constraint firstItem="Wb2-sA-kWZ" firstAttribute="leading" secondItem="Bcu-3y-fUS" secondAttribute="leading" constant="24" id="ttl-lead"/>
+                            <constraint firstItem="Bcu-3y-fUS" firstAttribute="trailing" secondItem="Wb2-sA-kWZ" secondAttribute="trailing" constant="24" id="ttl-trail"/>
                             <constraint firstItem="Wb2-sA-kWZ" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="Q3B-4y-guE"/>
-                            <constraint firstItem="Wb2-sA-kWZ" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="moa-c2-u7t"/>
+                            <constraint firstItem="sub-lbl-crown" firstAttribute="top" secondItem="Wb2-sA-kWZ" secondAttribute="bottom" constant="10" id="sub-top"/>
+                            <constraint firstItem="sub-lbl-crown" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="sub-cx"/>
+                            <constraint firstItem="sub-lbl-crown" firstAttribute="leading" secondItem="Bcu-3y-fUS" secondAttribute="leading" constant="24" id="sub-lead"/>
+                            <constraint firstItem="Bcu-3y-fUS" firstAttribute="trailing" secondItem="sub-lbl-crown" secondAttribute="trailing" constant="24" id="sub-trail"/>
+                            <constraint firstItem="accent-line" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="acc-cx"/>
+                            <constraint firstItem="accent-line" firstAttribute="top" secondItem="sub-lbl-crown" secondAttribute="bottom" constant="18" id="acc-top"/>
                         </constraints>
                     </view>
                 </viewController>
@@ -36,4 +72,7 @@
             <point key="canvasLocation" x="53" y="375"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="LaunchBackground" width="1536" height="1024"/>
+    </resources>
 </document>

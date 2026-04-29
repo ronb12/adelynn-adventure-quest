@@ -7,7 +7,7 @@ class EnemyNode: SKNode {
     let enemyType: EnemyType
     let behavior: EnemyBehavior
     let maxHP: CGFloat
-    let speed: CGFloat
+    let moveSpeed: CGFloat
     let bodyColor: UIColor
     let accentColor: UIColor
     let chaseRange: CGFloat
@@ -23,17 +23,21 @@ class EnemyNode: SKNode {
     var meleeCooldown: TimeInterval = 0
     var chargeDirection = CGPoint.zero
     var isElite: Bool
+    private var chillRemaining: TimeInterval = 0
+    private var burnStacks: Int = 0
+    private var burnTickTimer: TimeInterval = 0
+    private var lastHitWeapon: WeaponType = .sword
     private var bodyNode: SKShapeNode!
     private var hpBarBg: SKShapeNode!
-    private var hpBarFill: SKShapeNode!
+    private var hpBarFill: SKSpriteNode!
 
     // MARK: - Init
-    init(enemyType: EnemyType, behavior: EnemyBehavior, maxHP: CGFloat, speed: CGFloat,
+    init(enemyType: EnemyType, behavior: EnemyBehavior, maxHP: CGFloat, moveSpeed: CGFloat,
          bodyColor: UIColor, accentColor: UIColor, chaseRange: CGFloat) {
         self.enemyType = enemyType
         self.behavior = behavior
         self.maxHP = maxHP
-        self.speed = speed
+        self.moveSpeed = moveSpeed
         self.bodyColor = bodyColor
         self.accentColor = accentColor
         self.chaseRange = chaseRange
@@ -99,9 +103,16 @@ class EnemyNode: SKNode {
         bodyNode = SKShapeNode(path: path)
         bodyNode.fillColor = isElite ? accentColor : bodyColor
         bodyNode.strokeColor = accentColor
-        bodyNode.lineWidth = 1.5
+        bodyNode.lineWidth = 2.5
         bodyNode.name = "enemyBody"
         addChild(bodyNode)
+
+        let shadow = SKShapeNode(path: path)
+        shadow.fillColor = UIColor(white: 0, alpha: 0.38)
+        shadow.strokeColor = .clear
+        shadow.position = CGPoint(x: 2.5, y: -2)
+        shadow.zPosition = -1
+        insertChild(shadow, at: 0)
 
         // Eyes
         for xOff: CGFloat in [-r*0.3, r*0.3] {
@@ -157,11 +168,10 @@ class EnemyNode: SKNode {
         hpBarBg.position = CGPoint(x:0, y:y); hpBarBg.zPosition = 2
         addChild(hpBarBg)
 
-        hpBarFill = SKShapeNode(rectOf: CGSize(width:w, height:4), cornerRadius:2)
-        hpBarFill.fillColor = isElite ? .from(hex:"#ff4444") : .from(hex:"#44ff44")
-        hpBarFill.strokeColor = .clear
-        hpBarFill.anchorPoint = CGPoint(x:0, y:0.5)
-        hpBarFill.position = CGPoint(x:-w/2, y:y); hpBarFill.zPosition = 3
+        hpBarFill = SKSpriteNode(color: isElite ? .from(hex:"#ff4444") : .from(hex:"#44ff44"), size: CGSize(width: w, height: 4))
+        hpBarFill.anchorPoint = CGPoint(x: 0, y: 0.5)
+        hpBarFill.position = CGPoint(x: -w / 2, y: y)
+        hpBarFill.zPosition = 3
         addChild(hpBarFill)
     }
 
@@ -184,7 +194,8 @@ class EnemyNode: SKNode {
         body.linearDamping = 4
         body.categoryBitMask = PhysicsCategory.enemy
         body.contactTestBitMask = PhysicsCategory.playerWeapon | PhysicsCategory.player
-        body.collisionBitMask = PhysicsCategory.wall | PhysicsCategory.player
+        body.collisionBitMask = PhysicsCategory.wall | PhysicsCategory.player | PhysicsCategory.guardian | PhysicsCategory.boss
+            | PhysicsCategory.chest | PhysicsCategory.loreStone | PhysicsCategory.shard
         physicsBody = body
     }
 
@@ -195,6 +206,32 @@ class EnemyNode: SKNode {
         if hurtTimer > 0 { hurtTimer -= delta }
         if meleeCooldown > 0 { meleeCooldown -= delta }
         if rangedCooldown > 0 { rangedCooldown -= delta }
+        if chillRemaining > 0 { chillRemaining -= delta }
+
+        var spdMult: CGFloat = 1
+        if chillRemaining > 0 {
+            spdMult = 0.5
+            bodyNode.strokeColor = UIColor(red: 0.55, green: 0.85, blue: 1, alpha: 0.95)
+        } else {
+            bodyNode.strokeColor = accentColor
+        }
+
+        if burnStacks > 0 {
+            burnTickTimer -= delta
+            while burnTickTimer <= 0 && burnStacks > 0 && !isDead {
+                burnTickTimer += 0.42
+                hp -= 0.45
+                burnStacks -= 1
+                if let w = parent {
+                    GameJuice.addHitSparks(to: w, at: position, color: UIColor(red: 1, green: 0.45, blue: 0.1, alpha: 1), count: 4)
+                }
+                if hp <= 0 {
+                    dieAndGrantLoot()
+                    return
+                }
+                updateHPBar()
+            }
+        }
 
         let dist = position.distance(to: playerPosition)
         let dir = (playerPosition - position).normalized()
@@ -202,12 +239,12 @@ class EnemyNode: SKNode {
         switch behavior {
         case .chase:
             if dist < chaseRange {
-                physicsBody?.velocity = CGVector(dx: dir.x*speed, dy: dir.y*speed)
+                physicsBody?.velocity = CGVector(dx: dir.x * moveSpeed * spdMult, dy: dir.y * moveSpeed * spdMult)
             } else {
                 physicsBody?.velocity = .zero
             }
             // Melee hit
-            if dist < 25 && meleeCooldown <= 0 {
+            if dist < 25 && meleeCooldown <= 0 && chillRemaining <= 0 {
                 meleeCooldown = 1.0
                 GameStore.shared.damagePlayer(isElite ? 0.75 : 0.5)
             }
@@ -221,16 +258,16 @@ class EnemyNode: SKNode {
                         isCharging = true
                         chargeDirection = dir
                     } else {
-                        physicsBody?.velocity = CGVector(dx: dir.x*speed*0.5, dy: dir.y*speed*0.5)
+                        physicsBody?.velocity = CGVector(dx: dir.x * moveSpeed * 0.5 * spdMult, dy: dir.y * moveSpeed * 0.5 * spdMult)
                     }
                 } else { physicsBody?.velocity = .zero }
             } else {
-                let chargeSpeed = speed * 2.8
+                let chargeSpeed = moveSpeed * 2.8 * spdMult
                 physicsBody?.velocity = CGVector(dx: chargeDirection.x*chargeSpeed, dy: chargeDirection.y*chargeSpeed)
                 chargeTimer -= delta
                 if chargeTimer <= 0 { isCharging = false; chargeTimer = CGFloat.random(in: 1.0...2.5) }
             }
-            if dist < 22 && meleeCooldown <= 0 {
+            if dist < 22 && meleeCooldown <= 0 && chillRemaining <= 0 {
                 meleeCooldown = 0.8
                 GameStore.shared.damagePlayer(isElite ? 1.0 : 0.75)
             }
@@ -240,13 +277,13 @@ class EnemyNode: SKNode {
             if dist < chaseRange {
                 if dist < prefDist - 20 {
                     let away = (position - playerPosition).normalized()
-                    physicsBody?.velocity = CGVector(dx: away.x*speed*0.7, dy: away.y*speed*0.7)
+                    physicsBody?.velocity = CGVector(dx: away.x * moveSpeed * 0.7 * spdMult, dy: away.y * moveSpeed * 0.7 * spdMult)
                 } else if dist > prefDist + 20 {
-                    physicsBody?.velocity = CGVector(dx: dir.x*speed*0.5, dy: dir.y*speed*0.5)
+                    physicsBody?.velocity = CGVector(dx: dir.x * moveSpeed * 0.5 * spdMult, dy: dir.y * moveSpeed * 0.5 * spdMult)
                 } else {
                     physicsBody?.velocity = .zero
                 }
-                if rangedCooldown <= 0 {
+                if rangedCooldown <= 0 && chillRemaining <= 0 {
                     rangedCooldown = isElite ? 1.2 : 2.0
                     fireProjectile(toward: playerPosition)
                 }
@@ -270,14 +307,26 @@ class EnemyNode: SKNode {
     }
 
     // MARK: - Damage
-    func takeDamage(_ amount: CGFloat, from hitPos: CGPoint) {
+    func takeDamage(_ amount: CGFloat, from hitPos: CGPoint, isCritical: Bool = false, hitEffect: ProjectileHitEffect = .physical, sourceWeapon: WeaponType = .sword) {
         guard !isDead && hurtTimer <= 0 else { return }
-        hurtTimer = 0.25
+        hurtTimer = isCritical ? 0.18 : 0.25
+        lastHitWeapon = sourceWeapon
         hp -= amount
+
+        switch hitEffect {
+        case .burn:
+            burnStacks = min(6, burnStacks + 2)
+            burnTickTimer = min(burnTickTimer, 0.15)
+        case .chill:
+            chillRemaining = max(chillRemaining, 2.35)
+        case .physical:
+            break
+        }
 
         // Knockback
         let kbDir = (position - hitPos).normalized()
-        physicsBody?.applyImpulse(CGVector(dx: kbDir.x*120, dy: kbDir.y*120))
+        let kb: CGFloat = isCritical ? 165 : 120
+        physicsBody?.applyImpulse(CGVector(dx: kbDir.x * kb, dy: kbDir.y * kb))
 
         // Hit flash
         bodyNode.run(SKAction.sequence([
@@ -286,26 +335,29 @@ class EnemyNode: SKNode {
         ]))
 
         // Damage number
-        showDamageNumber(amount)
+        showDamageNumber(amount, isCritical: isCritical)
 
-        if hp <= 0 {
-            isDead = true
-            let pts = isElite ? 200 : Int(maxHP * 10)
-            GameStore.shared.addKill(pts)
-            if isElite { GameStore.shared.eliteKills += 1 }
-            // Drop rupee chance
-            if Int.random(in: 0..<3) == 0 {
-                GameStore.shared.rupees += isElite ? 3 : 1
-            }
-        }
+        if hp <= 0 { dieAndGrantLoot() }
         updateHPBar()
     }
 
-    private func showDamageNumber(_ amount: CGFloat) {
-        let label = SKLabelNode(text: "-\(Int(ceil(amount * 10)))")
+    private func dieAndGrantLoot() {
+        guard !isDead else { return }
+        isDead = true
+        let pts = isElite ? 200 : Int(maxHP * 10)
+        GameStore.shared.addKill(pts)
+        if isElite { GameStore.shared.eliteKills += 1 }
+        GameStore.shared.registerEnemySlain(maxHP: maxHP, wasElite: isElite, killingWeapon: lastHitWeapon)
+        if Int.random(in: 0..<3) == 0 {
+            GameStore.shared.rupees += isElite ? 3 : 1
+        }
+    }
+
+    private func showDamageNumber(_ amount: CGFloat, isCritical: Bool) {
+        let label = SKLabelNode(text: isCritical ? "CRIT -\(Int(ceil(amount * 10)))" : "-\(Int(ceil(amount * 10)))")
         label.fontName = "AvenirNext-Bold"
-        label.fontSize = 14
-        label.fontColor = isElite ? UIColor(red:1,green:0.5,blue:0,alpha:1) : .white
+        label.fontSize = isCritical ? 16 : 14
+        label.fontColor = isCritical ? UIColor(red:1,green:0.9,blue:0.25,alpha:1) : (isElite ? UIColor(red:1,green:0.5,blue:0,alpha:1) : .white)
         label.position = CGPoint(x: CGFloat.random(in:-10...10), y: enemyType.radius + 18)
         label.zPosition = 20
         addChild(label)
@@ -316,11 +368,10 @@ class EnemyNode: SKNode {
     }
 
     private func updateHPBar() {
-        guard let bg = hpBarBg else { return }
-        let w = bg.frame.width
+        guard hpBarBg != nil else { return }
         let ratio = max(0, hp / maxHP)
         hpBarFill.xScale = ratio
-        hpBarFill.fillColor = ratio > 0.5 ? .from(hex:"#44ff44") : ratio > 0.25 ? .from(hex:"#ffaa00") : .from(hex:"#ff2222")
+        hpBarFill.color = ratio > 0.5 ? .from(hex:"#44ff44") : ratio > 0.25 ? .from(hex:"#ffaa00") : .from(hex:"#ff2222")
     }
 
     func playDeathEffect() {

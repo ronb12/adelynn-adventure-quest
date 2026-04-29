@@ -1,0 +1,47 @@
+{
+  "comment": "POST body wrapper is { data: { ... } }. Replace APP_INTERNAL_ID (internal ASC app id, e.g. 6764447633). Adjust booleans after QA.",
+  "data_iphone": {
+    "data": {
+      "type": "accessibilityDeclarations",
+      "attributes": {
+        "deviceFamily": "IPHONE",
+        "supportsVoiceover": true,
+        "supportsVoiceControl": false,
+        "supportsLargerText": true,
+        "supportsSufficientContrast": false,
+        "supportsDarkInterface": true,
+        "supportsDifferentiateWithoutColorAlone": false,
+        "supportsReducedMotion": true,
+        "supportsCaptions": false,
+        "supportsAudioDescriptions": false
+      },
+      "relationships": {
+        "app": {
+          "data": { "type": "apps", "id": "APP_INTERNAL_ID" }
+        }
+      }
+    }
+  },
+  "data_ipad": {
+    "data": {
+      "type": "accessibilityDeclarations",
+      "attributes": {
+        "deviceFamily": "IPAD",
+        "supportsVoiceover": true,
+        "supportsVoiceControl": false,
+        "supportsLargerText": true,
+        "supportsSufficientContrast": false,
+        "supportsDarkInterface": true,
+        "supportsDifferentiateWithoutColorAlone": false,
+        "supportsReducedMotion": true,
+        "supportsCaptions": false,
+        "supportsAudioDescriptions": false
+      },
+      "relationships": {
+        "app": {
+          "data": { "type": "apps", "id": "APP_INTERNAL_ID" }
+        }
+      }
+    }
+  }
+}

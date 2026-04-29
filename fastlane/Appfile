@@ -1,0 +1,5 @@
+# App Store Connect / signing identifiers (team matches Xcode project)
+
+app_identifier("com.adelynn.adventurequest")
+apple_id("ronellbradley@gmail.com")
+team_id("4SQJ3AH62S")

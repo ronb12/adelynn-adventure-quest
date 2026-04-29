@@ -16,6 +16,9 @@ class SaveManager {
         var bossDefeated: Bool
         var guardianDefeated: [String]
         var score, eliteKills: Int
+        var swordTier: Int?
+        var playerLevel, playerXP, totalEnemiesSlain, healthPotions: Int?
+        var weaponKillCounts: [String: Int]?
     }
 
     func hasSave() -> Bool { UserDefaults.standard.data(forKey: key) != nil }
@@ -34,7 +37,11 @@ class SaveManager {
             areasVisited: Array(s.areasVisited.map{$0.rawValue}),
             bossHP: Double(s.bossHP), bossDefeated: s.bossDefeated,
             guardianDefeated: Array(s.guardianDefeated.map{$0.rawValue}),
-            score: s.score, eliteKills: s.eliteKills)
+            score: s.score, eliteKills: s.eliteKills,
+            swordTier: s.swordTier,
+            playerLevel: s.playerLevel, playerXP: s.playerXP,
+            totalEnemiesSlain: s.totalEnemiesSlain, healthPotions: s.healthPotions,
+            weaponKillCounts: Dictionary(uniqueKeysWithValues: s.weaponKillCounts.map { ($0.key.rawValue, $0.value) }))
         if let e = try? JSONEncoder().encode(d) { UserDefaults.standard.set(e, forKey: key) }
     }
 
@@ -57,6 +64,17 @@ class SaveManager {
         s.bossHP = CGFloat(d.bossHP); s.bossDefeated = d.bossDefeated
         s.guardianDefeated = Set(d.guardianDefeated.compactMap{AreaId(rawValue:$0)})
         s.score = d.score; s.eliteKills = d.eliteKills
+        s.swordTier = d.swordTier ?? 0
+        s.playerLevel = d.playerLevel ?? 1
+        s.playerXP = d.playerXP ?? 0
+        s.totalEnemiesSlain = d.totalEnemiesSlain ?? 0
+        s.healthPotions = d.healthPotions ?? 1
+        s.weaponKillCounts = [:]
+        if let wk = d.weaponKillCounts {
+            for (key, val) in wk where val > 0 {
+                if let w = WeaponType(rawValue: key) { s.weaponKillCounts[w] = val }
+            }
+        }
         s.gameState = .playing
         return true
     }

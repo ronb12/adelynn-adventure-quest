@@ -10,9 +10,14 @@ class ControlsNode: SKNode {
     var onCycleWeapon:  (() -> Void)?
     var onTogglePause:  (() -> Void)?
     var onRun:          ((Bool) -> Void)?
+    var onBlock:        ((Bool) -> Void)?
+    var onDodge:        (() -> Void)?
+    var onUsePotion:    (() -> Void)?
 
     // MARK: - State
     private(set) var joystickDirection: CGPoint = .zero
+    private var lastRunTapTime: TimeInterval = 0
+    private var lastAttackTapTime: TimeInterval = 0
 
     // Joystick geometry
     private var joystickBase: SKShapeNode!
@@ -27,6 +32,7 @@ class ControlsNode: SKNode {
     private var interactTouchID: UITouch?
     private var runTouchID:      UITouch?
     private var cycleTouchID:    UITouch?
+    private var blockTouchID:    UITouch?
 
     private let sceneSize: CGSize
 
@@ -91,10 +97,17 @@ class ControlsNode: SKNode {
         // Y — Cycle weapon (above A)
         makeButton(name:"btnCycle",   label:"Y", color:.from(hex:"#884400"),
                    position: CGPoint(x:bx,      y:by+94))
+        // Hold to block (web: hold B) — below B
+        makeButton(name:"btnBlock",   label:"Blk", color:.from(hex:"#4455aa"),
+                   position: CGPoint(x:bx-60,   y:by-48), radius: 24)
 
         // Pause (top-right corner)
         makeButton(name:"btnPause", label:"⏸", color:UIColor.white.withAlphaComponent(0.15),
                    position: CGPoint(x:sceneSize.width/2-28, y:sceneSize.height/2-28), radius:18)
+
+        // Heart potion (left, mid — above joystick zone)
+        makeButton(name: "btnPotion", label: "HP", color: UIColor(red: 0.65, green: 0.12, blue: 0.22, alpha: 1),
+                   position: CGPoint(x: -sceneSize.width / 2 + 36, y: sceneSize.height / 2 - 118), radius: 22)
     }
 
     @discardableResult
@@ -114,15 +127,15 @@ class ControlsNode: SKNode {
         return btn
     }
 
-    // MARK: - Touch Handling (called from scene)
-    func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+    // MARK: - Touch Handling (called from scene; named forward* to avoid ambiguity with UIResponder)
+    func forwardTouchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
             let loc = touch.location(in: self)
             handleTouchBegan(touch: touch, location: loc)
         }
     }
 
-    func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+    func forwardTouchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
             if touch == joystickTouchID {
                 let loc = touch.location(in: self)
@@ -131,18 +144,19 @@ class ControlsNode: SKNode {
         }
     }
 
-    func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+    func forwardTouchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
             if touch == joystickTouchID  { resetJoystick(); joystickTouchID = nil }
             if touch == attackTouchID    { attackTouchID = nil }
             if touch == interactTouchID  { interactTouchID = nil }
             if touch == runTouchID       { runTouchID = nil; onRun?(false) }
             if touch == cycleTouchID     { cycleTouchID = nil }
+            if touch == blockTouchID     { blockTouchID = nil; onBlock?(false) }
         }
     }
 
-    func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        touchesEnded(touches, with: event)
+    func forwardTouchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        forwardTouchesEnded(touches, with: event)
     }
 
     private func handleTouchBegan(touch: UITouch, location: CGPoint) {
@@ -163,13 +177,41 @@ class ControlsNode: SKNode {
         for node in tapped {
             switch node.name {
             case "btnAttack", "lbl_btnAttack":
-                attackTouchID = touch; onAttack?(); return
+                attackTouchID = touch
+                let nowAtk = CACurrentMediaTime()
+                if nowAtk - lastAttackTapTime > 0, nowAtk - lastAttackTapTime < 0.34 {
+                    lastAttackTapTime = 0
+                    onSpinAttack?()
+                } else {
+                    lastAttackTapTime = nowAtk
+                    onAttack?()
+                }
+                return
             case "btnRun", "lbl_btnRun":
-                runTouchID = touch; onRun?(true); return
+                let now = CACurrentMediaTime()
+                if now - lastRunTapTime > 0, now - lastRunTapTime < 0.32 {
+                    lastRunTapTime = 0
+                    onDodge?()
+                } else {
+                    lastRunTapTime = now
+                    runTouchID = touch
+                    onRun?(true)
+                }
+                return
             case "btnInteract", "lbl_btnInteract":
                 interactTouchID = touch; onInteract?(); return
             case "btnCycle", "lbl_btnCycle":
                 cycleTouchID = touch; onCycleWeapon?(); return
+            case "btnBlock", "lbl_btnBlock":
+                if blockTouchID == nil {
+                    blockTouchID = touch
+                    GameStore.shared.markBlockPressed()
+                    onBlock?(true)
+                }
+                return
+            case "btnPotion", "lbl_btnPotion":
+                onUsePotion?()
+                return
             case "btnPause", "lbl_btnPause":
                 onTogglePause?(); return
             default: break

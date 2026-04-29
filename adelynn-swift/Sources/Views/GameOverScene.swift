@@ -72,8 +72,8 @@ class GameOverScene: SKScene {
 
         // Buttons
         y -= panelH/2 + 50
-        addButton(text:"▶  Try Again",   name:"retry",  fill:UIColor(red:0.7,green:0.2,blue:0.0,alpha:1), at:CGPoint(x:size.width/2, y:y))
-        addButton(text:"⬅  Title Screen", name:"title",  fill:UIColor(red:0.15,green:0.15,blue:0.30,alpha:1), at:CGPoint(x:size.width/2, y:y-68))
+        addButton(text:"Try Again",   name:"retry",  fill:UIColor(red:0.7,green:0.2,blue:0.0,alpha:1), at:CGPoint(x:size.width/2, y:y))
+        addButton(text:"Title Screen", name:"title",  fill:UIColor(red:0.15,green:0.15,blue:0.30,alpha:1), at:CGPoint(x:size.width/2, y:y-68))
     }
 
     private func addButton(text: String, name: String, fill: UIColor, at pos: CGPoint) {
