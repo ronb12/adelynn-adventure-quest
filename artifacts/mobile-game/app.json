@@ -14,7 +14,9 @@
       "backgroundColor": "#0a0a1f"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.adelynn.adventurequest",
+      "buildNumber": "1"
     },
     "android": {},
     "web": {
@@ -33,6 +35,11 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "adelynn-aq-4sqj3-001"
+      }
     }
   }
 }
