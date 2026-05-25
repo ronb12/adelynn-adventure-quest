@@ -69,14 +69,6 @@ export function MuteButton() {
     });
   };
 
-  useEffect(() => {
-    // We control mute by adjusting the document AudioContext gain
-    // The simplest approach is suspending / resuming
-    import('./AudioManager').then(mod => {
-      void mod; // side-effect: ensure module is loaded
-    });
-  }, []);
-
   return (
     <button
       onClick={toggle}

@@ -18,6 +18,12 @@ const STAMINA_REGEN  = 0.55; // per second while not running
 // Exported so HUD can poll without subscribing to the store
 export const playerStamina = { current: STAMINA_MAX, max: STAMINA_MAX, isRunning: false };
 
+function safeFlatDirection(vec: THREE.Vector3, fallback = new THREE.Vector3(0, 0, -1)) {
+  const flat = vec.clone().setY(0);
+  if (flat.lengthSq() < 1e-6) return fallback.clone();
+  return flat.normalize();
+}
+
 // Main shard/armor chests
 const MAIN_CHEST_POSITIONS: Record<string, THREE.Vector3> = {
   field:        new THREE.Vector3(0, 0, -22),
@@ -918,13 +924,13 @@ export function Player() {
     }
 
     // Cottage interior wall collision
-    // Rooms: 10 wide (x: -5..5), z: -6..4.5, door gap |x| < 3.0 at z=4.5
+    // Rooms: 10 wide (x: -5..5), z: -6..4.5, door gap widened slightly so exits feel reliable
     if (store.currentArea === 'cottage1' || store.currentArea === 'cottage2' || store.currentArea === 'cottage3') {
       pos.current.x = THREE.MathUtils.clamp(pos.current.x, -4.35, 4.35);
       pos.current.z = Math.max(pos.current.z, -5.35);
       const CWALL_Z_IN  = 3.85;
       const CWALL_Z_OUT = 5.15;
-      if (Math.abs(pos.current.x) > 2.5 && pos.current.z > CWALL_Z_IN && pos.current.z < CWALL_Z_OUT) {
+      if (Math.abs(pos.current.x) > 2.2 && pos.current.z > CWALL_Z_IN && pos.current.z < CWALL_Z_OUT) {
         pos.current.z = pos.current.z < 4.5 ? CWALL_Z_IN : CWALL_Z_OUT;
       }
     }
@@ -1056,7 +1062,7 @@ export function Player() {
         rightArmRef.current.rotation.z = arc * 0.75;
 
         const hitPos = pos.current.clone()
-          .addScaledVector(facingDir.current.clone().setY(0).normalize(), 1.4)
+          .addScaledVector(safeFlatDirection(facingDir.current, new THREE.Vector3(0, 0, -1)), 1.4)
           .setY(0.5);
         store.setSwordState(true, hitPos);
       }

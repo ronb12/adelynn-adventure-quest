@@ -8,6 +8,11 @@ import { sfxExplosion } from './AudioManager';
 let _id = 0;
 const nextId = () => ++_id;
 
+function safeNormalize(vec: THREE.Vector3, fallback = new THREE.Vector3(0, 0, -1)) {
+  if (vec.lengthSq() < 1e-6) return fallback.clone();
+  return vec.normalize();
+}
+
 // ── Constants ─────────────────────────────────────────────────────
 const ARROW_SPEED  = 18;
 const ARROW_LIFE   = 1.0;
@@ -241,9 +246,9 @@ function BoomerangProjectile({ id, startPos, vel, onDone }: {
 
     if (returning.current) {
       const target = playerPos.clone().setY(0.9);
-      const toPlayer = target.sub(pos.current).normalize();
+      const toPlayer = safeNormalize(target.sub(pos.current), curVel.current.clone());
       curVel.current.lerp(toPlayer.multiplyScalar(BOOM_SPEED), 0.18);
-      pos.current.addScaledVector(curVel.current.clone().normalize().multiplyScalar(BOOM_SPEED), delta);
+      pos.current.addScaledVector(safeNormalize(curVel.current.clone()).multiplyScalar(BOOM_SPEED), delta);
 
       if (pos.current.distanceTo(playerPos) < 1.1 || age.current > BOOM_LIFE) {
         onDone(id);
@@ -398,7 +403,7 @@ function ChainProjectile({ id, startPos, vel, onDone }: {
   });
 
   // Visual: anchor head + 3 chain links behind it
-  const chainDir = vel.clone().normalize();
+  const chainDir = safeNormalize(vel.clone());
   return (
     <group ref={ref} position={startPos}>
       {/* Anchor head */}
@@ -653,7 +658,7 @@ export function Weapons() {
     store.clearPendingWeaponFire();
 
     const playerPos = store.playerPosition.clone();
-    const dir = store.playerDirection.clone().setY(0).normalize();
+    const dir = safeNormalize(store.playerDirection.clone().setY(0));
     const startPos = playerPos.clone().addScaledVector(dir, 0.9).setY(1.0);
 
     if (w === 'bow') {
@@ -666,9 +671,9 @@ export function Weapons() {
     } else if (w === 'moonbow') {
       // 3-arrow crescent fan, uses moonbow ammo
       if (store.useMoonbowAmmo()) {
-        const right = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
+        const right = safeNormalize(new THREE.Vector3(-dir.z, 0, dir.x), new THREE.Vector3(1, 0, 0));
         [-0.25, 0, 0.25].forEach(spread => {
-          const vel = dir.clone().addScaledVector(right, spread).normalize().multiplyScalar(MOONBOW_SPEED);
+          const vel = safeNormalize(dir.clone().addScaledVector(right, spread), dir).multiplyScalar(MOONBOW_SPEED);
           setProjectiles(prev => [...prev, {
             id: nextId(), type: 'moonbow',
             startPos: startPos.clone().addScaledVector(right, spread * 0.5),
@@ -705,9 +710,9 @@ export function Weapons() {
       }]);
     } else if (w === 'shuriken') {
       if (store.useShuriken()) {
-        const right = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
+        const right = safeNormalize(new THREE.Vector3(-dir.z, 0, dir.x), new THREE.Vector3(1, 0, 0));
         [0, -0.22, 0.22].forEach(offset => {
-          const spreadVel = dir.clone().addScaledVector(right, offset).normalize().multiplyScalar(SHURIKEN_SPEED);
+          const spreadVel = safeNormalize(dir.clone().addScaledVector(right, offset), dir).multiplyScalar(SHURIKEN_SPEED);
           setProjectiles(prev => [...prev, {
             id: nextId(), type: 'shuriken',
             startPos: startPos.clone().addScaledVector(right, offset * 0.4),

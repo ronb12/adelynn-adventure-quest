@@ -1088,6 +1088,232 @@ function QuestTracker() {
   );
 }
 
+function AdventureDirector() {
+  const currentArea = useGameStore(s => s.currentArea);
+  const shardsCollected = useGameStore(s => s.shardsCollected);
+  const loreRead = useGameStore(s => s.loreRead);
+  const totalKills = useGameStore(s => s.totalKills);
+  const completedQuests = useGameStore(s => s.completedQuests);
+  const guardianDefeated = useGameStore(s => s.guardianDefeated);
+  const areasVisited = useGameStore(s => s.areasVisited);
+  const caveDungeonStage = useGameStore(s => s.caveDungeonStage);
+  const desertDungeonStage = useGameStore(s => s.desertDungeonStage);
+  const bossDungeonStage = useGameStore(s => s.bossDungeonStage);
+  const unlockedWeapons = useGameStore(s => s.unlockedWeapons);
+  const unlockedSwords = useGameStore(s => s.unlockedSwords);
+  const chestsOpened = useGameStore(s => s.chestsOpened);
+
+  const worldCompletion = Math.min(
+    100,
+    Math.round(
+      shardsCollected * 24 +
+      completedQuests.length * 3.5 +
+      loreRead.length * 1.4 +
+      guardianDefeated.length * 4
+    )
+  );
+
+  const areaOrder = ['field', 'forest', 'desert', 'boss'] as const;
+  const nextArea = areaOrder[Math.min(shardsCollected, areaOrder.length - 1)];
+
+  const objective = (() => {
+    if (currentArea === 'cave') {
+      const hasBomb = unlockedWeapons.includes('bomb');
+      if (caveDungeonStage === 0) {
+        return {
+          title: 'Clear the entry swarm',
+          destination: 'Crystal Caverns south chamber',
+          detail: 'Break the relay ward.',
+          accent: '#a855f7',
+        };
+      }
+      if (caveDungeonStage === 1) {
+        return {
+          title: 'Break the inner defense',
+          destination: 'Crystal Caverns mid chamber',
+          detail: 'Collapse the inner relay.',
+          accent: '#c084fc',
+        };
+      }
+      if (!hasBomb) {
+        return {
+          title: 'Find the Ember Vial',
+          destination: 'Ashrock Summit',
+          detail: 'The final ember seal is cracked but not broken. Bring the bomb weapon back to breach the sanctum.',
+          accent: '#ff7a45',
+        };
+      }
+      if (!guardianDefeated.includes('cave')) {
+        return {
+          title: 'Defeat the Crystal Golem',
+          destination: 'Crystal Caverns sanctum',
+          detail: 'The deepest chamber is open. Drop into the ring and finish the golem before taking the treasure.',
+          accent: '#8b5cf6',
+        };
+      }
+      return {
+        title: 'Claim the sanctum reward',
+        destination: 'Crystal Caverns treasure dais',
+        detail: 'The cavern route is secured. Open the final chest and carry the upgraded route knowledge back to the surface.',
+        accent: '#38bdf8',
+      };
+    }
+
+    if (currentArea === 'desert') {
+      const hasBomb = unlockedWeapons.includes('bomb');
+      if (desertDungeonStage === 0) {
+        return {
+          title: 'Hold the first pass',
+          destination: 'Ashrock outer causeway',
+          detail: 'Take one lane at a time.',
+          accent: '#f59e0b',
+        };
+      }
+      if (!hasBomb) {
+        return {
+          title: 'Claim the Ember Vial',
+          destination: 'Ashrock forge trench',
+          detail: 'Cross by cover.',
+          accent: '#fb923c',
+        };
+      }
+      return {
+        title: 'Blast into the shard sanctum',
+        destination: 'Ashrock north vault',
+        detail: 'The lesson pays off here: use the bomb route you earned to break the vault seal and secure the shard.',
+        accent: '#ef4444',
+      };
+    }
+
+    if (currentArea === 'boss') {
+      const prepReady =
+        unlockedWeapons.includes('chain') &&
+        unlockedWeapons.includes('aura') &&
+        chestsOpened.includes('boss-armor');
+      const throneReady =
+        unlockedWeapons.includes('shadow') &&
+        unlockedWeapons.includes('veil') &&
+        unlockedSwords.includes('dragon');
+
+      if (bossDungeonStage === 0) {
+        return {
+          title: 'Secure the breach chamber',
+          destination: 'Malgrath outer ward',
+          detail: prepReady
+            ? 'Split the ward and cross.'
+            : 'Take the armor chest, Chain Anchor, and Aura Ring first.',
+          accent: '#8b5cf6',
+        };
+      }
+      if (bossDungeonStage === 1) {
+        return {
+          title: 'Open the throne route',
+          destination: 'Malgrath armory corridor',
+          detail: throneReady
+            ? 'Bait the rush and counter.'
+            : 'Collect Shadow Veil, Glacira\'s Veil, and the Dragon Blade.',
+          accent: '#a855f7',
+        };
+      }
+      if (!guardianDefeated.includes('boss') && !areasVisited.includes('void')) {
+        return {
+          title: 'Enter the final sanctum',
+          destination: 'Malgrath throne circle',
+          detail: 'The throne room is open. Cross the final seal and force the boss duel on your terms.',
+          accent: '#ef4444',
+        };
+      }
+      return {
+        title: 'End Malgrath',
+        destination: 'Throne ring',
+        detail: 'Stay inside the ring, manage the bolt spreads, and finish the final duel.',
+        accent: '#f43f5e',
+      };
+    }
+
+    if (shardsCollected === 0) {
+      return {
+        title: 'Recover the first shard',
+        destination: 'Sunfield Plains',
+        detail: 'Sweep the opening meadows, clear enemies, and crack open the Dawn chest.',
+        accent: '#f6c445',
+      };
+    }
+    if (shardsCollected === 1) {
+      return {
+        title: 'Press deeper into the woods',
+        destination: 'Whisper Woods',
+        detail: 'Follow lore stones and weapon shrines to uncover the Shard of Dusk.',
+        accent: '#8b5cf6',
+      };
+    }
+    if (shardsCollected === 2) {
+      return {
+        title: 'Climb Ashrock Summit',
+        destination: 'Ashrock Summit',
+        detail: 'Use your full arsenal, defeat elites, and claim the Shard of Ember.',
+        accent: '#ff7a45',
+      };
+    }
+    if (!areasVisited.includes('boss')) {
+      return {
+        title: 'Open the road to Malgrath',
+        destination: "Malgrath's Lair",
+        detail: 'Return to the portal and bring all three shards into the final assault.',
+        accent: '#ef4444',
+      };
+    }
+    if (completedQuests.length < QUEST_DEFS.length) {
+      return {
+        title: 'Finish the hero ledger',
+        destination: AREA_NAMES[currentArea] ?? 'Current area',
+        detail: 'Push combos, collect lore, and complete the remaining quest milestones.',
+        accent: '#22c55e',
+      };
+    }
+    return {
+      title: 'Crown restored',
+      destination: 'Aldenmere secured',
+      detail: 'You have cleared the main adventure. Hunt remaining lore and guardians for a perfect file.',
+      accent: '#38bdf8',
+    };
+  })();
+
+  const currentAreaDone =
+    (currentArea === 'field' && shardsCollected >= 1) ||
+    (currentArea === 'forest' && shardsCollected >= 2) ||
+    (currentArea === 'desert' && shardsCollected >= 3) ||
+    (currentArea === 'boss' && areasVisited.includes('boss'));
+
+  return (
+    <div
+      className="absolute pointer-events-none flex flex-col gap-1 bg-black/55 rounded-xl px-3 py-2 backdrop-blur-sm max-w-[270px]"
+      style={{ left: 8, top: 58, zIndex: 5500, borderLeft: `3px solid ${objective.accent}` }}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] uppercase tracking-[0.25em] text-amber-300/90 font-bold">Adventure Director</span>
+        <span className="text-[10px] font-mono text-gray-400">{AREA_NAMES[currentArea] ?? currentArea}</span>
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <span className="text-white text-xs font-bold leading-tight">{objective.title}</span>
+        <span className="text-[11px] text-purple-300 leading-tight">📍 {objective.destination}</span>
+        <span className="text-[11px] text-gray-300 leading-snug">{objective.detail}</span>
+      </div>
+      <div className="h-1.5 rounded-full bg-gray-800/80 overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-300"
+          style={{ width: `${worldCompletion}%`, background: objective.accent }}
+        />
+      </div>
+      <span className="text-[10px] text-gray-400 leading-snug">
+        {currentAreaDone
+          ? `Area clear. Next route: ${AREA_NAMES[nextArea] ?? nextArea}.`
+          : `Current zone: ${AREA_NAMES[currentArea] ?? currentArea}. Keep pushing this arc.`}
+      </span>
+    </div>
+  );
+}
+
 // ── Main HUD ──────────────────────────────────────────────────────
 export function HUD() {
   const {
@@ -1125,7 +1351,10 @@ export function HUD() {
       <AreaEntryBanner />
 
       {/* Quest Tracker */}
-      <QuestTracker />
+      {shardsCollected > 0 && currentArea !== 'cave' && <QuestTracker />}
+
+      {/* Adventure Director */}
+      <AdventureDirector />
 
       {/* Lore popup */}
       <LorePopup />

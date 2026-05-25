@@ -30,6 +30,29 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("@react-three") || id.includes("/three/")) {
+              return "vendor-3d";
+            }
+            if (id.includes("@clerk")) {
+              return "vendor-auth";
+            }
+            if (id.includes("@radix-ui") || id.includes("framer-motion") || id.includes("lucide-react")) {
+              return "vendor-ui";
+            }
+            if (id.includes("react") || id.includes("react-dom") || id.includes("wouter") || id.includes("zustand")) {
+              return "vendor-core";
+            }
+          }
+          if (id.includes("/src/game/Audio")) {
+            return "game-audio";
+          }
+        },
+      },
+    },
   },
   server: {
     port,

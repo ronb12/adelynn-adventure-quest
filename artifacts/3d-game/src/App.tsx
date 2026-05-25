@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { KeyboardControls } from '@react-three/drei';
-import { ClerkProvider } from '@clerk/react';
+import * as THREE from 'three';
 import { Router as WouterRouter, Route, Switch, useLocation } from 'wouter';
 import { useGameStore } from './game/store';
 import { keyMap } from './game/controls';
@@ -18,11 +18,9 @@ import { ShopUI } from './game/Shop';
 import { SaveSystem } from './game/SaveSystem';
 import { MobileControls } from './game/MobileControls';
 import { SignInPage, SignUpPage } from './game/AuthPages';
+import { MaybeClerkProvider } from './game/clerkCompat';
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
-
-const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string;
-const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL as string | undefined;
 
 function stripBase(path: string): string {
   return basePath && path.startsWith(basePath)
@@ -33,14 +31,15 @@ function stripBase(path: string): string {
 function GameScene() {
   const currentArea  = useGameStore(s => s.currentArea);
   const bossDefeated = useGameStore(s => s.bossDefeated);
+  const bossDungeonStage = useGameStore(s => s.bossDungeonStage);
 
   return (
     <>
       <World />
       <CameraRig />
       <Player />
-      {currentArea !== 'boss' && <Enemies key={`enemies-${currentArea}`} />}
-      {currentArea === 'boss' && !bossDefeated && <BossEnemy />}
+      <Enemies key={`enemies-${currentArea}-${bossDungeonStage}`} />
+      {currentArea === 'boss' && !bossDefeated && bossDungeonStage >= 2 && <BossEnemy />}
       <Pickups key={`pickups-${currentArea}`} />
       <Weapons />
     </>
@@ -67,7 +66,13 @@ function GameApp() {
   return (
     <div className="w-full h-[100dvh] relative overflow-hidden font-sans bg-black" style={{ touchAction: 'none' }}>
       <KeyboardControls map={keyMap}>
-        <Canvas shadows camera={{ position: [0, 15, 15], fov: 45 }}>
+        <Canvas
+          shadows={{ type: THREE.PCFShadowMap }}
+          camera={{ position: [0, 15, 15], fov: 45 }}
+          onCreated={({ gl }) => {
+            gl.shadowMap.type = THREE.PCFShadowMap;
+          }}
+        >
           {isInGame && <GameScene />}
         </Canvas>
       </KeyboardControls>
@@ -91,9 +96,7 @@ function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
 
   return (
-    <ClerkProvider
-      publishableKey={clerkPubKey ?? ''}
-      proxyUrl={clerkProxyUrl}
+    <MaybeClerkProvider
       signInUrl={`${basePath}/sign-in`}
       signUpUrl={`${basePath}/sign-up`}
       routerPush={(to) => setLocation(stripBase(to))}
@@ -104,7 +107,7 @@ function ClerkProviderWithRoutes() {
         <Route path="/sign-up/*?" component={SignUpPage} />
         <Route component={GameApp} />
       </Switch>
-    </ClerkProvider>
+    </MaybeClerkProvider>
   );
 }
 

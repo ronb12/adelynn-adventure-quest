@@ -11,6 +11,26 @@ let _sfxGain: GainNode | null = null;
 let _gestured = false;
 let _pendingArea: string | null = null;
 
+function finiteOr(value: number, fallback: number) {
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function safeTime(ctx: AudioContext, at: number) {
+  return Math.max(ctx.currentTime, finiteOr(at, ctx.currentTime));
+}
+
+function safeParamSet(param: AudioParam, value: number, at: number, ctx: AudioContext, fallbackValue = 0) {
+  param.setValueAtTime(finiteOr(value, fallbackValue), safeTime(ctx, at));
+}
+
+function safeParamLinear(param: AudioParam, value: number, at: number, ctx: AudioContext, fallbackValue = 0) {
+  param.linearRampToValueAtTime(finiteOr(value, fallbackValue), safeTime(ctx, at));
+}
+
+function safeParamExpo(param: AudioParam, value: number, at: number, ctx: AudioContext, fallbackValue = 0.001) {
+  param.exponentialRampToValueAtTime(Math.max(0.001, finiteOr(value, fallbackValue)), safeTime(ctx, at));
+}
+
 function _createCtx() {
   if (_ctx) return;
   _ctx = new AudioContext();
@@ -126,19 +146,23 @@ function schedNote(
   if (freq === 0 || !dest) return;
   const ctx = getCtx();
   if (!ctx) return;
+  const safeFreq = finiteOr(freq, 0);
+  const safeStart = safeTime(ctx, startTime);
+  const safeDuration = Math.max(0.01, finiteOr(duration, 0.12));
+  const safeVol = Math.max(0.001, finiteOr(vol, 0.12));
   const osc  = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = type;
-  osc.frequency.setValueAtTime(freq, startTime);
-  if (pitchEnd !== undefined) osc.frequency.linearRampToValueAtTime(pitchEnd, startTime + duration);
-  gain.gain.setValueAtTime(0.001, startTime);
-  gain.gain.linearRampToValueAtTime(vol, startTime + 0.012);
-  gain.gain.setValueAtTime(vol * 0.85, startTime + duration * 0.6);
-  gain.gain.linearRampToValueAtTime(0.001, startTime + duration * 0.98);
+  safeParamSet(osc.frequency, safeFreq, safeStart, ctx, safeFreq);
+  if (pitchEnd !== undefined) safeParamLinear(osc.frequency, pitchEnd, safeStart + safeDuration, ctx, safeFreq);
+  safeParamSet(gain.gain, 0.001, safeStart, ctx, 0.001);
+  safeParamLinear(gain.gain, safeVol, safeStart + 0.012, ctx, safeVol);
+  safeParamSet(gain.gain, safeVol * 0.85, safeStart + safeDuration * 0.6, ctx, safeVol * 0.85);
+  safeParamLinear(gain.gain, 0.001, safeStart + safeDuration * 0.98, ctx, 0.001);
   osc.connect(gain);
   gain.connect(dest);
-  osc.start(startTime);
-  osc.stop(startTime + duration + 0.01);
+  osc.start(safeStart);
+  osc.stop(safeStart + safeDuration + 0.01);
 }
 
 function schedulerTick() {
@@ -204,8 +228,8 @@ export function playMusic(area: string) {
   // Fade music gain in
   const g = _musicGain!;
   g.gain.cancelScheduledValues(ctx.currentTime);
-  g.gain.setValueAtTime(0, ctx.currentTime);
-  g.gain.linearRampToValueAtTime(0.38, ctx.currentTime + 0.8);
+  safeParamSet(g.gain, 0, ctx.currentTime, ctx, 0);
+  safeParamLinear(g.gain, 0.38, ctx.currentTime + 0.8, ctx, 0.38);
 }
 
 export function stopMusic() {
@@ -215,7 +239,7 @@ export function stopMusic() {
   const ctx = getCtx();
   if (ctx && _musicGain) {
     _musicGain.gain.cancelScheduledValues(ctx.currentTime);
-    _musicGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
+    safeParamLinear(_musicGain.gain, 0, ctx.currentTime + 0.5, ctx, 0);
   }
 }
 
@@ -237,12 +261,12 @@ export function sfxSword() {
   src.buffer = buf;
   const bpf = ctx.createBiquadFilter();
   bpf.type = 'bandpass';
-  bpf.frequency.setValueAtTime(900, now);
-  bpf.frequency.linearRampToValueAtTime(300, now + dur);
+  safeParamSet(bpf.frequency, 900, now, ctx, 900);
+  safeParamLinear(bpf.frequency, 300, now + dur, ctx, 300);
   bpf.Q.value = 2.5;
   const gain = ctx.createGain();
-  gain.gain.setValueAtTime(0.55, now);
-  gain.gain.linearRampToValueAtTime(0, now + dur);
+  safeParamSet(gain.gain, 0.55, now, ctx, 0.55);
+  safeParamLinear(gain.gain, 0, now + dur, ctx, 0);
   src.connect(bpf); bpf.connect(gain); gain.connect(dest);
   src.start(now); src.stop(now + dur);
 
@@ -291,8 +315,8 @@ export function sfxExplosion() {
   const lpf = ctx.createBiquadFilter();
   lpf.type = 'lowpass'; lpf.frequency.value = 400;
   const gain = ctx.createGain();
-  gain.gain.setValueAtTime(1.1, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+  safeParamSet(gain.gain, 1.1, now, ctx, 1.1);
+  safeParamExpo(gain.gain, 0.001, now + dur, ctx, 0.001);
   src.connect(lpf); lpf.connect(gain); gain.connect(dest);
   src.start(now); src.stop(now + dur);
   schedNote(70, now, 0.3, 'sine', 0.9, dest, 30);
@@ -321,7 +345,7 @@ export function sfxHit() {
   src.buffer = buf;
   const bpf = ctx.createBiquadFilter();
   bpf.type = 'bandpass'; bpf.frequency.value = 1800; bpf.Q.value = 1.5;
-  const g = ctx.createGain(); g.gain.setValueAtTime(0.35, now); g.gain.linearRampToValueAtTime(0, now + 0.07);
+  const g = ctx.createGain(); safeParamSet(g.gain, 0.35, now, ctx, 0.35); safeParamLinear(g.gain, 0, now + 0.07, ctx, 0);
   src.connect(bpf); bpf.connect(g); g.connect(dest);
   src.start(now); src.stop(now + 0.08);
 }
@@ -347,7 +371,7 @@ export function sfxPlayerHurt() {
   for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
   const src = ctx.createBufferSource();
   src.buffer = buf;
-  const g = ctx.createGain(); g.gain.setValueAtTime(0.22, now); g.gain.linearRampToValueAtTime(0, now + 0.12);
+  const g = ctx.createGain(); safeParamSet(g.gain, 0.22, now, ctx, 0.22); safeParamLinear(g.gain, 0, now + 0.12, ctx, 0);
   src.connect(g); g.connect(dest);
   src.start(now); src.stop(now + 0.12);
 }
@@ -489,10 +513,10 @@ export function sfxDodge() {
   const osc = ctx.createOscillator(); const gain = ctx.createGain();
   osc.connect(gain); gain.connect(dest);
   osc.type = 'sine';
-  osc.frequency.setValueAtTime(520, now);
-  osc.frequency.exponentialRampToValueAtTime(140, now + 0.13);
-  gain.gain.setValueAtTime(0.18, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+  safeParamSet(osc.frequency, 520, now, ctx, 520);
+  safeParamExpo(osc.frequency, 140, now + 0.13, ctx, 140);
+  safeParamSet(gain.gain, 0.18, now, ctx, 0.18);
+  safeParamExpo(gain.gain, 0.001, now + 0.13, ctx, 0.001);
   osc.start(now); osc.stop(now + 0.13);
 }
 
@@ -504,19 +528,19 @@ export function sfxGroundSlam() {
   const osc = ctx.createOscillator(); const gain = ctx.createGain();
   osc.connect(gain); gain.connect(dest);
   osc.type = 'sawtooth';
-  osc.frequency.setValueAtTime(200, now);
-  osc.frequency.exponentialRampToValueAtTime(35, now + 0.38);
-  gain.gain.setValueAtTime(0.55, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+  safeParamSet(osc.frequency, 200, now, ctx, 200);
+  safeParamExpo(osc.frequency, 35, now + 0.38, ctx, 35);
+  safeParamSet(gain.gain, 0.55, now, ctx, 0.55);
+  safeParamExpo(gain.gain, 0.001, now + 0.38, ctx, 0.001);
   osc.start(now); osc.stop(now + 0.38);
   // High crack
   const osc2 = ctx.createOscillator(); const gain2 = ctx.createGain();
   osc2.connect(gain2); gain2.connect(dest);
   osc2.type = 'square';
-  osc2.frequency.setValueAtTime(900, now);
-  osc2.frequency.exponentialRampToValueAtTime(200, now + 0.06);
-  gain2.gain.setValueAtTime(0.25, now);
-  gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+  safeParamSet(osc2.frequency, 900, now, ctx, 900);
+  safeParamExpo(osc2.frequency, 200, now + 0.06, ctx, 200);
+  safeParamSet(gain2.gain, 0.25, now, ctx, 0.25);
+  safeParamExpo(gain2.gain, 0.001, now + 0.08, ctx, 0.001);
   osc2.start(now); osc2.stop(now + 0.08);
 }
 
@@ -532,7 +556,7 @@ export function sfxParry() {
   const filter = ctx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = 1800;
   const gain = ctx.createGain();
   src.connect(filter); filter.connect(gain); gain.connect(dest);
-  gain.gain.setValueAtTime(0.45, now);
+  safeParamSet(gain.gain, 0.45, now, ctx, 0.45);
   src.start(now);
   // Resonant ping
   schedNote(NOTE.A4 * 2, now, 0.22, 'sine', 0.22, dest, NOTE.A4 * 2);
@@ -545,10 +569,10 @@ export function sfxShieldBash() {
   const osc = ctx.createOscillator(); const gain = ctx.createGain();
   osc.connect(gain); gain.connect(dest);
   osc.type = 'square';
-  osc.frequency.setValueAtTime(320, now);
-  osc.frequency.exponentialRampToValueAtTime(90, now + 0.18);
-  gain.gain.setValueAtTime(0.35, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+  safeParamSet(osc.frequency, 320, now, ctx, 320);
+  safeParamExpo(osc.frequency, 90, now + 0.18, ctx, 90);
+  safeParamSet(gain.gain, 0.35, now, ctx, 0.35);
+  safeParamExpo(gain.gain, 0.001, now + 0.18, ctx, 0.001);
   osc.start(now); osc.stop(now + 0.18);
   schedNote(NOTE.E3 ?? 164.8, now + 0.04, 0.12, 'triangle', 0.18, dest, NOTE.E3 ?? 164.8);
 }

@@ -262,7 +262,7 @@ export const PORTALS: Record<AreaId, PortalDef[]> = {
 // ── Village cottage door entry points (no stone arch — warm glow only) ──
 const COTTAGE_DOORS: { pos: THREE.Vector3; label: string; dest: AreaId; fieldReturn: THREE.Vector3 }[] = [
   { pos: new THREE.Vector3(6, 0, 9.5),    label: "Baker's Cottage",     dest: 'cottage1', fieldReturn: new THREE.Vector3(6, 0, 11.5) },
-  { pos: new THREE.Vector3(13.7, 0, 6.4), label: "Craftsman's Cottage", dest: 'cottage2', fieldReturn: new THREE.Vector3(14, 0, 8) },
+  { pos: new THREE.Vector3(13.7, 0, 6.4), label: "Craftsman's Cottage", dest: 'cottage2', fieldReturn: new THREE.Vector3(14.2, 0, 8.65) },
   { pos: new THREE.Vector3(10.2, 0, 16.5),label: "Herbalist's Cottage", dest: 'cottage3', fieldReturn: new THREE.Vector3(10, 0, 18.5) },
 ];
 const COTTAGE_SPAWN = new THREE.Vector3(0, 0, 1);
@@ -943,10 +943,13 @@ function ForestArea() {
 
 // ─── Desert area ─────────────────────────────────────────────────
 function DesertArea() {
+  const desertDungeonStage = useGameStore(s => s.desertDungeonStage);
+  const unlockedWeapons = useGameStore(s => s.unlockedWeapons);
   const rocks = useMemo(() => seededItems(18, -50, 50, 20), []);
   const pillars = useMemo(() => seededItems(10, -45, 45, 21), []);
   const cacti = useMemo(() => seededItems(15, -48, 48, 22), []);
-  const chestPos: [number, number, number] = [0, 0.5, -24];
+  const chestPos: [number, number, number] = [0, 0.5, -23];
+  const hasBomb = unlockedWeapons.includes('bomb');
   return (
     <>
       <color attach="background" args={['#d4956e']} />
@@ -1007,6 +1010,119 @@ function DesertArea() {
           </mesh>
         </group>
       ))}
+
+      {/* Pass walls and gates for a real route sequence */}
+      <group position={[0, 0, 9]}>
+        <mesh position={[-14.5, 2.6, 0]} castShadow>
+          <boxGeometry args={[25, 5.6, 1.1]} />
+          <meshStandardMaterial color="#8c5f31" roughness={0.95} />
+        </mesh>
+        <mesh position={[14.5, 2.6, 0]} castShadow>
+          <boxGeometry args={[25, 5.6, 1.1]} />
+          <meshStandardMaterial color="#8c5f31" roughness={0.95} />
+        </mesh>
+        {desertDungeonStage < 1 && (
+          <group>
+            <mesh position={[0, 2.6, 0]} castShadow>
+              <boxGeometry args={[6, 5.3, 1.1]} />
+              <meshStandardMaterial color="#a06b32" emissive="#f0b03a" emissiveIntensity={0.35} roughness={0.72} />
+            </mesh>
+            <mesh position={[0, 5.4, 0.58]}>
+              <boxGeometry args={[4.4, 0.35, 0.06]} />
+              <meshStandardMaterial color="#ffdd88" emissive="#ffb347" emissiveIntensity={1.2} />
+            </mesh>
+            {[-6.5, 6.5].map((x, i) => (
+              <group key={`desert-lane-banner-${i}`} position={[x, 0, 2.2]}>
+                <mesh position={[0, 2.8, 0]}>
+                  <boxGeometry args={[0.35, 5.2, 0.35]} />
+                  <meshStandardMaterial color="#6c4223" roughness={0.9} />
+                </mesh>
+                <mesh position={[0, 4.8, 0.36]}>
+                  <boxGeometry args={[1.7, 1.4, 0.08]} />
+                  <meshStandardMaterial color="#f6d28d" emissive="#f0b03a" emissiveIntensity={1.1} />
+                </mesh>
+              </group>
+            ))}
+          </group>
+        )}
+      </group>
+
+      <group position={[0, 0, -9]}>
+        <mesh position={[-14.5, 2.6, 0]} castShadow>
+          <boxGeometry args={[25, 5.6, 1.1]} />
+          <meshStandardMaterial color="#7d5429" roughness={0.95} />
+        </mesh>
+        <mesh position={[14.5, 2.6, 0]} castShadow>
+          <boxGeometry args={[25, 5.6, 1.1]} />
+          <meshStandardMaterial color="#7d5429" roughness={0.95} />
+        </mesh>
+        {!hasBomb && (
+          <group>
+            <mesh position={[0, 2.6, 0]} castShadow rotation={[0, 0.1, 0]}>
+              <boxGeometry args={[6.2, 5.4, 1.15]} />
+              <meshStandardMaterial color="#6a4020" roughness={0.92} />
+            </mesh>
+            <mesh position={[0, 2.8, 0.64]} rotation={[0.08, 0, 0]}>
+              <boxGeometry args={[4.7, 3.6, 0.08]} />
+              <meshStandardMaterial color="#ff8a3d" emissive="#ff6a00" emissiveIntensity={1.4} />
+            </mesh>
+          </group>
+        )}
+      </group>
+
+      <group position={[0, 0, 20]}>
+        <mesh position={[0, 1.3, 0]}>
+          <boxGeometry args={[4.8, 2.1, 0.3]} />
+          <meshStandardMaterial color="#7b542f" roughness={0.88} />
+        </mesh>
+        <mesh position={[0, 1.3, 0.16]}>
+          <boxGeometry args={[3.8, 1.1, 0.06]} />
+          <meshStandardMaterial color="#ffe0aa" emissive="#f0b03a" emissiveIntensity={1.15} />
+        </mesh>
+      </group>
+
+      {!hasBomb && desertDungeonStage >= 1 && (
+        <group position={[0, 0, -5.3]}>
+          {[-7.2, 7.2].map((x, i) => (
+            <group key={`ember-pylon-${i}`} position={[x, 0, -8.4]}>
+              <mesh position={[0, 1.8, 0]} castShadow>
+                <cylinderGeometry args={[0.55, 0.78, 3.6, 7]} />
+                <meshStandardMaterial color="#6f3c1d" roughness={0.85} />
+              </mesh>
+              <mesh position={[0, 3.85, 0]}>
+                <octahedronGeometry args={[0.85, 0]} />
+                <meshStandardMaterial color="#ffbe7a" emissive="#ff6a00" emissiveIntensity={1.8} roughness={0.18} />
+              </mesh>
+              <pointLight position={[0, 3.85, 0]} color="#ff7a45" intensity={1.9} distance={8} decay={2} />
+            </group>
+          ))}
+          {[-8, 0, 8].map((x, i) => (
+            <mesh key={`trench-safe-${i}`} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.03, -15.5]}>
+              <ringGeometry args={[1.45, 2.05, 18]} />
+              <meshStandardMaterial color="#ffd28a" emissive="#ff8a3d" emissiveIntensity={1.35} transparent opacity={0.58} />
+            </mesh>
+          ))}
+          <group position={[0, 0, -16.8]}>
+            <mesh position={[0, 2.6, 0]} castShadow>
+              <cylinderGeometry args={[1.1, 1.35, 5.2, 8]} />
+              <meshStandardMaterial color="#5f341a" roughness={0.84} />
+            </mesh>
+            <mesh position={[0, 5.5, 0]}>
+              <octahedronGeometry args={[1.1, 0]} />
+              <meshStandardMaterial color="#ffd08c" emissive="#ff6a00" emissiveIntensity={2.1} roughness={0.2} />
+            </mesh>
+            <pointLight position={[0, 5.5, 0]} color="#ff7a45" intensity={2.4} distance={11} decay={2} />
+          </group>
+          <mesh position={[0, 1.2, 0]}>
+            <boxGeometry args={[3.9, 1.7, 0.26]} />
+            <meshStandardMaterial color="#5d3d22" roughness={0.9} />
+          </mesh>
+          <mesh position={[0, 1.2, 0.16]}>
+            <boxGeometry args={[3.1, 0.9, 0.05]} />
+            <meshStandardMaterial color="#ffd28a" emissive="#ff8a3d" emissiveIntensity={1.45} />
+          </mesh>
+        </group>
+      )}
 
       <TreasureChest pos={chestPos} area="desert" />
       <LoreStonesForArea area="desert" />
@@ -1478,6 +1594,18 @@ function VoidArea() {
 
 // ─── Boss Lair area ───────────────────────────────────────────────
 function BossArea() {
+  const bossDungeonStage = useGameStore(s => s.bossDungeonStage);
+  const unlockedWeapons = useGameStore(s => s.unlockedWeapons);
+  const unlockedSwords = useGameStore(s => s.unlockedSwords);
+  const chestsOpened = useGameStore(s => s.chestsOpened);
+  const prepReady =
+    unlockedWeapons.includes('chain') &&
+    unlockedWeapons.includes('aura') &&
+    chestsOpened.includes('boss-armor');
+  const throneReady =
+    unlockedWeapons.includes('shadow') &&
+    unlockedWeapons.includes('veil') &&
+    unlockedSwords.includes('dragon');
   const columns = useMemo(() => {
     return [
       [-10, 0, -15], [10, 0, -15], [-10, 0, 5], [10, 0, 5],
@@ -1535,10 +1663,98 @@ function BossArea() {
         <meshStandardMaterial color="#12002a" roughness={0.8} />
       </mesh>
 
+      {/* Outer ward seal */}
+      <group position={[0, 0, 9]}>
+        <mesh position={[-14.5, 2.8, 0]} castShadow>
+          <boxGeometry args={[25, 5.8, 1.1]} />
+          <meshStandardMaterial color="#1a0030" roughness={0.85} />
+        </mesh>
+        <mesh position={[14.5, 2.8, 0]} castShadow>
+          <boxGeometry args={[25, 5.8, 1.1]} />
+          <meshStandardMaterial color="#1a0030" roughness={0.85} />
+        </mesh>
+        {bossDungeonStage < 1 && (
+          <group>
+            <mesh position={[0, 2.8, 0]} castShadow>
+              <boxGeometry args={[6, 5.6, 1.1]} />
+              <meshStandardMaterial color="#2b0a4c" emissive="#7c4dff" emissiveIntensity={0.55} roughness={0.42} transparent opacity={0.94} />
+            </mesh>
+            <mesh position={[0, 3.0, 0.6]}>
+              <boxGeometry args={[4.8, 3.8, 0.08]} />
+              <meshStandardMaterial color="#c9a8ff" emissive="#8b5cf6" emissiveIntensity={1.6} />
+            </mesh>
+            {[-7.8, 7.8].map((x, i) => (
+              <group key={`boss-mirror-${i}`} position={[x, 0, 4.2]}>
+                <mesh position={[0, 2.4, 0]} castShadow>
+                  <boxGeometry args={[0.48, 4.8, 0.48]} />
+                  <meshStandardMaterial color="#25003f" roughness={0.78} />
+                </mesh>
+                <mesh position={[0, 3.1, 0.34]}>
+                  <boxGeometry args={[1.9, 2.1, 0.08]} />
+                  <meshStandardMaterial color="#d7c4ff" emissive="#8b5cf6" emissiveIntensity={1.5} transparent opacity={0.84} />
+                </mesh>
+              </group>
+            ))}
+            <group position={[0, 0, 5.6]}>
+              <mesh position={[0, 2.9, 0]} castShadow>
+                <cylinderGeometry args={[0.8, 1.15, 5.8, 10]} />
+                <meshStandardMaterial color="#2b0a4c" roughness={0.62} metalness={0.18} />
+              </mesh>
+              <mesh position={[0, 6.15, 0]} rotation={[0.3, 0.1, -0.18]}>
+                <torusKnotGeometry args={[0.75, 0.2, 96, 12, 2, 3]} />
+                <meshStandardMaterial color="#d9c4ff" emissive="#8b5cf6" emissiveIntensity={1.9} />
+              </mesh>
+              <pointLight position={[0, 6.15, 0]} color="#a96cff" intensity={2.2} distance={10} decay={2} />
+            </group>
+          </group>
+        )}
+      </group>
+
+      {/* Inner throne seal */}
+      <group position={[0, 0, -9]}>
+        <mesh position={[-14.5, 2.8, 0]} castShadow>
+          <boxGeometry args={[25, 5.8, 1.1]} />
+          <meshStandardMaterial color="#160024" roughness={0.85} />
+        </mesh>
+        <mesh position={[14.5, 2.8, 0]} castShadow>
+          <boxGeometry args={[25, 5.8, 1.1]} />
+          <meshStandardMaterial color="#160024" roughness={0.85} />
+        </mesh>
+        {bossDungeonStage < 2 && (
+          <group>
+            <mesh position={[0, 2.8, 0]} castShadow>
+              <boxGeometry args={[6.2, 5.6, 1.1]} />
+              <meshStandardMaterial color="#250034" emissive={throneReady ? '#ef4444' : '#7c4dff'} emissiveIntensity={throneReady ? 0.95 : 0.45} roughness={0.4} transparent opacity={0.96} />
+            </mesh>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
+              <ringGeometry args={[2.4, 3.6, 28]} />
+              <meshStandardMaterial color="#aa00ff" emissive="#7c4dff" emissiveIntensity={1.4} transparent opacity={0.6} />
+            </mesh>
+            <mesh position={[0, 5.8, 0.2]}>
+              <torusGeometry args={[2.2, 0.3, 10, 20]} />
+              <meshStandardMaterial color="#c78bff" emissive="#8b5cf6" emissiveIntensity={1.1} />
+            </mesh>
+          </group>
+        )}
+      </group>
+
       {/* Armor chest */}
       <TreasureChest pos={[-8, 0.5, 8]} area="boss-armor" />
       <SwordChestsForArea area="boss" />
       <WeaponAltarsForArea area="boss" />
+
+      {!prepReady && (
+        <group position={[0, 0, 20]}>
+          <mesh position={[0, 1.35, 0]}>
+            <boxGeometry args={[5.1, 2.2, 0.32]} />
+            <meshStandardMaterial color="#261238" roughness={0.88} />
+          </mesh>
+          <mesh position={[0, 1.35, 0.18]}>
+            <boxGeometry args={[4.2, 1.2, 0.06]} />
+            <meshStandardMaterial color="#d9c8ff" emissive="#8b5cf6" emissiveIntensity={1.5} />
+          </mesh>
+        </group>
+      )}
 
       <Boundary />
     </>
@@ -1547,6 +1763,9 @@ function BossArea() {
 
 // ─── Crystal Caverns (cave) ───────────────────────────────────────
 function CaveArea() {
+  const caveDungeonStage = useGameStore(s => s.caveDungeonStage);
+  const unlockedWeapons = useGameStore(s => s.unlockedWeapons);
+  const guardianDefeated = useGameStore(s => s.guardianDefeated);
   const bigCrystals  = useMemo(() => seededItems(22, -46, 46, 71), []);
   const stalactites  = useMemo(() => seededItems(18, -46, 46, 72), []);
   const boulders     = useMemo(() => seededItems(12, -44, 44, 73), []);
@@ -1554,6 +1773,10 @@ function CaveArea() {
   const hiddenChestPositions: [number, number, number][] = [
     [20, 0.5, -18], [-20, 0.5, -20], [0, 0.5, -26],
   ];
+  const hasBomb = unlockedWeapons.includes('bomb');
+  const southernSealOpen = caveDungeonStage >= 1;
+  const sanctumOpen = caveDungeonStage >= 2 && hasBomb;
+  const caveGuardianCleared = guardianDefeated.includes('cave');
 
   return (
     <>
@@ -1702,6 +1925,106 @@ function CaveArea() {
         </mesh>
       </group>
 
+      {/* Chamber dividers to turn the cave into a dungeon run */}
+      <group position={[0, 0, 9]}>
+        <mesh position={[-14.5, 2.7, 0]} castShadow>
+          <boxGeometry args={[25, 5.8, 1.1]} />
+          <meshStandardMaterial color="#120a24" roughness={0.96} />
+        </mesh>
+        <mesh position={[14.5, 2.7, 0]} castShadow>
+          <boxGeometry args={[25, 5.8, 1.1]} />
+          <meshStandardMaterial color="#120a24" roughness={0.96} />
+        </mesh>
+        {!southernSealOpen && (
+          <group>
+            <mesh position={[0, 2.7, 0]} castShadow>
+              <boxGeometry args={[6, 5.5, 1.1]} />
+              <meshStandardMaterial color="#291340" emissive="#6f37c9" emissiveIntensity={0.65} roughness={0.25} transparent opacity={0.92} />
+            </mesh>
+            <mesh position={[0, 5.55, 0.58]}>
+              <boxGeometry args={[4.2, 0.42, 0.08]} />
+              <meshStandardMaterial color="#d1b5ff" emissive="#8d5cff" emissiveIntensity={1.5} />
+            </mesh>
+            {[-7.4, 7.4].map((x, i) => (
+              <group key={`cave-relay-${i}`} position={[x, 0, 2.6]}>
+                <mesh position={[0, 1.7, 0]} castShadow rotation={[0, Math.PI / 4, 0]}>
+                  <boxGeometry args={[1.2, 3.4, 1.2]} />
+                  <meshStandardMaterial color="#2c1747" roughness={0.7} />
+                </mesh>
+                <mesh position={[0, 3.85, 0]}>
+                  <octahedronGeometry args={[0.78, 0]} />
+                  <meshStandardMaterial color="#d2b0ff" emissive="#8d5cff" emissiveIntensity={1.6} transparent opacity={0.86} />
+                </mesh>
+                <pointLight position={[0, 3.85, 0]} color="#aa66ff" intensity={1.5} distance={7} decay={2} />
+              </group>
+            ))}
+            <group position={[0, 0, 4.8]}>
+              <mesh position={[0, 2.4, 0]} castShadow rotation={[0, Math.PI / 4, 0]}>
+                <octahedronGeometry args={[1.7, 0]} />
+                <meshStandardMaterial color="#efe2ff" emissive="#9f63ff" emissiveIntensity={2.2} transparent opacity={0.92} />
+              </mesh>
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.06, 0]}>
+                <ringGeometry args={[2.2, 2.9, 28]} />
+                <meshStandardMaterial color="#d9beff" emissive="#8d5cff" emissiveIntensity={1.4} transparent opacity={0.62} />
+              </mesh>
+              <pointLight position={[0, 2.6, 0]} color="#b87aff" intensity={2.1} distance={10} decay={2} />
+            </group>
+          </group>
+        )}
+      </group>
+
+      <group position={[0, 0, -9]}>
+        <mesh position={[-14.5, 2.7, 0]} castShadow>
+          <boxGeometry args={[25, 5.8, 1.1]} />
+          <meshStandardMaterial color="#120a24" roughness={0.96} />
+        </mesh>
+        <mesh position={[14.5, 2.7, 0]} castShadow>
+          <boxGeometry args={[25, 5.8, 1.1]} />
+          <meshStandardMaterial color="#120a24" roughness={0.96} />
+        </mesh>
+        {!sanctumOpen && (
+          <group>
+            <mesh position={[0, 2.7, 0]} castShadow>
+              <boxGeometry args={[6, 5.5, 1.1]} />
+              <meshStandardMaterial color="#3b1b10" emissive={hasBomb ? '#ff7a45' : '#6b2b18'} emissiveIntensity={hasBomb ? 1.4 : 0.4} roughness={0.35} />
+            </mesh>
+            <mesh position={[0, 3.1, 0.62]} rotation={[0.18, 0, 0]}>
+              <boxGeometry args={[4.5, 3.4, 0.08]} />
+              <meshStandardMaterial color="#ff9a55" emissive="#ff7a45" emissiveIntensity={hasBomb ? 1.9 : 0.8} />
+            </mesh>
+            <mesh position={[0, 2.9, 0.22]} rotation={[0, 0, Math.PI / 2]}>
+              <torusGeometry args={[1.7, 0.24, 10, 18]} />
+              <meshStandardMaterial color="#ffb277" emissive="#ff7a45" emissiveIntensity={hasBomb ? 1.25 : 0.55} />
+            </mesh>
+          </group>
+        )}
+      </group>
+
+      {/* Guidance markers for the dungeon chambers */}
+      <group position={[0, 0, 20]}>
+        <mesh position={[0, 1.4, 0]}>
+          <boxGeometry args={[4.8, 2.2, 0.35]} />
+          <meshStandardMaterial color="#26153f" roughness={0.88} />
+        </mesh>
+        <mesh position={[0, 1.4, 0.19]}>
+          <boxGeometry args={[4.15, 1.55, 0.06]} />
+          <meshStandardMaterial color="#c9a8ff" emissive="#8d5cff" emissiveIntensity={1.4} />
+        </mesh>
+      </group>
+
+      {!hasBomb && caveDungeonStage >= 2 && (
+        <group position={[0, 0, -5.4]}>
+          <mesh position={[0, 1.2, 0]}>
+            <boxGeometry args={[3.8, 1.7, 0.28]} />
+            <meshStandardMaterial color="#3a2216" roughness={0.9} />
+          </mesh>
+          <mesh position={[0, 1.2, 0.17]}>
+            <boxGeometry args={[3.05, 0.9, 0.05]} />
+            <meshStandardMaterial color="#ffb277" emissive="#ff7a45" emissiveIntensity={1.6} />
+          </mesh>
+        </group>
+      )}
+
       {/* Childhood marble (Adelynn's) — behind big crystal cluster */}
       <group position={[-9, 0.18, 6]}>
         <mesh>
@@ -1712,7 +2035,17 @@ function CaveArea() {
         <pointLight color="#44ccff" intensity={0.8} distance={2.5} decay={2} />
       </group>
 
-      <TreasureChest pos={[-24, 0.5, -5]} area="cave" />
+      {/* Sanctum reward and visual payoff */}
+      <TreasureChest pos={[0, 0.5, -23]} area="cave" />
+      {!caveGuardianCleared && sanctumOpen && (
+        <group position={[0, 0, -18]}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
+            <ringGeometry args={[3.2, 4.2, 36]} />
+            <meshStandardMaterial color="#c99bff" emissive="#8d5cff" emissiveIntensity={1.6} transparent opacity={0.65} />
+          </mesh>
+          <pointLight position={[0, 1.8, 0]} color="#bb88ff" intensity={2} distance={12} decay={2} />
+        </group>
+      )}
       <LoreStonesForArea area="cave" />
       <WeaponAltarsForArea area="cave" />
       <FairyFountain pos={[20, 0, 20]} />
@@ -3154,6 +3487,9 @@ const FOUNTAIN_POSITIONS: Partial<Record<AreaId, THREE.Vector3>> = {
 
 export function World() {
   const portalTimeRef = useRef(0);
+  const caveRelayPulseAtRef = useRef(0);
+  const desertForgePulseAtRef = useRef(0);
+  const bossIdolPulseAtRef = useRef(0);
   const currentArea = useGameStore(state => state.currentArea);
   const portals = PORTALS[currentArea] ?? [];
   const shardsCollected = useGameStore(s => s.shardsCollected);
@@ -3168,9 +3504,108 @@ export function World() {
   }
 
   useFrame((_, delta) => {
-    const { playerPosition, gameState } = useGameStore.getState();
+    const store = useGameStore.getState();
+    const { playerPosition, gameState } = store;
     if (gameState !== 'playing') return;
     portalTimeRef.current += delta;
+
+    if (currentArea === 'cave') {
+      const relaySpirePos = new THREE.Vector3(0, 0, 13.8);
+      let nextPos: THREE.Vector3 | null = null;
+      if (store.caveDungeonStage < 2 && playerPosition.distanceTo(relaySpirePos) < 2.9 && portalTimeRef.current > caveRelayPulseAtRef.current + 1.1) {
+        caveRelayPulseAtRef.current = portalTimeRef.current;
+        store.damagePlayer(0.2);
+      }
+      if (store.caveDungeonStage < 1 && playerPosition.z < 10) {
+        nextPos = playerPosition.clone();
+        nextPos.z = 10;
+      }
+      if (!(store.caveDungeonStage >= 2 && store.unlockedWeapons.includes('bomb')) && playerPosition.z < -10) {
+        nextPos = (nextPos ?? playerPosition.clone());
+        nextPos.z = -10;
+      }
+      if (nextPos) {
+        store.setPlayerPosition(nextPos);
+        return;
+      }
+    }
+
+    if (currentArea === 'desert') {
+      const forgeHeartPos = new THREE.Vector3(0, 0, -22.1);
+      let nextPos: THREE.Vector3 | null = null;
+      if (store.desertDungeonStage < 1 && playerPosition.z < 10) {
+        nextPos = playerPosition.clone();
+        nextPos.z = 10;
+      }
+      if (!store.unlockedWeapons.includes('bomb') && playerPosition.z < -10) {
+        nextPos = (nextPos ?? playerPosition.clone());
+        nextPos.z = -10;
+      }
+      if (store.desertDungeonStage === 1 && !store.unlockedWeapons.includes('bomb') && playerPosition.distanceTo(forgeHeartPos) < 3.1 && portalTimeRef.current > desertForgePulseAtRef.current + 1.1) {
+        desertForgePulseAtRef.current = portalTimeRef.current;
+        store.damagePlayer(0.2);
+      }
+      if (store.desertDungeonStage === 1 && store.unlockedWeapons.includes('bomb') && playerPosition.distanceTo(forgeHeartPos) < 3.4) {
+        store.setDesertDungeonStage(2);
+        store.setItemFanfare({
+          name: 'Forge wall cracked',
+          icon: '💣',
+          desc: 'The Ember Vial overloaded the forge heart. The northern shard vault is now open.',
+        });
+      }
+      if (nextPos) {
+        store.setPlayerPosition(nextPos);
+        return;
+      }
+    }
+
+    if (currentArea === 'boss') {
+      const wardIdolPos = new THREE.Vector3(0, 0, 14.6);
+      const crownSealPos = new THREE.Vector3(0, 0, -9);
+      let nextPos: THREE.Vector3 | null = null;
+      const prepReady =
+        store.unlockedWeapons.includes('chain') &&
+        store.unlockedWeapons.includes('aura') &&
+        store.chestsOpened.includes('boss-armor');
+      const throneReady =
+        store.unlockedWeapons.includes('shadow') &&
+        store.unlockedWeapons.includes('veil') &&
+        store.unlockedSwords.includes('dragon');
+
+      if (store.bossDungeonStage === 0 && !prepReady && playerPosition.distanceTo(wardIdolPos) < 3.2 && portalTimeRef.current > bossIdolPulseAtRef.current + 1.1) {
+        bossIdolPulseAtRef.current = portalTimeRef.current;
+        store.damagePlayer(0.2);
+      }
+      if (store.bossDungeonStage === 0 && prepReady && playerPosition.distanceTo(wardIdolPos) < 3.5) {
+        store.setBossDungeonStage(1);
+        store.setItemFanfare({
+          name: 'Outer ward broken',
+          icon: '🛡️',
+          desc: 'The ward idol has shattered. The armory corridor is now open.',
+        });
+      }
+      if (store.bossDungeonStage === 1 && throneReady && playerPosition.distanceTo(crownSealPos) < 3.5) {
+        store.setBossDungeonStage(2);
+        store.setItemFanfare({
+          name: 'Final seal destabilized',
+          icon: '👑',
+          desc: 'The crown seal has split. The throne room route is exposed.',
+        });
+      }
+
+      if (store.bossDungeonStage < 1 && playerPosition.z < 10) {
+        nextPos = playerPosition.clone();
+        nextPos.z = 10;
+      }
+      if (store.bossDungeonStage < 2 && playerPosition.z < -10) {
+        nextPos = (nextPos ?? playerPosition.clone());
+        nextPos.z = -10;
+      }
+      if (nextPos) {
+        store.setPlayerPosition(nextPos);
+        return;
+      }
+    }
 
     // Portal proximity check
     for (const portal of allPortals) {
@@ -3192,7 +3627,7 @@ export function World() {
     }
     // Cottage exit — walk through south doorway back to field
     if (currentArea === 'cottage1' || currentArea === 'cottage2' || currentArea === 'cottage3') {
-      if (playerPosition.z > 3.8 && Math.abs(playerPosition.x) < 3.0) {
+      if (playerPosition.z > 3.35 && Math.abs(playerPosition.x) < 3.35) {
         const idx = currentArea === 'cottage1' ? 0 : currentArea === 'cottage2' ? 1 : 2;
         useGameStore.getState().triggerAreaTransition({ area: 'field', spawnPos: COTTAGE_DOORS[idx].fieldReturn.clone() });
         return;
