@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { mobileInput } from './mobileControls';
+import { mobileInput } from './mobileInputState';
 import { useGameStore } from './store';
 
 // ── Detect if device supports touch ──────────────────────────────

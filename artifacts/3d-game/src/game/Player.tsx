@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { Controls } from './controls';
 import { useGameStore, SWORD_DEFS, SWORD_CHESTS, WEAPON_PICKUPS, SwordId, SleepPhase } from './store';
 import { sfxSword, sfxArrow, sfxBomb, sfxBoomerang, sfxJump, sfxDodge, sfxGroundSlam, sfxParry, sfxShieldBash } from './AudioManager';
-import { mobileInput } from './mobileControls';
+import { mobileInput } from './mobileInputState';
 
 const SPEED      = 5;
 const RUN_SPEED  = 9.0;   // sprint speed

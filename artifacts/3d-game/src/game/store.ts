@@ -145,6 +145,9 @@ interface GameStore {
   guardianDefeated: AreaId[];
   currentGuardianHP: number;
   currentGuardianMaxHP: number;
+  caveDungeonStage: number;
+  desertDungeonStage: number;
+  bossDungeonStage: number;
 
   setGameState: (state: GameState) => void;
   togglePause: () => void;
@@ -224,6 +227,9 @@ interface GameStore {
   addEliteKill: () => void;
   spawnGuardian: (area: AreaId, maxHP: number) => void;
   damageGuardian: (dmg: number) => void;
+  setCaveDungeonStage: (stage: number) => void;
+  setDesertDungeonStage: (stage: number) => void;
+  setBossDungeonStage: (stage: number) => void;
   // Quest tracking
   totalKills: number;
   areaKills: Record<string, number>;
@@ -322,6 +328,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   guardianDefeated: [],
   currentGuardianHP: 0,
   currentGuardianMaxHP: 0,
+  caveDungeonStage: 0,
+  desertDungeonStage: 0,
+  bossDungeonStage: 0,
 
   setGameState: (state) => set((s) => ({
     gameState: state,
@@ -677,6 +686,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return { currentGuardianHP: newHP };
   }),
 
+  setCaveDungeonStage: (stage) => set({ caveDungeonStage: stage }),
+  setDesertDungeonStage: (stage) => set({ desertDungeonStage: stage }),
+  setBossDungeonStage: (stage) => set({ bossDungeonStage: stage }),
+
   resetGame: () => set({
     gameState: 'playing',
     hearts: 8,
@@ -737,6 +750,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     guardianDefeated: [],
     currentGuardianHP: 0,
     currentGuardianMaxHP: 0,
+    caveDungeonStage: 0,
+    desertDungeonStage: 0,
+    bossDungeonStage: 0,
     totalKills: 0,
     areaKills: {},
     maxCombo: 0,
@@ -847,6 +863,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       loreRead: [],
       areasVisited: [area],
       eliteKills: 0,
+      caveDungeonStage: 0,
+      desertDungeonStage: 0,
+      bossDungeonStage: 0,
     });
     return true;
   },
